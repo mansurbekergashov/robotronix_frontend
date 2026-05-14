@@ -21,7 +21,7 @@ services:
       - "3000:80"
     environment:
       - BACKEND_URL=${BACKEND_URL:-https://robotronix.uz}
-      - BACKEND_WS_URL=${BACKEND_WS_URL:-wss://robotronix.uz}
+      - BACKEND_WS_URL=${BACKEND_WS_URL:-https://robotronix.uz}
     networks:
       - robotronix-network
     healthcheck:
@@ -38,7 +38,7 @@ services:
       - "3001:80"
     environment:
       - BACKEND_URL=${BACKEND_URL:-https://robotronix.uz}
-      - BACKEND_WS_URL=${BACKEND_WS_URL:-wss://robotronix.uz}
+      - BACKEND_WS_URL=${BACKEND_WS_URL:-https://robotronix.uz}
     networks:
       - robotronix-network
     healthcheck:
@@ -55,7 +55,7 @@ services:
       - "3002:80"
     environment:
       - BACKEND_URL=${BACKEND_URL:-https://robotronix.uz}
-      - BACKEND_WS_URL=${BACKEND_WS_URL:-wss://robotronix.uz}
+      - BACKEND_WS_URL=${BACKEND_WS_URL:-https://robotronix.uz}
     networks:
       - robotronix-network
     healthcheck:
