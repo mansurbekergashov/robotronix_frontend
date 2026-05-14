@@ -16,6 +16,7 @@ const CertificateHolders = lazy(() => import('./pages/CertificateHolders'));
 const Products = lazy(() => import('./pages/Products'));
 const Payments = lazy(() => import('./pages/Payments'));
 const Orders = lazy(() => import('./pages/Orders'));
+const Geography = lazy(() => import('./pages/Geography'));
 const Applications = lazy(() => import('./pages/Applications'));
 const Audit = lazy(() => import('./pages/Audit'));
 const Chat = lazy(() => import('./pages/Chat'));
@@ -128,6 +129,7 @@ function AppRoutes() {
           <Route path="products" element={<Products />} />
           <Route path="payments" element={<Payments />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="geography" element={<Geography />} />
           <Route path="applications" element={<Applications />} />
           <Route path="audit" element={<Audit />} />
           <Route path="chat" element={<Chat />} />

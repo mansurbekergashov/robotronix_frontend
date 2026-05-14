@@ -1,0 +1,113 @@
+.carousel-container {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  padding: 60px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel {
+  width: 100%;
+  max-width: 1100px;
+  height: 350px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  position: absolute;
+  width: 320px;
+  height: 220px;
+  border-radius: 20px;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s ease;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.card.active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  z-index: 3;
+}
+
+.card.side {
+  opacity: 0.5;
+  transform: scale(0.85);
+  z-index: 2;
+}
+
+.card.side:nth-child(odd) {
+  transform: translateX(-340px) scale(0.85);
+}
+
+.card.side:nth-child(even) {
+  transform: translateX(340px) scale(0.85);
+}
+
+.card.hidden {
+  opacity: 0;
+  transform: scale(0.5);
+  z-index: 1;
+}
+
+.nav-btn {
+  position: absolute;
+  z-index: 10;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 24px;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.nav-btn.left {
+  left: 20px;
+}
+
+.nav-btn.right {
+  right: 20px;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .card {
+    width: 240px;
+    height: 180px;
+  }
+
+  .card.side:nth-child(odd) {
+    transform: translateX(-180px) scale(0.8);
+  }
+
+  .card.side:nth-child(even) {
+    transform: translateX(180px) scale(0.8);
+  }
+}
+
+@media (max-width: 500px) {
+  .card.side {
+    opacity: 0;
+  }
+
+  .card.active {
+    width: 90%;
+  }
+
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+  }
+}

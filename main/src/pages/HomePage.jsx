@@ -7,6 +7,7 @@ import About from "../components/home/About";
 import FAQ from "../components/home/FAQ";
 import NewsSection from "../components/home/NewsSection";
 import Contact from "../components/home/Contact";
+import Carousel from "../components/home/Carousel";
 
 const HomePage = () => {
   return (
@@ -16,6 +17,7 @@ const HomePage = () => {
       <Courses />
       <Products />
       <Partners />
+      <Carousel/>
       <About />
       <FAQ />
       <NewsSection preview />

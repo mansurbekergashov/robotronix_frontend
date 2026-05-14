@@ -30,7 +30,7 @@
 .geo-column {
     background: var(--card-bg);
     border-radius: 12px;
-    border: 1px solid var(--border-color);
+    border: var(--border-color);
     display: flex;
     flex-direction: column;
     width: 300px;
@@ -40,12 +40,12 @@
 .geo-column.wide {
     flex-grow: 1;
     width: auto;
-    min-width: 400px;
+    min-width: 180px;
 }
 
 .geo-col-header {
     padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -59,6 +59,9 @@
     align-items: center;
     gap: 8px;
     color: var(--text-primary);
+}
+.geo-col-header h3 svg {
+    color: #0066ff;
 }
 
 .btn-icon-add {
@@ -77,7 +80,7 @@
 
 .btn-icon-add:hover {
     background: #0066ff;
-    color: var(--text-primary);
+    color: #fff;
 }
 
 .geo-list {
@@ -106,7 +109,8 @@
 }
 
 .geo-list-item:hover {
-    background: var(--bg-secondary);
+    background: var(--card-bg);
+    opacity: 80%;
 }
 
 .geo-list-item.active {
@@ -138,8 +142,8 @@
 }
 
 .geo-location-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    border: var(--border-color);
     border-radius: 10px;
     padding: 15px;
     margin-bottom: 10px;
@@ -219,7 +223,7 @@
     width: 100%;
     padding: 10px 15px;
     background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: var(--border-color);
     border-radius: 8px;
     color: var(--text-primary);
     font-family: inherit;

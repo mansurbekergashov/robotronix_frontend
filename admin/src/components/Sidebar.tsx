@@ -2,7 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   FaHome, FaUsers, FaBook, FaBox, FaShoppingCart,
   FaClipboardList, FaComments, FaUserGraduate, FaCertificate,
-  FaHistory, FaGlobe, FaSignOutAlt, FaChevronDown, FaUserCircle, FaUserCheck, FaNewspaper, FaCreditCard
+  FaHistory, FaGlobe, FaSignOutAlt, FaChevronDown, FaUserCircle, FaUserCheck, FaNewspaper, FaCreditCard,
+  FaMapMarkerAlt
 } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +30,7 @@ const menuItems: MenuItem[] = [
   { id: 'products', label: 'Mahsulotlar', icon: <FaBox />, path: '/products' },
   { id: 'payments', label: 'To\'lovlar', icon: <FaCreditCard />, path: '/payments' },
   { id: 'orders', label: 'Buyurtmalar', icon: <FaShoppingCart />, path: '/orders' },
+  { id: 'geography', label: 'Pochta manzillari', icon: <FaMapMarkerAlt />, path: '/geography' },
   { id: 'applications', label: "Arizalar", icon: <FaClipboardList />, path: '/applications' },
   { id: 'news', label: 'Yangiliklar', icon: <FaNewspaper />, path: '/news' },
   { id: 'audit', label: 'Audit Jurnali', icon: <FaHistory />, path: '/audit' },
