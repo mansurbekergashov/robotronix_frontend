@@ -1,13 +1,11 @@
 # Frontend jamoasi uchun — barcha 3 ta frontend
 #
-# Ishlatish (backend alohida ishlamoqda bo'lsa):
-#   cp .env.example .env
-#   docker-compose up
+# Serverda backend bilan ishlash (tavsiya):
+#   docker-compose up               # .env da BACKEND_URL=https://robotronix.uz
 #
-# ESLATMA: docker-compose.yml backend/docker-compose.yml bilan birgalikda
-# robotronix-network tarmog'idan foydalanadi.
-# Backend oldin ishga tushirilgan bo'lishi kerak:
+# Lokal backend bilan ishlash:
 #   cd ../backend && docker-compose up -d
+#   docker-compose up               # .env da BACKEND_URL=http://backend:8080
 #
 # Portlar:
 #   Main:  http://localhost:3000
@@ -21,6 +19,9 @@ services:
     restart: always
     ports:
       - "3000:80"
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-https://robotronix.uz}
+      - BACKEND_WS_URL=${BACKEND_WS_URL:-wss://robotronix.uz}
     networks:
       - robotronix-network
     healthcheck:
@@ -35,6 +36,9 @@ services:
     restart: always
     ports:
       - "3001:80"
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-https://robotronix.uz}
+      - BACKEND_WS_URL=${BACKEND_WS_URL:-wss://robotronix.uz}
     networks:
       - robotronix-network
     healthcheck:
@@ -49,6 +53,9 @@ services:
     restart: always
     ports:
       - "3002:80"
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-https://robotronix.uz}
+      - BACKEND_WS_URL=${BACKEND_WS_URL:-wss://robotronix.uz}
     networks:
       - robotronix-network
     healthcheck:
@@ -59,5 +66,5 @@ services:
 
 networks:
   robotronix-network:
-    external: true
     name: robotronix-network
+    driver: bridge
