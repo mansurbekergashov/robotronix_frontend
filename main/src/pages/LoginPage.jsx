@@ -34,12 +34,14 @@ const LoginPage = () => {
         const result = await login(formData.email, formData.password)
 
         if (result.success) {
-            // Get user from localStorage to check role
             const userData = localStorage.getItem('user')
             const user = userData ? JSON.parse(userData) : null
-            
-            // Regular users go to user panel
-            window.location.href = '/user-panel/'
+
+            if (user?.role === 'ADMIN') {
+                window.location.href = APP_CONFIG.ADMIN_DASHBOARD_URL
+            } else {
+                window.location.href = APP_CONFIG.USER_DASHBOARD_URL
+            }
         } else {
             setError(result.error || 'Kirish amalga oshmadi. Qaytadan urinib ko\'ring.')
         }

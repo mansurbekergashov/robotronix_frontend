@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       inactivityTimer = setTimeout(() => {
         console.log('Auto logout due to inactivity');
         logout();
-      }, 5 * 60 * 1000); // 5 minutes
+      }, 30 * 60 * 1000); // 30 minutes
     };
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];

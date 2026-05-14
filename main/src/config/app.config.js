@@ -9,10 +9,12 @@ export const APP_CONFIG = {
         : '/api',
     
     // Dashboard URLs
-    USER_DASHBOARD_URL: 'http://127.0.0.1:3002',
-    
+    USER_DASHBOARD_URL: isDevelopment
+        ? 'http://localhost:3002'
+        : '/user-panel/',
+
     ADMIN_DASHBOARD_URL: isDevelopment
-        ? 'http://admin.localhost'  // Nginx orqali
+        ? 'http://localhost:3001'
         : `${window.location.protocol}//admin.${window.location.hostname}`,
     
     // App Info

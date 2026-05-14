@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../services/api'
+import { APP_CONFIG } from '../config/app.config'
 
 const AuthContext = createContext(null)
 
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem('token'))
 
     const LAST_ACTIVE_KEY = 'robotronix_last_active'
-    const TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+    const TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -39,8 +40,12 @@ export const AuthProvider = ({ children }) => {
                     const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
                     const isInPanel = window.location.pathname.startsWith('/user-panel');
                     
-                    if (userData.role !== 'ADMIN' && !isInPanel && isAuthPage) {
-                        window.location.href = '/user-panel/';
+                    if (!isInPanel && isAuthPage) {
+                        if (userData.role === 'ADMIN') {
+                            window.location.href = APP_CONFIG.ADMIN_DASHBOARD_URL;
+                        } else {
+                            window.location.href = APP_CONFIG.USER_DASHBOARD_URL;
+                        }
                     }
                 } catch (error) {
                     console.error('Initial verification failed:', error);
