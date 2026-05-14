@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const backendUrl = env.BACKEND_URL || 'https://robotronix.uz';
-  const backendWs  = backendUrl.replace(/^https/, 'wss');
+  const backendWs  = backendUrl.replace(/^http/, 'ws');
 
   return {
     plugins: [react(), tailwindcss()],
