@@ -1,6 +1,8 @@
 FROM nginx:alpine
-# Exclude dev files from the image
-COPY index.html assets/ src/ public/ /usr/share/nginx/html/
+COPY index.html /usr/share/nginx/html/index.html
+COPY assets /usr/share/nginx/html/assets
+COPY src /usr/share/nginx/html/src
+COPY public /usr/share/nginx/html/public
 # nginx Docker image processes /etc/nginx/templates/*.template with envsubst
 # at container start — ${BACKEND_URL} and ${BACKEND_WS_URL} are substituted
 COPY nginx.conf /etc/nginx/templates/default.conf.template
