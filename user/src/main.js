@@ -41,6 +41,20 @@ class App {
         const loadingOverlay = this.createLoadingOverlay();
         document.body.appendChild(loadingOverlay);
 
+        // In local dev the main site (localhost:3000) and user panel (localhost:3002)
+        // are different origins and cannot share localStorage. The main site passes
+        // tokens via URL params after login so we can bootstrap this origin's storage.
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        if (urlToken) {
+            localStorage.setItem('token', urlToken);
+            const urlRefresh = urlParams.get('refreshToken');
+            if (urlRefresh) localStorage.setItem('refreshToken', urlRefresh);
+            // Remove tokens from URL without triggering navigation
+            const cleanUrl = window.location.pathname + window.location.hash;
+            history.replaceState(null, '', cleanUrl);
+        }
+
         try {
             // Check basic authentication (presence of token)
             if (!this.auth.isAuthenticated()) {
