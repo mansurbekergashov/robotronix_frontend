@@ -1,5 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig, loadEnv } from 'vite';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -8,21 +7,27 @@ export default defineConfig(({ mode }) => {
   const backendWs  = backendUrl.replace(/^http/, 'ws');
 
   // Strip Origin/Referer so Spring's CORS filter doesn't activate.
-  // The browser treats all Vite-proxied requests as same-origin, so it
-  // never checks the response for CORS headers — removing Origin is safe.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stripCorsHeaders = (proxy: any) => {
-    proxy.on('proxyReq', (proxyReq: any) => {
+  const stripCorsHeaders = (proxy) => {
+    proxy.on('proxyReq', (proxyReq) => {
       proxyReq.removeHeader('origin');
       proxyReq.removeHeader('referer');
     });
   };
 
   return {
-    plugins: [react()],
-    base: '/',
+    root: '.',
+    // In dev, remove <base href="/user-panel/"> so assets resolve from root.
+    // Production build keeps it — nginx rewrites /user-panel/ → / before serving.
+    plugins: [
+      {
+        name: 'remove-base-href',
+        transformIndexHtml(html) {
+          return html.replace(/<base\s[^>]*href="[^"]*"[^>]*\/?>/i, '');
+        },
+      },
+    ],
     server: {
-      port: 3001,
+      port: 3002,
       proxy: {
         '/api': {
           target: backendUrl,

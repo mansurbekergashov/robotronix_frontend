@@ -4,8 +4,11 @@
   "description": "Robotronix User Dashboard - Foydalanuvchilar uchun panel",
   "main": "index.html",
   "scripts": {
-    "dev": "npx serve . -p 3002",
+    "dev": "vite",
     "start": "npx serve . -p 3002"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
   },
   "keywords": [
     "robotronix",

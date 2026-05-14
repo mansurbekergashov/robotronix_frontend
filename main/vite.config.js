@@ -8,7 +8,15 @@ export default defineConfig(({ mode }) => {
   const backendUrl = env.BACKEND_URL || 'https://robotronix.uz';
   const backendWs  = backendUrl.replace(/^http/, 'ws');
 
-  const isHttps = backendUrl.startsWith('https');
+  // Strip Origin/Referer so Spring's CORS filter doesn't activate.
+  // The browser treats all Vite-proxied requests as same-origin, so it
+  // never checks the response for CORS headers — removing Origin is safe.
+  const stripCorsHeaders = (proxy) => {
+    proxy.on('proxyReq', (proxyReq) => {
+      proxyReq.removeHeader('origin');
+      proxyReq.removeHeader('referer');
+    });
+  };
 
   return {
     plugins: [react(), tailwindcss()],
@@ -18,18 +26,20 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: backendUrl,
           changeOrigin: true,
-          secure: isHttps,
+          secure: false,
+          configure: stripCorsHeaders,
         },
         '/uploads': {
           target: backendUrl,
           changeOrigin: true,
-          secure: isHttps,
+          secure: false,
+          configure: stripCorsHeaders,
         },
         '/ws': {
           target: backendWs,
           ws: true,
           changeOrigin: true,
-          secure: isHttps,
+          secure: false,
         },
       },
     },
