@@ -40,7 +40,15 @@ const LoginPage = () => {
             if (user?.role === 'ADMIN') {
                 window.location.href = APP_CONFIG.ADMIN_DASHBOARD_URL
             } else {
-                window.location.href = APP_CONFIG.USER_DASHBOARD_URL
+                const token = localStorage.getItem('token')
+                const refreshToken = localStorage.getItem('refreshToken')
+                const base = APP_CONFIG.USER_DASHBOARD_URL
+                // In dev, user panel runs on a different port → different localStorage origin.
+                // Pass tokens via URL so user panel can bootstrap its own localStorage.
+                const params = (token && base.includes('localhost'))
+                    ? `?token=${encodeURIComponent(token)}${refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : ''}`
+                    : ''
+                window.location.href = base + params
             }
         } else {
             setError(result.error || 'Kirish amalga oshmadi. Qaytadan urinib ko\'ring.')
