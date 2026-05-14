@@ -14,11 +14,11 @@ export const WS_BASE_URL = _origin.replace(/^http/, 'ws');
  * @returns {string} - The resolved URL
  */
 export const getFileUrl = (path) => {
-    const defaultImage = 'public/default-image.svg';
+    const defaultImage = '/default-image.svg';
     
     if (!path || path.includes('placeholder.svg')) return defaultImage;
     if (path.startsWith('http')) return path;
-    if (path.startsWith('public/')) return path; // Already has public prefix
+    if (path.startsWith('public/')) return `/${path.slice('public/'.length)}`;
     
     // For uploaded files (starting with /uploads)
     if (path.startsWith('/uploads') || path.startsWith('uploads')) {
