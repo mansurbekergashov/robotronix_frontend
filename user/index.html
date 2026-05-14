@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="uz">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!-- CSP for development / non-proxied environments -->
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com https://mc.yandex.ru; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' ws: wss: http: https:; base-uri 'self';"
+        />
+        <base href="/user-panel/" />
+        <title>Robotronix - Foydalanuvchi Panel</title>
+
+        <!-- Favicon -->
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="assets/images/favicon.svg"
+        />
+
+        <!-- Fonts -->
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            rel="stylesheet"
+        />
+
+        <!-- Styles -->
+        <link rel="stylesheet" href="src/styles/main.css" />
+    </head>
+
+    <body>
+        <div id="app">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <!-- Sidebar content will be loaded by JavaScript -->
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content" id="main-content">
+                <!-- Page content will be loaded by JavaScript -->
+            </main>
+        </div>
+
+        <!-- Scripts -->
+        <!-- Emoji Picker Element (Web Component) -->
+        <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
+        <script type="module" src="src/main.js"></script>
+    </body>
+</html>

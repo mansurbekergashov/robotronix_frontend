@@ -1,0 +1,408 @@
+// Orders Page with List View + Detail Modal
+export default class Orders {
+  constructor() {
+    this.container = document.getElementById("main-content");
+    this.orders = [];
+    this.refreshInterval = null;
+    this.selectedOrder = null;
+    this.onOrderUpdate = (event) => {
+      const update = event.detail;
+      if (update && update.entityType === 'ORDER') {
+        this.loadOrders();
+      }
+    };
+  }
+
+  async render() {
+    this.container.innerHTML = `
+            <div class="page-header">
+                <div class="header-content">
+                    <div>
+                        <h1><i class="fas fa-shopping-bag"></i> Buyurtmalarim</h1>
+                        <p>Barcha buyurtmalar tarixi va holati</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="refresh-indicator" id="refreshIndicator">
+                            <i class="fas fa-sync-alt"></i> Avtomatik yangilanmoqda
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="orders-container">
+                <div class="orders-table-wrapper" id="ordersList">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Buyurtmalar yuklanmoqda...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Detail Modal -->
+            <div class="modal-overlay" id="orderModal" style="display: none;">
+                <div class="modal-content detail-modal">
+                    <div class="modal-header">
+                        <h2 id="modalTitle">Buyurtma tafsilotlari</h2>
+                        <button class="close-btn" id="closeModal">&times;</button>
+                    </div>
+                    <div class="modal-body" id="modalBody"></div>
+                </div>
+            </div>
+        `;
+
+    // Global funksiya yaratish
+    window.confirmDelivery = (orderId) => this.confirmDelivery(orderId);
+
+    // Modal yopish eventlari
+    document
+      .getElementById("closeModal")
+      .addEventListener("click", () => this.closeModal());
+    document.getElementById("orderModal").addEventListener("click", (e) => {
+      if (e.target.id === "orderModal") this.closeModal();
+    });
+
+    await this.loadOrders();
+    this.startAutoRefresh();
+
+    // Listen for real-time updates
+    window.addEventListener('robotronix-update', this.onOrderUpdate);
+  }
+
+  startAutoRefresh() {
+    this.refreshInterval = setInterval(() => {
+      this.loadOrders(true);
+    }, 5000);
+  }
+
+  async loadOrders(silent = false) {
+    try {
+      if (!silent) {
+        const indicator = document.getElementById("refreshIndicator");
+        if (indicator) indicator.classList.add("refreshing");
+      }
+
+      const { default: api } = await import("../services/api.js");
+      const newOrders = await api.get("/orders/my");
+
+      if (this.initialLoad || JSON.stringify(newOrders) !== JSON.stringify(this.orders)) {
+        this.orders = newOrders;
+        this.renderOrders();
+        this.initialLoad = false;
+        // Agar modal ochiq bo'lsa, modalni ham yangilash
+        if (this.selectedOrder) {
+          const updated = this.orders.find(
+            (o) => o.id === this.selectedOrder.id,
+          );
+          if (updated) {
+            this.selectedOrder = updated;
+            this.renderModalContent(updated);
+          }
+        }
+      }
+
+      if (!silent) {
+        const indicator = document.getElementById("refreshIndicator");
+        if (indicator)
+          setTimeout(() => indicator.classList.remove("refreshing"), 500);
+      }
+    } catch (error) {
+      console.error("Buyurtmalarni yuklashda xatolik:", error);
+      if (!silent) {
+        document.getElementById("ordersList").innerHTML = `
+                    <div class="empty-state error-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Xatolik yuz berdi</h3>
+                        <p>Buyurtmalarni yuklashda muammo yuzaga keldi</p>
+                        <button class="btn-primary" onclick="location.reload()">
+                            <i class="fas fa-redo"></i> Qayta urinish
+                        </button>
+                    </div>
+                `;
+      }
+    }
+  }
+
+  getStatusInfo(status) {
+    const statusMap = {
+      PENDING: { class: "warning", text: "Kutilmoqda", icon: "fa-clock" },
+      CONFIRMED: {
+        class: "info",
+        text: "Tasdiqlandi",
+        icon: "fa-check-circle",
+      },
+      PREPARING: {
+        class: "primary",
+        text: "Tayyorlanmoqda",
+        icon: "fa-box-open",
+      },
+      SHIPPED: { class: "secondary", text: "Yo'lda", icon: "fa-truck" },
+      DELIVERED: { class: "delivered", text: "Yetkazildi", icon: "fa-truck" },
+      RECEIVED: {
+        class: "success",
+        text: "Qabul qilindi",
+        icon: "fa-check-double",
+      },
+      CANCELLED: {
+        class: "danger",
+        text: "Bekor qilindi",
+        icon: "fa-times-circle",
+      },
+    };
+    return (
+      statusMap[status] || {
+        class: "secondary",
+        text: status,
+        icon: "fa-info-circle",
+      }
+    );
+  }
+
+  renderOrders() {
+    const ordersList = document.getElementById("ordersList");
+
+    if (!this.orders || this.orders.length === 0) {
+      ordersList.innerHTML = `
+                <div class="cart-empty-state">
+                    <div class="empty-icon-wrapper">
+                        <i class="fas fa-shopping-bag"></i>
+                        <div class="icon-pulse"></div>
+                    </div>
+                    <h2>Buyurtmalar yo'q</h2>
+                    <p>Siz hali hech qanday buyurtma bermagansiz. Bizning do'konimizdan o'zingizga yoqqan mahsulotlarni topishingiz mumkin.</p>
+                    <a href="#products" class="btn-primary btn-large">
+                        <i class="fas fa-store"></i> Do'konga o'tish
+                    </a>
+                </div>
+            `;
+      return;
+    }
+
+    ordersList.innerHTML = `
+            <div class="orders-list-table">
+                <div class="orders-list-header">
+                    <span class="ol-col ol-id">№</span>
+                    <span class="ol-col ol-items">Mahsulotlar</span>
+                    <span class="ol-col ol-date">Sana</span>
+                    <span class="ol-col ol-total">Summa</span>
+                    <span class="ol-col ol-status">Holat</span>
+                </div>
+                ${this.orders
+                  .map((order) => {
+                    const status = this.getStatusInfo(order.status);
+                    const date = new Date(order.createdAt).toLocaleDateString(
+                      "uz-UZ",
+                      {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      },
+                    );
+                    const items =
+                      order.items && Array.isArray(order.items)
+                        ? order.items
+                        : [];
+                    const itemsSummary =
+                      items.length > 0
+                        ? items
+                            .map(
+                              (i) =>
+                                i.product?.title ||
+                                i.product?.name ||
+                                "Mahsulot",
+                            )
+                            .slice(0, 2)
+                            .join(", ") +
+                          (items.length > 2 ? ` +${items.length - 2}` : "")
+                        : "Mahsulot yo'q";
+
+                    return `
+                        <div class="orders-list-row" data-order-id="${order.id}">
+                            <span class="ol-col ol-id">#${order.id}</span>
+                            <span class="ol-col ol-items">
+                                <span class="ol-items-text">${itemsSummary}</span>
+                                <span class="ol-items-count">${items.length} ta mahsulot</span>
+                            </span>
+                            <span class="ol-col ol-date">${date}</span>
+                            <span class="ol-col ol-total">${(order.totalAmount || 0).toLocaleString()} so'm</span>
+                            <span class="ol-col ol-status">
+                                <span class="status-badge status-${status.class}">
+                                    <i class="fas ${status.icon}"></i> ${status.text}
+                                </span>
+                            </span>
+                        </div>
+                    `;
+                  })
+                  .join("")}
+            </div>
+        `;
+
+    // Har bir row uchun click event
+    ordersList.querySelectorAll(".orders-list-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const orderId = parseInt(row.dataset.orderId);
+        const order = this.orders.find((o) => o.id === orderId);
+        if (order) this.openModal(order);
+      });
+    });
+  }
+
+  openModal(order) {
+    this.selectedOrder = order;
+    const modal = document.getElementById("orderModal");
+    document.getElementById("modalTitle").innerHTML =
+      `<i class="fas fa-receipt"></i> Buyurtma #${order.id}`;
+    this.renderModalContent(order);
+    modal.classList.add("active");
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  renderModalContent(order) {
+    const status = this.getStatusInfo(order.status);
+    const date = new Date(order.createdAt).toLocaleDateString("uz-UZ", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const time = new Date(order.createdAt).toLocaleTimeString("uz-UZ", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    document.getElementById("modalBody").innerHTML = `
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label><i class="fas fa-hashtag"></i> Buyurtma ID</label>
+                    <p>#${order.id}</p>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-info-circle"></i> Holati</label>
+                    <div class="value">
+                        <span class="status-badge status-${status.class} status-lg">
+                            <i class="fas ${status.icon}"></i> ${status.text}
+                        </span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-calendar-alt"></i> Sana va Vaqt</label>
+                    <p>${date}, ${time}</p>
+                </div>
+                <div class="detail-item">
+                    <label><i class="fas fa-wallet"></i> Umumiy Summa</label>
+                    <p class="text-primary" style="font-weight: 700;">${(order.totalAmount || 0).toLocaleString()} so'm</p>
+                </div>
+
+                ${
+                  order.contactPhone
+                    ? `
+                <div class="detail-item">
+                    <label><i class="fas fa-phone"></i> Aloqa telefon</label>
+                    <p>${order.contactPhone}</p>
+                </div>`
+                    : ""
+                }
+
+                ${
+                  order.shippingAddress
+                    ? `
+                <div class="detail-item full-width">
+                    <label><i class="fas fa-map-marker-alt"></i> Yetkazib berish manzili</label>
+                    <p>${order.shippingAddress}</p>
+                </div>`
+                    : ""
+                }
+            </div>
+
+            <div class="detail-section-title">
+                <i class="fas fa-box"></i> Buyurtma tarkibi
+            </div>
+
+            <div class="order-items-list">
+                ${(order.items && Array.isArray(order.items) ? order.items : [])
+                  .map(
+                    (item) => `
+                    <div class="order-item-row">
+                        <div class="order-item-info">
+                            <span class="order-item-name">${item.product?.title || item.product?.name || "Mahsulot"}</span>
+                            <span class="order-item-details">${item.quantity} ta x ${(item.price || 0).toLocaleString()} so'm</span>
+                        </div>
+                        <span class="order-item-total">${((item.price || 0) * item.quantity).toLocaleString()} so'm</span>
+                    </div>
+                `,
+                  )
+                  .join("")}
+            </div>
+
+            ${
+              order.status === "DELIVERED"
+                ? `
+            <div class="detail-control">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0;">Buyurtmani tasdiqlash</h3>
+                    <p style="font-size: 0.85rem; color: #8b92a7; margin: 0;">Mahsulotlarni qabul qilib olgan bo'lsangiz, tasdiqlang</p>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-confirm-delivery" onclick="window.confirmDelivery(${order.id})" style="width: 100%; height: 50px;">
+                        <i class="fas fa-check-circle"></i> Buyurtmani qabul qildim
+                    </button>
+                </div>
+            </div>`
+                : ""
+            }
+        `;
+  }
+
+  closeModal() {
+    const modal = document.getElementById("orderModal");
+    if (modal) {
+      modal.classList.remove("active");
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 300);
+    }
+    document.body.style.overflow = "";
+    this.selectedOrder = null;
+  }
+
+  async confirmDelivery(orderId) {
+    if (!confirm("Buyurtmani qabul qildingizmi?")) return;
+
+    try {
+      const { default: api } = await import("../services/api.js");
+      await api.patch(`/orders/${orderId}/confirm`);
+      await this.loadOrders();
+      this.showNotification("Buyurtma qabul qilindi!", "success");
+    } catch (error) {
+      console.error("Buyurtmani tasdiqlashda xatolik:", error);
+      this.showNotification(
+        "Xatolik yuz berdi. Qayta urinib ko'ring.",
+        "error",
+      );
+    }
+  }
+
+  showNotification(message, type = "success") {
+    const notification = document.createElement("div");
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+            <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-circle"}"></i>
+            <span>${message}</span>
+        `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.classList.add("show"), 100);
+    setTimeout(() => {
+      notification.classList.remove("show");
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  destroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
+    window.removeEventListener('robotronix-update', this.onOrderUpdate);
+    if (window.confirmDelivery) delete window.confirmDelivery;
+    this.closeModal();
+  }
+}

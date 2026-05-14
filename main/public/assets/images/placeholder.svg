@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Robotronix placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#0B4BFF"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="70%">
+      <stop offset="0" stop-color="#00CCFF" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#00CCFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <rect width="1200" height="800" fill="url(#glow)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.26" stroke-width="10">
+    <rect x="360" y="190" width="480" height="320" rx="32"/>
+    <path d="M460 260h280"/>
+    <path d="M460 330h280"/>
+    <path d="M460 400h220"/>
+  </g>
+
+  <g>
+    <circle cx="520" cy="285" r="18" fill="#ffffff" fill-opacity="0.75"/>
+    <circle cx="680" cy="285" r="18" fill="#ffffff" fill-opacity="0.75"/>
+  </g>
+
+  <text x="600" y="610" text-anchor="middle" fill="#ffffff" fill-opacity="0.92"
+        font-family="Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif" font-size="54" font-weight="800">
+    Robotronix
+  </text>
+  <text x="600" y="675" text-anchor="middle" fill="#ffffff" fill-opacity="0.75"
+        font-family="Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif" font-size="30" font-weight="600">
+    Rasm mavjud emas
+  </text>
+</svg>

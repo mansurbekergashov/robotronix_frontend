@@ -1,0 +1,168 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg) !important;
+  color: var(--text-primary);
+
+}
+
+body input:-webkit-autofill,
+body input:-webkit-autofill:hover,
+body input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px white inset;
+    -webkit-text-fill-color: black;
+    border: var(--border-color);
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+body.dark input:-webkit-autofill,
+body.dark input:-webkit-autofill:hover,
+body.dark input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset;
+    -webkit-text-fill-color: white;
+    border: var(--border-color);
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+:root {
+  min-height: 100vh;  
+  
+  /* Colors */  
+  --primary-color: #0066ff;
+  --secondary-color: #454545;  /*76797f*/
+  --accent-color: #ff6b35;
+  --bg: #fff;
+  --darker-bg: #214291;
+  --card-bg: #fff;
+  --btn-bg: rgba(67, 67, 67, 0.05);
+  --text-primary: #0a0a0a;
+  --text-secondary: #a0a9c0;
+  --text-muted: #76797f;
+  --border-color: 1px solid #b8b8b8;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --info-color: #0066ff;
+
+  /* Shadows */
+  --shadow-md: 0 4px 12px rgba(70, 71, 73, 0.1);
+}
+
+.dark {
+
+  /* Colors */
+  --primary-color: #0066ff;
+  --secondary-color: #8b92a7;
+  --accent-color: #ff6b35;
+  --bg: #0a0e1a;
+  --darker-bg: #050810;
+  --card-bg: #1a1f2e;
+  --btn-bg: rgba(255, 255, 255, 0.05);
+  --text-primary: #fff;
+  --text-secondary: #a0a9c0;
+  --text-muted: #76797f;
+  --border-color: 1px solid rgba(255, 255, 255, 0.08);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --info-color: #0066ff;
+
+  /* Shadows */
+  --shadow-md: 0 4px 12px rgba(70, 71, 73, 0.1);
+
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9f9f9f;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3d4a;
+}
+
+/* Global dark-theme dropdown/select styles */
+select,
+.form-group select,
+.filter-select,
+.status-select {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b92a7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 16px !important;
+  padding-right: 36px;
+}
+
+select:focus,
+.form-group select:focus,
+.filter-select:focus,
+.status-select:focus {
+  outline: none;
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+}
+
+select option,
+.form-group select option,
+.filter-select option,
+.status-select option,
+.status-dropdown option {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  padding: 10px;
+}
+
+/* Ensure ALL select/dropdown options in dark theme are readable */
+option {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Global file input styles */
+input[type="file"] {
+  color: #8b92a7;
+}
+
+input[type="file"]::file-selector-button {
+  background: linear-gradient(135deg, #0066ff 0%, #00ccff 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+  transition: all 0.3s;
+}
+
+input[type="file"]::file-selector-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}

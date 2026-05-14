@@ -1,0 +1,181 @@
+import { API_BASE_URL, getFileUrl } from '../config.js';
+import CheckoutModal from '../components/CheckoutModal.js';
+
+
+export default class Products {
+    constructor() {
+        this.container = document.getElementById('main-content');
+        this.products = [];
+        this.onProductUpdate = (event) => {
+            const update = event.detail;
+            if (update && update.entityType === 'PRODUCT') {
+                this.loadProducts();
+            }
+        };
+    }
+
+    async render() {
+        this.container.innerHTML = `
+            <div class="page-header">
+                <h1>Do'kon</h1>
+                <p>Mahsulotlar va to'plamlar</p>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Mahsulotlar yuklanmoqda...</p>
+                </div>
+            </div>
+        `;
+
+        await this.loadProducts();
+
+        // Listen for real-time updates
+        window.addEventListener('robotronix-update', this.onProductUpdate);
+    }
+
+    async loadProducts() {
+        try {
+            const { default: api } = await import('../services/api.js');
+            this.products = await api.get('/products');
+            this.renderProducts();
+        } catch (error) {
+            console.error('Error loading products:', error);
+            document.getElementById('productsGrid').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Mahsulotlarni yuklashda xatolik</p>
+                </div>
+            `;
+        }
+    }
+
+    renderProducts() {
+        const grid = document.getElementById('productsGrid');
+        if (!this.products || this.products.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <p>Mahsulotlar topilmadi</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = this.products.map(product => `
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="${getFileUrl(product.imageUrl)}" alt="${product.title}">
+                </div>
+                <div class="product-content">
+                    <h3>${product.title}</h3>
+                    <p>${product.description || 'Arduino va elektronika sohasidagi eng sara to\'plam'}</p>
+                    <div class="product-price">
+                        <span class="price-main">${(product.price || 0).toLocaleString()} so'm</span>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-order-now buy-now" 
+                            data-id="${product.id}" 
+                            data-title="${product.title}" 
+                            data-price="${product.price}"
+                            data-image="${product.imageUrl || ''}"
+                            data-payment-card-id="${product.paymentCardId || ''}">
+                            <i class="fas fa-bolt"></i> Buyurtma berish
+                        </button>
+                        <button class="btn-add-cart-outline add-to-cart" 
+                            data-id="${product.id}" 
+                            data-title="${product.title}" 
+                            data-price="${product.price}"
+                            data-image="${product.imageUrl || ''}"
+                            data-payment-card-id="${product.paymentCardId || ''}"
+                            title="Savatga qo'shish">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        this.attachEvents();
+    }
+
+    attachEvents() {
+        document.querySelectorAll('.add-to-cart').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.currentTarget;
+                const product = {
+                    id: String(target.dataset.id),
+                    title: target.dataset.title,
+                    price: parseInt(target.dataset.price),
+                    image: target.dataset.image,
+                    paymentCardId: target.dataset.paymentCardId ? Number(target.dataset.paymentCardId) : null,
+                    quantity: 1
+                };
+                this.addToCart(product);
+            });
+        });
+
+        document.querySelectorAll('.buy-now').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.currentTarget;
+                const product = {
+                    id: target.dataset.id,
+                    title: target.dataset.title,
+                    price: parseInt(target.dataset.price),
+                    imageUrl: target.dataset.image,
+                    paymentCardId: target.dataset.paymentCardId ? Number(target.dataset.paymentCardId) : null,
+                    quantity: 1
+                };
+
+                const modal = new CheckoutModal({
+                    items: [product],
+                    isCartCheckout: false,
+                    onSuccess: () => {
+                        this.showNotification('Buyurtmangiz muvaffaqiyatli yuborildi!');
+                    }
+                });
+                modal.render();
+            });
+        });
+    }
+
+    addToCart(product) {
+        let cart = JSON.parse(localStorage.getItem('userCart') || '[]');
+        const existing = cart.find(item => item.id === product.id);
+
+        if (existing) {
+            existing.quantity++;
+        } else {
+            cart.push(product);
+        }
+
+        localStorage.setItem('userCart', JSON.stringify(cart));
+        this.showNotification('Mahsulot savatga qo\'shildi!');
+
+        // Update cart badge
+        const badge = document.getElementById('cartBadge');
+        if (badge) {
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            badge.textContent = count;
+            badge.style.display = 'inline-block';
+        }
+    }
+
+    showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification success';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    destroy() {
+        window.removeEventListener('robotronix-update', this.onProductUpdate);
+    }
+}

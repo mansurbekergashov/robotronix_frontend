@@ -1,0 +1,45 @@
+/* CSS Variables */
+:root {
+    /* Colors */
+    --primary-color: #0066ff;
+    --secondary-color: #454545;  /*76797f*/
+    --accent-color: #ff6b35;
+    --dark-bg: #fff;
+    --darker-bg: #214291;
+    --card-bg: #fff;
+    --text-primary: #0a0a0a;
+    --text-secondary: #a0a9c0;
+    --text-muted: #76797f;
+    --border-color: #b8b8b8;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --info-color: #0066ff;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(70, 71, 73, 0.1);
+    --shadow-md: 0 4px 12px rgba(70, 71, 73, 0.1);
+    --shadow-lg: 0 8px 24px rgba(70, 71, 73, 0.1);;
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-smooth: 0.3s ease;
+}
+
+.dark {
+    --primary-color: #0066ff;
+    --secondary-color: #76797f;
+    --accent-color: #ff6b35;
+    --dark-bg: #0a0e1a;
+    --darker-bg: #050810;
+    --card-bg: #1a1f2e;
+    --text-primary: #fff;
+    --text-secondary: #5d5d5d;
+    --text-muted: #6b7280;
+    --border-color: rgba(255, 255, 255, 0.06);
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --info-color: #0066ff;
+
+
+}
+

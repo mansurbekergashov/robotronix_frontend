@@ -1,0 +1,24 @@
+{
+  "name": "robotronix-user-panel",
+  "version": "1.0.0",
+  "description": "Robotronix User Dashboard - Foydalanuvchilar uchun panel",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve . -p 3002",
+    "start": "npx serve . -p 3002"
+  },
+  "keywords": [
+    "robotronix",
+    "user",
+    "dashboard",
+    "education"
+  ],
+  "author": "Robotronix Team",
+  "license": "MIT",
+  "dependencies": {
+    "@stomp/stompjs": "^7.0.0",
+    "sockjs-client": "^1.6.1",
+    "swiper": "^12.1.3"
+  }
+}
+

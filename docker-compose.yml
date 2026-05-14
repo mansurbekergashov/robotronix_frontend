@@ -1,0 +1,63 @@
+# Frontend jamoasi uchun — barcha 3 ta frontend
+#
+# Ishlatish (backend alohida ishlamoqda bo'lsa):
+#   cp .env.example .env
+#   docker-compose up
+#
+# ESLATMA: docker-compose.yml backend/docker-compose.yml bilan birgalikda
+# robotronix-network tarmog'idan foydalanadi.
+# Backend oldin ishga tushirilgan bo'lishi kerak:
+#   cd ../backend && docker-compose up -d
+#
+# Portlar:
+#   Main:  http://localhost:3000
+#   Admin: http://localhost:3001
+#   User:  http://localhost:3002
+
+services:
+  frontend:
+    build: ./main
+    container_name: robotronix-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - robotronix-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  admin-frontend:
+    build: ./admin
+    container_name: robotronix-admin-frontend
+    restart: always
+    ports:
+      - "3001:80"
+    networks:
+      - robotronix-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  user-frontend:
+    build: ./user
+    container_name: robotronix-user-frontend
+    restart: always
+    ports:
+      - "3002:80"
+    networks:
+      - robotronix-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  robotronix-network:
+    external: true
+    name: robotronix-network
