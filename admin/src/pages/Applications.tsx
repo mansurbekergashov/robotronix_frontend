@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaGraduationCap, FaSearch, FaTimes, FaComments, FaClock, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
+import { FaGraduationCap, FaSearch, FaTimes, FaComments, FaClock, FaTrash, FaCheck } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { syncService } from '../services/SyncService';
@@ -10,21 +10,10 @@ interface Application {
   fullName: string;
   phone: string;
   courseTitle: string;
-  status: 'PENDING' | 'CONFIRMED' | 'REJECTED';
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'PAYMENT_WAITING' | 'CANCELLED';
   createdAt: string;
   userEmail?: string;
-  paymentCardId?: number | null;
-  paymentReceiptUrl?: string | null;
-}
-
-interface PaymentCard {
-  id: number;
-  label: string;
-  cardNumber: string;
-  cardHolder: string;
-  bankName?: string;
-  phone?: string;
-  isActive: boolean;
+  paymentConfirmed?: boolean;
 }
 
 export default function Applications() {
@@ -39,8 +28,6 @@ export default function Applications() {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([]);
-  const [confirmDialog, setConfirmDialog] = useState<{ id: number; status: string; hasReceipt: boolean } | null>(null);
   const navigate = useNavigate();
 
   const PAGE_SIZE = 50;
@@ -64,10 +51,6 @@ export default function Applications() {
       unsubEnroll();
     };
   }, [debouncedSearch, filterStatus]);
-
-  useEffect(() => {
-    fetchPaymentCards();
-  }, []);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
     setNotification({ message, type });
@@ -107,56 +90,22 @@ export default function Applications() {
     }
   };
 
-  const fetchPaymentCards = async () => {
-    try {
-      const response = await api.get('/admin/payment-cards');
-      setPaymentCards(response.data || []);
-    } catch (error) {
-      console.error('Error fetching payment cards:', error);
-    }
-  };
-
-
   const handleStatusUpdate = async (id: number, status: string) => {
     try {
       await api.put(`/admin/enrollments/${id}/status`, { status });
-
-      // If confirmed, the receipt was deleted on backend — clear it locally too
-      const receiptDeleted = status === 'CONFIRMED';
-
       setApplications(applications.map(app =>
-        app.id === id
-          ? { ...app, status: status as any, ...(receiptDeleted ? { paymentReceiptUrl: null } : {}) }
-          : app
+        app.id === id ? { ...app, status: status as any } : app
       ));
-      if (selectedApp?.id === id) {
-        setSelectedApp({
-          ...selectedApp,
-          status: status,
-          ...(receiptDeleted ? { paymentReceiptUrl: null } : {}),
-        });
-      }
-
-      if (receiptDeleted) {
-        showNotification('✅ Ariza tasdiqlandi va to\'lov cheki o\'chirildi', 'success');
-      } else {
-        showNotification('Holat muvaffaqiyatli yangilandi', 'success');
-      }
+      if (selectedApp?.id === id) setSelectedApp({ ...selectedApp, status });
+      showNotification('Holat muvaffaqiyatli yangilandi', 'success');
     } catch (error) {
       console.error('Error updating status:', error);
       showNotification('Holatni yangilashda xatolik yuz berdi', 'error');
     }
   };
 
-  /** Show confirmation dialog when confirming with a receipt */
   const requestConfirm = (id: number, status: string) => {
-    if (status === 'CONFIRMED') {
-      const app = applications.find((a: any) => a.id === id) || selectedApp;
-      const hasReceipt = !!(app?.paymentReceiptUrl);
-      setConfirmDialog({ id, status, hasReceipt });
-    } else {
-      handleStatusUpdate(id, status);
-    }
+    handleStatusUpdate(id, status);
   };
 
   const handleDeleteApplication = async (id: number) => {
@@ -382,32 +331,15 @@ export default function Applications() {
 
               <div className="detail-grid" style={{ marginTop: '1rem' }}>
                 <div className="detail-section">
-                  <h3>To'lov ma'lumotlari</h3>
-                  {(() => {
-                    const card = paymentCards.find(c => c.id === selectedApp.paymentCardId);
-                    if (!card) {
-                      return <p><strong>Karta:</strong> Tanlanmagan</p>;
-                    }
-                    return (
-                      <>
-                        <p><strong>Karta:</strong> {card.label}</p>
-                        <p><strong>Raqam:</strong> {card.cardNumber}</p>
-                        <p><strong>Ega:</strong> {card.cardHolder}</p>
-                        {card.bankName && <p><strong>Bank:</strong> {card.bankName}</p>}
-                        {card.phone && <p><strong>Telefon:</strong> {card.phone}</p>}
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="detail-section">
-                  <h3>Chek</h3>
-                  {selectedApp.paymentReceiptUrl ? (
-                    <a className="btn-secondary" href={selectedApp.paymentReceiptUrl} target="_blank" rel="noreferrer">
-                      Chekni ko'rish
-                    </a>
+                  <h3>To'lov holati</h3>
+                  {selectedApp.paymentConfirmed ? (
+                    <p><span className="badge badge-success"><FaCheck /> Payme orqali to'langan</span></p>
                   ) : (
-                    <p>{selectedApp.status === 'CONFIRMED' ? 'Chek tasdiqlangandan keyin o\'chirilgan' : 'Chek yuklanmagan'}</p>
+                    <p><span className="badge badge-warning">To'lov kutilmoqda</span></p>
                   )}
+                  <p style={{ marginTop: '0.5rem', color: '#8b92a7', fontSize: '13px' }}>
+                    To'lov Payme orqali avtomatik tasdiqlanadi
+                  </p>
                 </div>
               </div>
 
@@ -448,45 +380,6 @@ export default function Applications() {
         </div>
       )}
 
-      {/* Confirmation dialog for confirming enrollment */}
-      {confirmDialog && (
-        <div className="modal-overlay confirm-overlay" onClick={() => setConfirmDialog(null)}>
-          <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
-            <div className="confirm-dialog-icon">
-              <FaExclamationTriangle />
-            </div>
-            <h3>Diqqat!</h3>
-            {confirmDialog.hasReceipt ? (
-              <p className="confirm-dialog-text">
-                Chekni yaxshilab tekshiring! Agar tasdiqlasangiz, <strong>to'lov cheki o'chirib yuboriladi</strong> va qayta tiklab bo'lmaydi.
-                <br /><br />
-                Davom etishni xohlaysizmi?
-              </p>
-            ) : (
-              <p className="confirm-dialog-text">
-                Arizani tasdiqlashni xohlaysizmi?
-              </p>
-            )}
-            <div className="confirm-dialog-actions">
-              <button
-                className="btn-status btn-secondary"
-                onClick={() => setConfirmDialog(null)}
-              >
-                Bekor qilish
-              </button>
-              <button
-                className="btn-status btn-success"
-                onClick={() => {
-                  handleStatusUpdate(confirmDialog.id, confirmDialog.status);
-                  setConfirmDialog(null);
-                }}
-              >
-                <FaGraduationCap /> Ha, tasdiqlash
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

@@ -4,10 +4,7 @@ import CheckoutModal from '../components/CheckoutModal.js';
 export default class Cart {
     constructor() {
         this.container = document.getElementById('main-content');
-        this.cart = JSON.parse(localStorage.getItem('userCart') || '[]').map(item => ({
-            ...item,
-            paymentCardId: item.paymentCardId ?? null
-        }));
+        this.cart = JSON.parse(localStorage.getItem('userCart') || '[]');
     }
 
     render() {
@@ -184,7 +181,6 @@ export default class Cart {
                 price: item.price,
                 quantity: item.quantity,
                 imageUrl: item.image,
-                paymentCardId: item.paymentCardId ?? null
             }],
             isCartCheckout: false,
             onSuccess: () => {
@@ -204,7 +200,6 @@ export default class Cart {
                 price: item.price,
                 quantity: item.quantity,
                 imageUrl: item.image,
-                paymentCardId: item.paymentCardId ?? null
             })),
             isCartCheckout: true,
             onSuccess: () => {

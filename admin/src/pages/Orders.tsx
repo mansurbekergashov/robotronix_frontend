@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
+import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
 import { syncService } from '../services/SyncService';
 import './Orders.css';
@@ -10,22 +10,11 @@ interface OrderData {
   user?: { id: number; fullName: string; phone: string; email: string };
   items?: { product?: { title: string }; quantity: number; price: number }[];
   totalAmount: number;
-  paymentCardId?: number | null;
-  paymentReceiptUrl?: string | null;
+  paymentConfirmed?: boolean;
   status: string;
   shippingAddress: string;
   contactPhone: string;
   createdAt: string;
-}
-
-interface PaymentCard {
-  id: number;
-  label: string;
-  cardNumber: string;
-  cardHolder: string;
-  bankName?: string;
-  phone?: string;
-  isActive: boolean;
 }
 
 export default function Orders() {
@@ -35,9 +24,7 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ id: number; status: string; hasReceipt: boolean } | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -51,10 +38,6 @@ export default function Orders() {
       unsub();
     };
   }, [filterStatus, searchTerm]); // Refetch when filters change
-
-  useEffect(() => {
-    fetchPaymentCards();
-  }, []);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
     setNotification({ message, type });
@@ -73,16 +56,6 @@ export default function Orders() {
       setLoading(false);
     }
   };
-
-  const fetchPaymentCards = async () => {
-    try {
-      const response = await api.get('/admin/payment-cards');
-      setPaymentCards(response.data || []);
-    } catch (error) {
-      console.error('Error fetching payment cards:', error);
-    }
-  };
-
 
   const handleDeleteOrder = async (id: number) => {
     if (!confirm("Ushbu buyurtmani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!")) return;
@@ -110,42 +83,19 @@ export default function Orders() {
     try {
       await api.put(`/admin/orders/${id}/status`, { status: newStatus });
 
-      // If confirmed, the receipt was deleted on backend — clear it locally too
-      const receiptDeleted = newStatus === 'CONFIRMED';
-
-      setOrders(orders.map(o =>
-        o.id === id
-          ? { ...o, status: newStatus, ...(receiptDeleted ? { paymentReceiptUrl: null } : {}) }
-          : o
-      ));
+      setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus } : o));
       if (selectedOrder?.id === id) {
-        setSelectedOrder({
-          ...selectedOrder,
-          status: newStatus,
-          ...(receiptDeleted ? { paymentReceiptUrl: null } : {}),
-        });
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
-
-      if (receiptDeleted) {
-        showNotification('✅ Buyurtma tasdiqlandi va to\'lov cheki o\'chirildi', 'success');
-      } else {
-        showNotification('Holat muvaffaqiyatli yangilandi', 'success');
-      }
+      showNotification('Holat muvaffaqiyatli yangilandi', 'success');
     } catch (error) {
       console.error('Error updating status:', error);
       showNotification('Holatni yangilashda xatolik yuz berdi', 'error');
     }
   };
 
-  /** Show confirmation dialog when confirming with a receipt */
   const requestConfirm = (id: number, status: string) => {
-    if (status === 'CONFIRMED') {
-      const order = orders.find(o => o.id === id) || selectedOrder;
-      const hasReceipt = !!(order?.paymentReceiptUrl);
-      setConfirmDialog({ id, status, hasReceipt });
-    } else {
-      updateStatus(id, status);
-    }
+    updateStatus(id, status);
   };
 
   const getStatusBadge = (status: string) => {
@@ -330,32 +280,15 @@ export default function Orders() {
 
               <div className="detail-grid" style={{ marginTop: '1rem' }}>
                 <div className="detail-section">
-                  <h3>To'lov ma'lumotlari</h3>
-                  {(() => {
-                    const card = paymentCards.find(c => c.id === selectedOrder.paymentCardId);
-                    if (!card) {
-                      return <p><strong>Karta:</strong> Tanlanmagan</p>;
-                    }
-                    return (
-                      <>
-                        <p><strong>Karta:</strong> {card.label}</p>
-                        <p><strong>Raqam:</strong> {card.cardNumber}</p>
-                        <p><strong>Ega:</strong> {card.cardHolder}</p>
-                        {card.bankName && <p><strong>Bank:</strong> {card.bankName}</p>}
-                        {card.phone && <p><strong>Telefon:</strong> {card.phone}</p>}
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="detail-section">
-                  <h3>Chek</h3>
-                  {selectedOrder.paymentReceiptUrl ? (
-                    <a className="btn-secondary" href={selectedOrder.paymentReceiptUrl} target="_blank" rel="noreferrer">
-                      Chekni ko'rish
-                    </a>
+                  <h3>To'lov holati</h3>
+                  {selectedOrder.paymentConfirmed ? (
+                    <p><span className="badge badge-success"><FaCheck /> Payme orqali to'langan</span></p>
                   ) : (
-                    <p>{selectedOrder.status === 'CONFIRMED' ? 'Chek tasdiqlangandan keyin o\'chirilgan' : 'Chek yuklanmagan'}</p>
+                    <p><span className="badge badge-warning">To'lov kutilmoqda</span></p>
                   )}
+                  <p style={{ marginTop: '0.5rem', color: '#8b92a7', fontSize: '13px' }}>
+                    To'lov Payme orqali avtomatik tasdiqlanadi
+                  </p>
                 </div>
               </div>
 
@@ -415,45 +348,6 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Confirmation dialog for confirming order */}
-      {confirmDialog && (
-        <div className="modal-overlay confirm-overlay" onClick={() => setConfirmDialog(null)}>
-          <div className="confirm-dialog" onClick={e => e.stopPropagation()}>
-            <div className="confirm-dialog-icon">
-              <FaExclamationTriangle />
-            </div>
-            <h3>Diqqat!</h3>
-            {confirmDialog.hasReceipt ? (
-              <p className="confirm-dialog-text">
-                Chekni yaxshilab tekshiring! Agar tasdiqlasangiz, <strong>to'lov cheki o'chirib yuboriladi</strong> va qayta tiklab bo'lmaydi.
-                <br /><br />
-                Davom etishni xohlaysizmi?
-              </p>
-            ) : (
-              <p className="confirm-dialog-text">
-                Buyurtmani tasdiqlashni xohlaysizmi?
-              </p>
-            )}
-            <div className="confirm-dialog-actions">
-              <button
-                className="btn-status btn-secondary"
-                onClick={() => setConfirmDialog(null)}
-              >
-                Bekor qilish
-              </button>
-              <button
-                className="btn-status btn-success"
-                onClick={() => {
-                  updateStatus(confirmDialog.id, confirmDialog.status);
-                  setConfirmDialog(null);
-                }}
-              >
-                <FaCheck /> Ha, tasdiqlash
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

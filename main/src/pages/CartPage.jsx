@@ -1,45 +1,171 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { getFileUrl } from '../utils';
 
+const POLL_INTERVAL_MS  = 3000;
+const POLL_TIMEOUT_MS   = 900000; // 15 daqiqa
+
 const CartPage = () => {
     const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    const [isOrdering, setIsOrdering] = useState(false);
-    const [orderData, setOrderData] = useState({
-        shippingAddress: '',
-        contactPhone: ''
-    });
-    const [paymentCards, setPaymentCards] = useState([]);
-    const [receiptFile, setReceiptFile] = useState(null);
 
-    const paymentCardIds = [...new Set(cartItems.map(item => item.product?.paymentCardId).filter(Boolean))];
-    const paymentCardIssue = paymentCardIds.length === 0
-        ? "To'lov kartasi tanlanmagan. Iltimos, admin bilan bog'laning."
-        : paymentCardIds.length > 1
-            ? "Savatda bir nechta to'lov kartasi mavjud. Har bir kartaga alohida buyurtma bering."
-            : null;
-    const paymentCardId = paymentCardIds[0];
-    const paymentCard = paymentCards.find(card => String(card.id) === String(paymentCardId));
+    const [isOrdering, setIsOrdering]     = useState(false);
+    const [orderData, setOrderData]        = useState({ shippingAddress: '', contactPhone: '' });
+    const [paymentState, setPaymentState]  = useState(null); // null | 'waiting' | 'confirmed' | 'timeout'
+    const [pendingOrderId, setPendingOrderId] = useState(null);
+    const pollingRef = useRef(null);
 
-    useEffect(() => {
-        const fetchCards = async () => {
-            if (!isAuthenticated) return;
+    // Polling tozalash
+    const stopPolling = () => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+        }
+    };
+
+    useEffect(() => () => stopPolling(), []);
+
+    const startPolling = (orderId) => {
+        stopPolling();
+        pollingRef.current = setInterval(async () => {
             try {
-                const response = await api.get('/payment-cards');
-                setPaymentCards(response.data || []);
-            } catch (error) {
-                console.error('Error fetching payment cards:', error);
-            }
-        };
-        fetchCards();
-    }, [isAuthenticated]);
+                const res = await api.get('/orders/my');
+                const order = (res.data || []).find(o => o.id === orderId);
+                if (!order) return;
+                if (order.paymentConfirmed) {
+                    stopPolling();
+                    setPaymentState('confirmed');
+                    clearCart();
+                }
+            } catch (_) { /* tarmoq xatolarini e'tiborsiz qoldirish */ }
+        }, POLL_INTERVAL_MS);
 
-    if (cartItems.length === 0 || !Array.isArray(cartItems)) {
+        setTimeout(() => {
+            stopPolling();
+            setPaymentState(prev => prev === 'waiting' ? 'timeout' : prev);
+        }, POLL_TIMEOUT_MS);
+    };
+
+    const handlePlaceOrder = async (e) => {
+        e.preventDefault();
+        if (!isAuthenticated) {
+            navigate('/login?redirect=/cart');
+            return;
+        }
+
+        const shippingAddress = orderData.shippingAddress.trim();
+        const contactPhone    = orderData.contactPhone.trim();
+
+        if (!shippingAddress) { alert("Yetkazib berish manzilini kiriting"); return; }
+        if (!contactPhone)    { alert("Telefon raqamini kiriting");           return; }
+
+        setIsOrdering(true);
+        try {
+            const items = cartItems.map(item => ({
+                productId: item.product.id,
+                quantity:  item.quantity
+            }));
+
+            const res = await api.post('/orders', { items, shippingAddress, contactPhone });
+            const { id: orderId, paymentUrl } = res.data;
+
+            setPendingOrderId(orderId);
+            setPaymentState('waiting');
+            window.open(paymentUrl, '_blank');
+            startPolling(orderId);
+        } catch (error) {
+            alert('Buyurtma berishda xatolik: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setIsOrdering(false);
+        }
+    };
+
+    // ─── To'lov kutilmoqda holati ─────────────────────────────────────────────
+
+    if (paymentState === 'waiting') {
+        return (
+            <div className="cart-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '20px' }}>💳</div>
+                <h2>Payme to'lov oynasi ochildi</h2>
+                <p style={{ color: '#6b7280', marginBottom: '12px' }}>
+                    Yangi tabda Payme sahifasini ko'ring va to'lovni amalga oshiring.
+                </p>
+                <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+                    To'lov tasdiqlangandan so'ng bu sahifa avtomatik yangilanadi...
+                </p>
+                <div className="spinner" style={{
+                    width: '40px', height: '40px',
+                    border: '4px solid #e5e7eb',
+                    borderTopColor: '#33cccc',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 24px'
+                }} />
+                <button
+                    className="btn-secondary"
+                    onClick={() => {
+                        const url = pendingOrderId
+                            ? `/orders/${pendingOrderId}/payment-url` : null;
+                        if (url) api.get(url).then(r => window.open(r.data.url, '_blank')).catch(() => {});
+                    }}
+                    style={{ marginRight: '12px' }}
+                >
+                    Payme sahifasini qayta ochish
+                </button>
+                <button
+                    className="btn-cancel"
+                    onClick={() => { stopPolling(); setPaymentState(null); }}
+                    style={{ background: '#374151', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                >
+                    Bekor qilish
+                </button>
+            </div>
+        );
+    }
+
+    if (paymentState === 'confirmed') {
+        return (
+            <div className="cart-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '4rem', color: '#10b981', marginBottom: '20px' }}>✅</div>
+                <h2>To'lov muvaffaqiyatli amalga oshirildi!</h2>
+                <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+                    Buyurtmangiz tasdiqlandi. Tez orada yetkazib beriladi.
+                </p>
+                <button className="btn-primary" onClick={() => navigate('/')}>
+                    Bosh sahifaga qaytish
+                </button>
+            </div>
+        );
+    }
+
+    if (paymentState === 'timeout') {
+        return (
+            <div className="cart-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏰</div>
+                <h2>To'lov vaqti tugadi</h2>
+                <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+                    15 daqiqa ichida to'lov tasdiqlanmadi. Qaytadan urinib ko'ring.
+                </p>
+                <button
+                    className="btn-primary"
+                    onClick={() => {
+                        setPaymentState(null);
+                        setPendingOrderId(null);
+                    }}
+                >
+                    Qaytadan buyurtma berish
+                </button>
+            </div>
+        );
+    }
+
+    // ─── Bo'sh savat ──────────────────────────────────────────────────────────
+
+    if (!cartItems.length) {
         return (
             <div className="cart-empty">
                 <h2>Savatingiz bo'sh</h2>
@@ -49,48 +175,7 @@ const CartPage = () => {
         );
     }
 
-    const handlePlaceOrder = async (e) => {
-        e.preventDefault();
-        if (!isAuthenticated) {
-            navigate('/login?redirect=/cart');
-            return;
-        }
-
-        try {
-            setIsOrdering(true);
-            const items = cartItems.map(item => ({
-                productId: item.product.id,
-                quantity: item.quantity
-            }));
-
-            if (paymentCardIssue) {
-                alert(paymentCardIssue);
-                return;
-            }
-
-            if (!receiptFile) {
-                alert("Iltimos, to'lov chekini yuklang");
-                return;
-            }
-
-            const payload = new FormData();
-            payload.append('order', new Blob([JSON.stringify({
-                items,
-                ...orderData
-            })], { type: 'application/json' }));
-            payload.append('receipt', receiptFile);
-
-            await api.post('/orders', payload);
-
-            alert('Buyurtmangiz muvaffaqiyatli qabul qilindi!');
-            clearCart();
-            navigate('/');
-        } catch (error) {
-            alert('Buyurtma berishda xatolik yuz berdi: ' + (error.response?.data?.message || error.message));
-        } finally {
-            setIsOrdering(false);
-        }
-    };
+    // ─── Asosiy savat va checkout ─────────────────────────────────────────────
 
     return (
         <div className="cart-container">
@@ -132,7 +217,7 @@ const CartPage = () => {
                                 required
                                 value={orderData.shippingAddress}
                                 onChange={(e) => setOrderData({ ...orderData, shippingAddress: e.target.value })}
-                                placeholder="Shahar, tuman, ko'cha..."
+                                placeholder="Shahar, tuman, ko'cha, uy raqami..."
                             />
                         </div>
                         <div className="form-group">
@@ -145,39 +230,43 @@ const CartPage = () => {
                                 placeholder="+998 90 123 45 67"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>To'lov kartasi:</label>
-                            <div className="payment-card-info">
-                                {!isAuthenticated ? (
-                                    <div className="loading-note">Kartani ko'rish uchun tizimga kiring</div>
-                                ) : paymentCardIssue ? (
-                                    <div className="warning-text">{paymentCardIssue}</div>
-                                ) : paymentCard ? (
-                                    <>
-                                        <div><strong>{paymentCard.label}</strong></div>
-                                        <div>Karta raqami: {paymentCard.cardNumber}</div>
-                                        <div>Ega: {paymentCard.cardHolder}</div>
-                                        {paymentCard.bankName && <div>Bank: {paymentCard.bankName}</div>}
-                                        {paymentCard.phone && <div>Telefon: {paymentCard.phone}</div>}
-                                    </>
-                                ) : (
-                                    <div className="loading-note">Yuklanmoqda...</div>
-                                )}
+
+                        <div className="payment-info-box" style={{
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>💳</span>
+                            <div>
+                                <div style={{ fontWeight: 600, color: '#166534' }}>Payme orqali to'lov</div>
+                                <div style={{ fontSize: '13px', color: '#15803d' }}>
+                                    Buyurtma bergandan so'ng Payme to'lov sahifasi avtomatik ochiladi
+                                </div>
                             </div>
                         </div>
-                        <div className="form-group">
-                            <label>To'lov cheki (majburiy):</label>
-                            <input
-                                type="file"
-                                accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf"
-                                required
-                                disabled={!!paymentCardIssue}
-                                onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
-                            />
-                        </div>
-                        <button type="submit" className="btn-primary btn-full" disabled={isOrdering}>
-                            {isOrdering ? 'Yuborilmoqda...' : 'Buyurtma berish'}
+
+                        <button
+                            type="submit"
+                            className="btn-primary btn-full"
+                            disabled={isOrdering || !isAuthenticated}
+                        >
+                            {isOrdering
+                                ? 'Buyurtma yaratilmoqda...'
+                                : isAuthenticated
+                                    ? '🛒 Buyurtma berish va Payme orqali to\'lash'
+                                    : 'To\'lash uchun tizimga kiring'}
                         </button>
+                        {!isAuthenticated && (
+                            <Link to="/login?redirect=/cart" className="btn-secondary btn-full"
+                                  style={{ display: 'block', textAlign: 'center', marginTop: '8px' }}>
+                                Kirish
+                            </Link>
+                        )}
                     </form>
                 </div>
             </div>

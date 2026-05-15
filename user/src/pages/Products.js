@@ -75,20 +75,18 @@ export default class Products {
                         <span class="price-main">${(product.price || 0).toLocaleString()} so'm</span>
                     </div>
                     <div class="product-actions">
-                        <button class="btn-order-now buy-now" 
-                            data-id="${product.id}" 
-                            data-title="${product.title}" 
+                        <button class="btn-order-now buy-now"
+                            data-id="${product.id}"
+                            data-title="${product.title}"
                             data-price="${product.price}"
-                            data-image="${product.imageUrl || ''}"
-                            data-payment-card-id="${product.paymentCardId || ''}">
+                            data-image="${product.imageUrl || ''}">
                             <i class="fas fa-bolt"></i> Buyurtma berish
                         </button>
-                        <button class="btn-add-cart-outline add-to-cart" 
-                            data-id="${product.id}" 
-                            data-title="${product.title}" 
+                        <button class="btn-add-cart-outline add-to-cart"
+                            data-id="${product.id}"
+                            data-title="${product.title}"
                             data-price="${product.price}"
                             data-image="${product.imageUrl || ''}"
-                            data-payment-card-id="${product.paymentCardId || ''}"
                             title="Savatga qo'shish">
                             <i class="fas fa-shopping-cart"></i>
                         </button>
@@ -109,7 +107,6 @@ export default class Products {
                     title: target.dataset.title,
                     price: parseInt(target.dataset.price),
                     image: target.dataset.image,
-                    paymentCardId: target.dataset.paymentCardId ? Number(target.dataset.paymentCardId) : null,
                     quantity: 1
                 };
                 this.addToCart(product);
@@ -124,7 +121,6 @@ export default class Products {
                     title: target.dataset.title,
                     price: parseInt(target.dataset.price),
                     imageUrl: target.dataset.image,
-                    paymentCardId: target.dataset.paymentCardId ? Number(target.dataset.paymentCardId) : null,
                     quantity: 1
                 };
 

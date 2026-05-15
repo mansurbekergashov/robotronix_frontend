@@ -90,13 +90,23 @@ export default class Courses {
                 `;
             } else {
                 const statusMap = {
-                    'PENDING': { text: 'Ariza kutilmoqda', class: 'status-pending', icon: 'clock' },
-                    'CONFIRMED': { text: 'O\'qishda', class: 'status-active', icon: 'check-double' },
-                    'REJECTED': { text: 'Rad etilgan', class: 'status-rejected', icon: 'times-circle' },
-                    'COMPLETED': { text: 'Tugallangan', class: 'status-completed', icon: 'certificate' }
+                    'PENDING':         { text: "To'lov kutilmoqda",   class: 'status-pending',  icon: 'credit-card' },
+                    'PAYMENT_WAITING': { text: "To'lov kutilmoqda",   class: 'status-pending',  icon: 'credit-card' },
+                    'CONFIRMED':       { text: "O'qishda",            class: 'status-active',   icon: 'check-double' },
+                    'REJECTED':        { text: 'Rad etilgan',          class: 'status-rejected', icon: 'times-circle' },
+                    'CANCELLED':       { text: 'Bekor qilindi',        class: 'status-rejected', icon: 'ban' },
+                    'COMPLETED':       { text: 'Tugallangan',          class: 'status-completed',icon: 'certificate' }
                 };
                 const s = statusMap[status] || { text: 'Yozilgan', class: 'status-info', icon: 'info-circle' };
-                buttonHTML = `
+
+                const canRetryPayment = (status === 'PENDING' || status === 'PAYMENT_WAITING') && !enrollment?.paymentConfirmed;
+                buttonHTML = canRetryPayment ? `
+                    <button class="btn-primary btn-full retry-payment-btn"
+                        data-enrollment-id="${enrollment.id}"
+                        data-course-id="${course.id}">
+                        <i class="fas fa-credit-card"></i> To'lovni davom ettirish
+                    </button>
+                ` : `
                     <button class="btn-status btn-full ${s.class}" disabled>
                         <i class="fas fa-${s.icon}"></i> ${s.text}
                     </button>
@@ -147,6 +157,28 @@ export default class Courses {
         document.querySelectorAll('.enroll-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.handleEnroll(e));
         });
+        document.querySelectorAll('.retry-payment-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleRetryPayment(e));
+        });
+    }
+
+    async handleRetryPayment(event) {
+        const btn = event.currentTarget;
+        const enrollmentId = btn.dataset.enrollmentId;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yuklanmoqda...';
+        try {
+            const { default: api } = await import('../services/api.js');
+            const { paymentUrl } = await api.get(`/courses/enrollments/${enrollmentId}/payment-url`);
+            if (!paymentUrl) throw new Error('URL olinmadi');
+            window.open(paymentUrl, '_blank');
+            this.showNotification("Payme sahifasi yangi tabda ochildi. To'lovdan so'ng bu sahifa yangilanadi.", 'info');
+        } catch (err) {
+            console.error('Retry payment error:', err);
+            this.showNotification("To'lov URL olishda xatolik. Qaytadan urinib ko'ring.", 'error');
+            btn.disabled = false;
+            btn.innerHTML = "<i class='fas fa-credit-card'></i> To'lovni davom ettirish";
+        }
     }
 
     async handleEnroll(event) {

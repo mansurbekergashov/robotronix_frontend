@@ -63,30 +63,14 @@ export default class MyCourses {
 
   getStatusInfo(status) {
     const statusMap = {
-      PENDING: { class: "pending", text: "Ariza kutilmoqda", icon: "fa-clock" },
-      CONFIRMED: {
-        class: "active",
-        text: "O'qishda",
-        icon: "fa-graduation-cap",
-      },
-      REJECTED: {
-        class: "rejected",
-        text: "Rad etilgan",
-        icon: "fa-times-circle",
-      },
-      COMPLETED: {
-        class: "completed",
-        text: "Tugallangan",
-        icon: "fa-certificate",
-      },
+      PENDING:         { class: "pending",   text: "To'lov kutilmoqda", icon: "fa-credit-card" },
+      PAYMENT_WAITING: { class: "pending",   text: "To'lov kutilmoqda", icon: "fa-credit-card" },
+      CONFIRMED:       { class: "active",    text: "O'qishda",          icon: "fa-graduation-cap" },
+      REJECTED:        { class: "rejected",  text: "Rad etilgan",        icon: "fa-times-circle" },
+      CANCELLED:       { class: "rejected",  text: "Bekor qilindi",     icon: "fa-ban" },
+      COMPLETED:       { class: "completed", text: "Tugallangan",       icon: "fa-certificate" },
     };
-    return (
-      statusMap[status] || {
-        class: "info",
-        text: status,
-        icon: "fa-info-circle",
-      }
-    );
+    return statusMap[status] || { class: "info", text: status, icon: "fa-info-circle" };
   }
 
   renderEnrollments() {

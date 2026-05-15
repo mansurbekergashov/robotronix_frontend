@@ -8,7 +8,6 @@ interface CourseData {
   title: string;
   description: string;
   price: number;
-  paymentCardId?: number | null;
   duration: string;
   ageGroup: string;
   category: string;
@@ -17,21 +16,10 @@ interface CourseData {
   telegramUrl?: string;
 }
 
-interface PaymentCardOption {
-  id: number;
-  label: string;
-  cardNumber: string;
-  cardHolder: string;
-  bankName?: string;
-  phone?: string;
-  isActive: boolean;
-}
-
 const initialCourse: Omit<CourseData, 'id'> = {
   title: '',
   description: '',
   price: 0,
-  paymentCardId: null,
   duration: '',
   ageGroup: '',
   category: '',
@@ -50,13 +38,11 @@ export default function Courses() {
   const [formData, setFormData] = useState<Omit<CourseData, 'id'> | CourseData>(initialCourse);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [paymentCards, setPaymentCards] = useState<PaymentCardOption[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchCourses();
-    fetchPaymentCards();
   }, []);
 
   useEffect(() => {
@@ -77,15 +63,6 @@ export default function Courses() {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchPaymentCards = async () => {
-    try {
-      const response = await api.get('/admin/payment-cards');
-      setPaymentCards(response.data || []);
-    } catch (error) {
-      console.error('Error fetching payment cards:', error);
     }
   };
 
@@ -320,23 +297,6 @@ export default function Courses() {
                     <option value="teachers">O'qituvchilar (Teachers)</option>
                   </select>
                 </div>
-              </div>
-              <div className="form-group">
-                <label>To'lov uchun karta</label>
-                <select
-                  value={formData.paymentCardId ?? ''}
-                  onChange={e => {
-                    const value = e.target.value ? Number(e.target.value) : null;
-                    setFormData({ ...formData, paymentCardId: value });
-                  }}
-                >
-                  <option value="">Tanlanmagan</option>
-                  {paymentCards.map(card => (
-                    <option key={card.id} value={card.id}>
-                      {card.label} • {card.cardNumber}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div className="form-row">
                 <div className="form-group">

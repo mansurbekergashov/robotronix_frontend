@@ -162,13 +162,14 @@ export default class Dashboard {
 
   getStatusInfo(status) {
     const statusMap = {
-      PENDING: { class: "warning", text: "Kutilmoqda" },
-      CONFIRMED: { class: "info", text: "Tasdiqlandi" },
-      PREPARING: { class: "primary", text: "Tayyorlanmoqda" },
-      SHIPPED: { class: "secondary", text: "Yo'lda" },
-      DELIVERED: { class: "delivered", text: "Yetkazildi" },
-      RECEIVED: { class: "success", text: "Qabul qilindi" },
-      CANCELLED: { class: "danger", text: "Bekor qilindi" },
+      PENDING:         { class: "warning",   text: "To'lov kutilmoqda" },
+      PAYMENT_WAITING: { class: "warning",   text: "To'lov kutilmoqda" },
+      CONFIRMED:       { class: "info",      text: "Tasdiqlandi" },
+      PREPARING:       { class: "primary",   text: "Tayyorlanmoqda" },
+      SHIPPED:         { class: "secondary", text: "Yo'lda" },
+      DELIVERED:       { class: "delivered", text: "Yetkazildi" },
+      RECEIVED:        { class: "success",   text: "Qabul qilindi" },
+      CANCELLED:       { class: "danger",    text: "Bekor qilindi" },
     };
     return statusMap[status] || { class: "secondary", text: status };
   }

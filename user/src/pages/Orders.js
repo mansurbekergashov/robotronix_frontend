@@ -50,8 +50,9 @@ export default class Orders {
             </div>
         `;
 
-    // Global funksiya yaratish
+    // Global funksiyalar yaratish
     window.confirmDelivery = (orderId) => this.confirmDelivery(orderId);
+    window.retryOrderPayment = (orderId) => this.retryOrderPayment(orderId);
 
     // Modal yopish eventlari
     document
@@ -124,37 +125,16 @@ export default class Orders {
 
   getStatusInfo(status) {
     const statusMap = {
-      PENDING: { class: "warning", text: "Kutilmoqda", icon: "fa-clock" },
-      CONFIRMED: {
-        class: "info",
-        text: "Tasdiqlandi",
-        icon: "fa-check-circle",
-      },
-      PREPARING: {
-        class: "primary",
-        text: "Tayyorlanmoqda",
-        icon: "fa-box-open",
-      },
-      SHIPPED: { class: "secondary", text: "Yo'lda", icon: "fa-truck" },
-      DELIVERED: { class: "delivered", text: "Yetkazildi", icon: "fa-truck" },
-      RECEIVED: {
-        class: "success",
-        text: "Qabul qilindi",
-        icon: "fa-check-double",
-      },
-      CANCELLED: {
-        class: "danger",
-        text: "Bekor qilindi",
-        icon: "fa-times-circle",
-      },
+      PENDING:         { class: "warning",   text: "To'lov kutilmoqda", icon: "fa-credit-card" },
+      PAYMENT_WAITING: { class: "warning",   text: "To'lov kutilmoqda", icon: "fa-credit-card" },
+      CONFIRMED:       { class: "info",      text: "Tasdiqlandi",       icon: "fa-check-circle" },
+      PREPARING:       { class: "primary",   text: "Tayyorlanmoqda",    icon: "fa-box-open" },
+      SHIPPED:         { class: "secondary", text: "Yo'lda",            icon: "fa-truck" },
+      DELIVERED:       { class: "delivered", text: "Yetkazildi",        icon: "fa-truck" },
+      RECEIVED:        { class: "success",   text: "Qabul qilindi",     icon: "fa-check-double" },
+      CANCELLED:       { class: "danger",    text: "Bekor qilindi",     icon: "fa-times-circle" },
     };
-    return (
-      statusMap[status] || {
-        class: "secondary",
-        text: status,
-        icon: "fa-info-circle",
-      }
-    );
+    return statusMap[status] || { class: "secondary", text: status, icon: "fa-info-circle" };
   }
 
   renderOrders() {
@@ -334,7 +314,20 @@ export default class Orders {
             </div>
 
             ${
-              order.status === "DELIVERED"
+              (order.status === "PENDING" || order.status === "PAYMENT_WAITING") && !order.paymentConfirmed
+                ? `
+            <div class="detail-control">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0;">To'lovni amalga oshirish</h3>
+                    <p style="font-size: 0.85rem; color: #8b92a7; margin: 0;">Buyurtmangizni tasdiqlash uchun to'lovni amalga oshiring</p>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-confirm-delivery" id="retryPaymentBtn" onclick="window.retryOrderPayment(${order.id})" style="width: 100%; height: 50px; background: linear-gradient(135deg, #0066ff, #00ccff);">
+                        <i class="fas fa-credit-card"></i> To'lovni davom ettirish
+                    </button>
+                </div>
+            </div>`
+                : order.status === "DELIVERED"
                 ? `
             <div class="detail-control">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
@@ -381,6 +374,28 @@ export default class Orders {
     }
   }
 
+  async retryOrderPayment(orderId) {
+    const btn = document.getElementById("retryPaymentBtn");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yuklanmoqda...';
+    }
+    try {
+      const { default: api } = await import("../services/api.js");
+      const { paymentUrl } = await api.get(`/orders/${orderId}/payment-url`);
+      if (!paymentUrl) throw new Error("URL olinmadi");
+      window.open(paymentUrl, "_blank");
+      this.showNotification("Payme sahifasi yangi tabda ochildi. To'lovdan so'ng bu sahifa yangilanadi.", "info");
+    } catch (error) {
+      console.error("Retry payment error:", error);
+      this.showNotification("To'lov URL olishda xatolik. Qaytadan urinib ko'ring.", "error");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-credit-card"></i> To\'lovni davom ettirish';
+      }
+    }
+  }
+
   showNotification(message, type = "success") {
     const notification = document.createElement("div");
     notification.className = `notification notification-${type}`;
@@ -403,6 +418,7 @@ export default class Orders {
     }
     window.removeEventListener('robotronix-update', this.onOrderUpdate);
     if (window.confirmDelivery) delete window.confirmDelivery;
+    if (window.retryOrderPayment) delete window.retryOrderPayment;
     this.closeModal();
   }
 }

@@ -1,12 +1,16 @@
 import api from '../services/api.js';
 
+const POLL_INTERVAL_MS = 3000;
+const POLL_TIMEOUT_MS  = 900000; // 15 daqiqa
+
 export default class EnrollmentModal {
     constructor(options = {}) {
-        this.course = options.course;
-        this.onSuccess = options.onSuccess || (() => { });
-        this.onClose = options.onClose || (() => { });
-        this.paymentCardId = this.course?.paymentCardId || null;
-        this.paymentCardIssue = this.paymentCardId ? null : "Ushbu kurs uchun to'lov kartasi tanlanmagan.";
+        this.course    = options.course;
+        this.onSuccess = options.onSuccess || (() => {});
+        this.onClose   = options.onClose   || (() => {});
+        this._pollTimer   = null;
+        this._pollTimeout = null;
+        this._modal = null;
     }
 
     render() {
@@ -20,206 +24,161 @@ export default class EnrollmentModal {
                     <h2><i class="fas fa-graduation-cap"></i> Kursga yozilish</h2>
                     <button class="close-btn" id="closeEnrollment">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" id="enrollmentBody">
                     <form class="checkout-form" id="enrollmentForm">
+
                         <div class="checkout-summary">
-                            <div class="detail-section-title" style="margin-top: 0;">
+                            <div class="detail-section-title" style="margin-top:0">
                                 <i class="fas fa-book"></i> Kurs ma'lumotlari
                             </div>
-                            <div class="payment-card-info">
-                                <div class="payment-card-line"><strong>${this.course?.title || 'Kurs'}</strong></div>
-                                <div class="payment-card-line">Narxi: ${(this.course?.price || 0).toLocaleString()} so'm</div>
+                            <div class="payment-card-line">
+                                <strong>${this.course?.title || 'Kurs'}</strong>
+                            </div>
+                            <div class="payment-card-line" style="font-size:18px; color:#33cccc; font-weight:600; margin-top:6px;">
+                                ${(this.course?.price || 0).toLocaleString()} so'm
                             </div>
                         </div>
 
-                        <div class="checkout-summary" style="margin-top: 20px;">
-                            <div class="detail-section-title" style="margin-top: 0;">
-                                <i class="fas fa-credit-card"></i> To'lov ma'lumotlari
-                            </div>
-                            <div id="coursePaymentCardInfo" class="payment-card-info">
-                                ${this.paymentCardIssue ? `<div class="warning-text">${this.paymentCardIssue}</div>` : '<div class="loading-note">Yuklanmoqda...</div>'}
-                            </div>
-                            <div class="detail-item full-width" style="margin-top: 12px;">
-                                <label><i class="fas fa-file-upload"></i> To'lov cheki (majburiy)</label>
-                                <input type="file" id="courseReceiptFile" class="form-input" accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf" ${this.paymentCardIssue ? 'disabled' : ''} required>
+                        <div class="checkout-summary" style="margin-top:20px; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25); border-radius:10px; padding:14px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:1.6rem">💳</span>
+                                <div>
+                                    <div style="font-weight:600; color:#10b981">Payme orqali to'lov</div>
+                                    <div style="font-size:13px; color:#6ee7b7">
+                                        Yozilgandan so'ng Payme to'lov sahifasi avtomatik ochiladi
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="detail-control">
-                            <h3><i class="fas fa-tasks"></i> Arizani yuborish</h3>
+                        <div class="detail-control" style="margin-top:20px">
                             <div class="detail-actions">
-                                <button type="submit" class="btn-confirm-delivery" id="submitEnrollBtn" ${this.paymentCardIssue ? 'disabled' : ''}>
-                                    <i class="fas fa-check-circle"></i> Yuborish
+                                <button type="submit" class="btn-confirm-delivery" id="submitEnrollBtn">
+                                    <i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to'lash
                                 </button>
                             </div>
                         </div>
+
                     </form>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
-        this.setupEventListeners(modal);
-        this.loadPaymentCardInfo(modal);
+        this._modal = modal;
+        this._setupEventListeners(modal);
     }
 
-    setupEventListeners(modal) {
-        const closeBtn = modal.querySelector('#closeEnrollment');
-        const form = modal.querySelector('#enrollmentForm');
+    _setupEventListeners(modal) {
+        modal.querySelector('#closeEnrollment').onclick = () => this.close();
+        modal.onclick = (e) => { if (e.target === modal) this.close(); };
 
-        closeBtn.onclick = () => this.close();
-        modal.onclick = (e) => {
-            if (e.target === modal) this.close();
-        };
-
-        form.onsubmit = async (e) => {
+        modal.querySelector('#enrollmentForm').onsubmit = async (e) => {
             e.preventDefault();
-            if (this.paymentCardIssue) {
-                alert(this.paymentCardIssue);
-                return;
-            }
-
             const submitBtn = modal.querySelector('#submitEnrollBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yuborilmoqda...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yozilmoqda...';
 
             try {
-                const receiptInput = modal.querySelector('#courseReceiptFile');
-                const receiptFile = receiptInput?.files?.[0];
-                if (!receiptFile) {
-                    alert('Iltimos, to\'lov chekini yuklang');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Yuborish';
-                    return;
-                }
+                const response = await api.post(`/courses/${this.course.id}/enroll`, { paymentMethod: 'PAYME' });
+                const { id: enrollId, paymentUrl } = response;
 
-                const payload = new FormData();
-                payload.append('receipt', receiptFile);
+                if (!paymentUrl) throw new Error("To'lov URL olinmadi");
 
-                const response = await api.post(`/courses/${this.course.id}/enroll`, payload, true);
-                if (response) {
-                    this.showSuccess();
-                    setTimeout(() => {
-                        this.close();
-                        this.onSuccess();
-                    }, 1500);
-                }
+                window.open(paymentUrl, '_blank');
+                this._showWaitingState(paymentUrl);
+                this._startPolling(enrollId);
             } catch (error) {
                 console.error('Enrollment error:', error);
-                alert('Ariza yuborishda xatolik yuz berdi');
+                alert('Ariza yuborishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Yuborish';
+                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to\'lash';
             }
         };
     }
 
-    async loadPaymentCardInfo(modal) {
-        const container = modal.querySelector('#coursePaymentCardInfo');
-        if (!container) return;
-
-        if (this.paymentCardIssue) {
-            container.innerHTML = `<div class="warning-text">${this.paymentCardIssue}</div>`;
-            return;
-        }
-
-        try {
-            const cards = await api.get('/payment-cards');
-            const card = (cards || []).find(c => String(c.id) === String(this.paymentCardId));
-            if (!card) {
-                container.innerHTML = `<div class="warning-text">To'lov kartasi topilmadi</div>`;
-                return;
-            }
-            const hasLinks = card.paymeUrl || card.clickUrl;
-
-            container.innerHTML = `
-                <div class="payment-card-line"><strong>${card.label}</strong></div>
-                ${!hasLinks ? `
-                    <div class="payment-card-line">Karta raqami: ${card.cardNumber}</div>
-                    <div class="payment-card-line">Ega: ${card.cardHolder}</div>
-                ` : ''}
-                ${card.bankName ? `<div class="payment-card-line">Bank: ${card.bankName}</div>` : ''}
-                ${card.phone ? `<div class="payment-card-line">Telefon: ${card.phone}</div>` : ''}
-                ${hasLinks ? `
-                <div class="payment-links-container" style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    ${card.paymeUrl ? `<button type="button" class="btn-pay-link btn-payme" data-url="${card.paymeUrl}" style="background:#33cccc; color:white; padding:8px 15px; border-radius:8px; border:none; cursor:pointer; font-weight:600; font-family:inherit; font-size:14px; display:flex; align-items:center; gap:8px;"><i class="fas fa-link"></i> Payme orqali to'lash</button>` : ''}
-                    ${card.clickUrl ? `<button type="button" class="btn-pay-link btn-click" data-url="${card.clickUrl}" style="background:#00a1ff; color:white; padding:8px 15px; border-radius:8px; border:none; cursor:pointer; font-weight:600; font-family:inherit; font-size:14px; display:flex; align-items:center; gap:8px;"><i class="fas fa-link"></i> Click orqali to'lash</button>` : ''}
-                </div>
-                ` : ''}
-            `;
-
-            const buttons = container.querySelectorAll('.btn-pay-link');
-            buttons.forEach(btn => {
-                btn.onclick = (e) => {
-                    const url = e.currentTarget.getAttribute('data-url');
-                    console.log('Opening payment URL:', url);
-                    this.showPaymentWarning(url);
-                };
-            });
-        } catch (error) {
-            console.error('Payment card load error:', error);
-            container.innerHTML = `<div class="warning-text">To'lov kartasi yuklanmadi</div>`;
-        }
-    }
-
-    showSuccess() {
-        const modalBody = document.querySelector('#enrollmentModal .modal-body');
-        if (!modalBody) return;
-        modalBody.innerHTML = `
-            <div class="order-success-state" style="text-align: center; padding: 40px 20px;">
-                <div class="success-icon" style="font-size: 4rem; color: #10b981; margin-bottom: 20px;">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h2 style="color: white; margin-bottom: 12px;">Arizangiz qabul qilindi!</h2>
-                <p style="color: #8b92a7;">Adminlar arizangizni ko'rib chiqadi.</p>
-            </div>
-        `;
-    }
-
-    showPaymentWarning(url) {
-        const warningModal = document.createElement('div');
-        warningModal.className = 'modal-overlay active';
-        warningModal.style.zIndex = '20000';
-        warningModal.innerHTML = `
-            <div class="modal-content" style="max-width: 400px; text-align: center; padding: 25px; background: #1c2333; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                <div style="font-size: 3.5rem; color: #f59e0b; margin-bottom: 15px;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <h3 style="margin-bottom: 15px; color: white;">Diqqat!</h3>
-                <p style="color: #8b92a7; margin-bottom: 25px; line-height: 1.6;">
-                    To'lovni amalga oshirganingizdan so'ng, to'lov <strong>muvaffaqiyatli bo'lganligi haqidagi skrinshotni</strong> yoki <strong>cheki</strong>ni saqlab oling.
-                    <br><br>
-                    Adminlar sizning arizangizni aynan shu ma'lumotlar asosida tekshirishadi va shundan so'ng tasdiqlashadi. Uni joyidagi "To'lov cheki" joyiga yuklashni unutmang!
+    _showWaitingState(paymentUrl) {
+        const body = this._modal.querySelector('#enrollmentBody');
+        body.innerHTML = `
+            <div style="text-align:center; padding:40px 20px">
+                <div style="font-size:3rem; margin-bottom:16px">💳</div>
+                <h3 style="color:white; margin-bottom:12px">Payme to'lov oynasi ochildi</h3>
+                <p style="color:#8b92a7; margin-bottom:8px">
+                    Yangi tabda Payme sahifasini ko'ring va to'lovni amalga oshiring.
                 </p>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button type="button" class="btn-primary" id="btnUnderstandWarning" style="flex: 1; padding: 10px;"><i class="fas fa-check"></i> Tushundim, to'lash</button>
-                    <button type="button" class="btn-cancel" id="btnCancelWarning" style="flex: 1; padding: 10px; background: #334155; color: white; border: none; border-radius: 8px; cursor: pointer;">Bekor qilish</button>
-                </div>
+                <p style="color:#8b92a7; margin-bottom:24px">
+                    To'lov tasdiqlangandan so'ng bu sahifa avtomatik yangilanadi...
+                </p>
+                <div style="width:36px;height:36px;border:4px solid #2d3748;border-top-color:#33cccc;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 24px;"></div>
+                <button id="reopenPaymeEnroll" style="background:#33cccc;color:#0f172a;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                    <i class="fas fa-external-link-alt"></i> Payme sahifasini qayta ochish
+                </button>
             </div>
         `;
-        document.body.appendChild(warningModal);
+        body.querySelector('#reopenPaymeEnroll').onclick = () => window.open(paymentUrl, '_blank');
+    }
 
-        warningModal.querySelector('#btnUnderstandWarning').onclick = () => {
-            window.open(url, '_blank');
-            warningModal.remove();
-        };
+    _startPolling(enrollId) {
+        this._stopPolling();
+        this._pollTimer = setInterval(async () => {
+            try {
+                const enrollments = await api.get('/courses/my-enrollments');
+                const enr = (enrollments || []).find(e => e.id === enrollId);
+                if (enr?.paymentConfirmed) {
+                    this._stopPolling();
+                    this._showSuccess();
+                    setTimeout(() => { this.close(); this.onSuccess(); }, 2500);
+                }
+            } catch (_) {}
+        }, POLL_INTERVAL_MS);
 
-        warningModal.querySelector('#btnCancelWarning').onclick = () => {
-            warningModal.remove();
-        };
+        this._pollTimeout = setTimeout(() => {
+            this._stopPolling();
+            this._showTimeout();
+        }, POLL_TIMEOUT_MS);
+    }
 
-        warningModal.onclick = (e) => {
-            if(e.target === warningModal) warningModal.remove();
-        };
+    _stopPolling() {
+        if (this._pollTimer)   { clearInterval(this._pollTimer);  this._pollTimer = null; }
+        if (this._pollTimeout) { clearTimeout(this._pollTimeout); this._pollTimeout = null; }
+    }
+
+    _showSuccess() {
+        const body = this._modal?.querySelector('#enrollmentBody');
+        if (!body) return;
+        body.innerHTML = `
+            <div style="text-align:center; padding:40px 20px">
+                <div style="font-size:4rem; color:#10b981; margin-bottom:20px">✅</div>
+                <h2 style="color:white; margin-bottom:12px">To'lov muvaffaqiyatli!</h2>
+                <p style="color:#8b92a7">Kursga yozildingiz. Tez orada operatorlarimiz siz bilan bog'lanadi.</p>
+            </div>
+        `;
+    }
+
+    _showTimeout() {
+        const body = this._modal?.querySelector('#enrollmentBody');
+        if (!body) return;
+        body.innerHTML = `
+            <div style="text-align:center; padding:40px 20px">
+                <div style="font-size:3rem; margin-bottom:16px">⏰</div>
+                <h3 style="color:white; margin-bottom:12px">To'lov vaqti tugadi</h3>
+                <p style="color:#8b92a7; margin-bottom:24px">
+                    15 daqiqa ichida to'lov tasdiqlanmadi. Qaytadan urinib ko'ring.
+                </p>
+                <button id="closeEnrollTimeout" style="background:#33cccc;color:#0f172a;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600">
+                    Yopish
+                </button>
+            </div>
+        `;
+        body.querySelector('#closeEnrollTimeout').onclick = () => this.close();
     }
 
     close() {
+        this._stopPolling();
         const modal = document.getElementById('enrollmentModal');
         if (modal) {
             modal.classList.remove('active');
-            setTimeout(() => {
-                modal.remove();
-                this.onClose();
-            }, 300);
+            setTimeout(() => { modal.remove(); this.onClose(); }, 300);
         }
     }
 }

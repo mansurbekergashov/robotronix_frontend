@@ -1,132 +1,73 @@
 import { useEffect, useState } from 'react';
-import { FaCreditCard, FaPlus, FaEdit, FaTrash, FaSearch, FaTimes, FaSave } from 'react-icons/fa';
+import { FaCreditCard, FaSearch, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 import api from '../services/api';
 import './Payments.css';
 
-interface PaymentCard {
+interface PaymeTransaction {
   id: number;
-  label: string;
-  cardNumber: string;
-  cardHolder: string;
-  bankName?: string;
-  phone?: string;
-  paymeUrl?: string;
-  clickUrl?: string;
-  isActive: boolean;
+  paymeId: string;
+  orderId?: number | null;
+  enrollmentId?: number | null;
+  amount: number;
+  state: number;
+  reason?: number | null;
+  createTime: string;
+  performTime?: string | null;
+  cancelTime?: string | null;
 }
 
-const initialCard: Omit<PaymentCard, 'id'> = {
-  label: '',
-  cardNumber: '',
-  cardHolder: '',
-  bankName: '',
-  phone: '',
-  paymeUrl: '',
-  clickUrl: '',
-  isActive: true,
+const STATE_LABELS: Record<number, { label: string; className: string; icon: React.ReactElement }> = {
+  1:  { label: "Yaratildi",      className: "badge-warning",  icon: <FaClock /> },
+  2:  { label: "To'landi",       className: "badge-success",  icon: <FaCheckCircle /> },
+  [-1]: { label: "Bekor (avval)", className: "badge-danger",  icon: <FaTimesCircle /> },
+  [-2]: { label: "Bekor (keyin)", className: "badge-danger",  icon: <FaTimesCircle /> },
 };
 
 export default function Payments() {
-  const [cards, setCards] = useState<PaymentCard[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [transactions, setTransactions] = useState<PaymeTransaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
-  const [formData, setFormData] = useState<Omit<PaymentCard, 'id'> | PaymentCard>(initialCard);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchCards();
+    fetchTransactions();
+    const interval = setInterval(fetchTransactions, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchCards = async () => {
+  const fetchTransactions = async () => {
     try {
-      const response = await api.get('/admin/payment-cards');
-      setCards(response.data || []);
+      const response = await api.get('/admin/payme-transactions');
+      setTransactions((response.data || []).sort(
+        (a: PaymeTransaction, b: PaymeTransaction) =>
+          new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+      ));
     } catch (error) {
-      console.error('Error fetching payment cards:', error);
+      console.error('Error fetching Payme transactions:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOpenModal = (card?: PaymentCard) => {
-    if (card) {
-      setSelectedCard(card);
-      setFormData({ ...card });
-    } else {
-      setSelectedCard(null);
-      setFormData(initialCard);
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Karta o'chirishni tasdiqlaysizmi?")) return;
-    try {
-      await api.delete(`/admin/payment-cards/${id}`);
-      setCards(cards.filter(card => card.id !== id));
-    } catch (error) {
-      console.error('Error deleting card:', error);
-      alert('Kartani o\'chirishda xatolik');
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    if (!formData.label.trim()) {
-      alert('Karta nomi majburiy');
-      return;
-    }
-    
-    const hasUrl = (formData.paymeUrl && formData.paymeUrl.trim() !== '') || (formData.clickUrl && formData.clickUrl.trim() !== '');
-
-    if (!hasUrl) {
-      if (!formData.cardNumber.trim()) {
-        alert('Agar Payme/Click havola bo\'lmasa, karta raqami majburiy');
-        return;
-      }
-      if (!formData.cardHolder.trim()) {
-        alert('Agar Payme/Click havola bo\'lmasa, karta egasi majburiy');
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
-    try {
-      let response: any;
-      if (selectedCard) {
-        response = await api.put(`/admin/payment-cards/${selectedCard.id}`, formData);
-        setCards(cards.map(card => card.id === selectedCard.id ? response.data : card));
-      } else {
-        response = await api.post('/admin/payment-cards', formData);
-        setCards([response.data, ...cards]);
-      }
-      setIsModalOpen(false);
-    } catch (error: any) {
-      console.error('Error saving card:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
-      alert(errorMsg);
-    } finally {
-      setTimeout(() => setIsSubmitting(false), 500);
-    }
-  };
-
-  const filteredCards = cards.filter(card => {
+  const filtered = transactions.filter(tx => {
     const q = searchTerm.toLowerCase();
     return (
-      card.label?.toLowerCase().includes(q) ||
-      card.cardNumber?.toLowerCase().includes(q) ||
-      card.cardHolder?.toLowerCase().includes(q) ||
-      card.bankName?.toLowerCase().includes(q)
+      tx.paymeId?.toLowerCase().includes(q) ||
+      String(tx.orderId || '').includes(q) ||
+      String(tx.enrollmentId || '').includes(q)
     );
   });
+
+  const formatAmount = (tiyin: number) =>
+    `${(tiyin / 100).toLocaleString('uz-UZ')} so'm`;
+
+  const formatDate = (iso?: string | null) =>
+    iso ? new Date(iso).toLocaleString('uz-UZ') : '—';
+
+  const entityLabel = (tx: PaymeTransaction) => {
+    if (tx.orderId)      return `Buyurtma #${tx.orderId}`;
+    if (tx.enrollmentId) return `Kurs yozilish #${tx.enrollmentId}`;
+    return '—';
+  };
 
   if (loading) return <div className="page-container"><p>Yuklanmoqda...</p></div>;
 
@@ -134,12 +75,9 @@ export default function Payments() {
     <div className="page-container">
       <div className="page-header">
         <div>
-          <h1><FaCreditCard /> To'lov kartalari</h1>
-          <p>To'lov uchun kartalarni boshqaring ({cards.length} ta)</p>
+          <h1><FaCreditCard /> Payme tranzaksiyalar</h1>
+          <p>Barcha Payme to'lov tranzaksiyalari ({transactions.length} ta)</p>
         </div>
-        <button className="btn-primary" onClick={() => handleOpenModal()}>
-          <FaPlus /> Yangi karta
-        </button>
       </div>
 
       <div className="page-toolbar">
@@ -147,9 +85,9 @@ export default function Payments() {
           <FaSearch />
           <input
             type="text"
-            placeholder="Kartalarni qidirish..."
+            placeholder="Payme ID yoki buyurtma/kurs raqami..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -158,135 +96,48 @@ export default function Payments() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Nomi</th>
-              <th>Karta raqami</th>
-              <th>Ega</th>
-              <th>Bank</th>
-              <th>Telefon</th>
+              <th>#</th>
+              <th>Payme ID</th>
+              <th>Buyurtma / Kurs</th>
+              <th>Summa</th>
               <th>Holat</th>
-              <th>Amallar</th>
+              <th>Yaratilgan</th>
+              <th>To'langan</th>
+              <th>Bekor</th>
             </tr>
           </thead>
           <tbody>
-            {filteredCards.map(card => (
-              <tr key={card.id}>
-                <td><strong>{card.label}</strong></td>
-                <td className="mono">{card.cardNumber}</td>
-                <td>{card.cardHolder}</td>
-                <td>{card.bankName || '-'}</td>
-                <td>{card.phone || '-'}</td>
-                <td>
-                  <span className={`status-pill ${card.isActive ? 'active' : 'inactive'}`}>
-                    {card.isActive ? 'Aktiv' : 'Noaktiv'}
-                  </span>
-                </td>
-                <td>
-                  <div className="action-buttons">
-                    <button className="btn-icon btn-edit" onClick={() => handleOpenModal(card)}><FaEdit /></button>
-                    <button className="btn-icon btn-delete" onClick={() => handleDelete(card.id)}><FaTrash /></button>
-                  </div>
+            {filtered.map(tx => {
+              const stateInfo = STATE_LABELS[tx.state] ?? { label: String(tx.state), className: 'badge-info', icon: <FaClock /> };
+              return (
+                <tr key={tx.id}>
+                  <td>{tx.id}</td>
+                  <td className="mono" style={{ fontSize: '12px', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {tx.paymeId}
+                  </td>
+                  <td>{entityLabel(tx)}</td>
+                  <td><strong>{formatAmount(tx.amount ?? 0)}</strong></td>
+                  <td>
+                    <span className={`status-pill ${stateInfo.className}`}>
+                      {stateInfo.icon} {stateInfo.label}
+                    </span>
+                  </td>
+                  <td>{formatDate(tx.createTime)}</td>
+                  <td>{formatDate(tx.performTime)}</td>
+                  <td>{tx.cancelTime ? formatDate(tx.cancelTime) : '—'}</td>
+                </tr>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>
+                  Tranzaksiyalar topilmadi
                 </td>
               </tr>
-            ))}
-            {filteredCards.length === 0 && (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Kartalar topilmadi</td></tr>
             )}
           </tbody>
         </table>
       </div>
-
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{selectedCard ? 'Kartani tahrirlash' : 'Yangi karta qo\'shish'}</h2>
-              <button className="close-btn" onClick={handleCloseModal}><FaTimes /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="modal-body">
-              <div className="form-group">
-                <label>Karta nomi</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.label}
-                  onChange={e => setFormData({ ...formData, label: e.target.value })}
-                />
-              </div>
-              {(!formData.paymeUrl && !formData.clickUrl) && (
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Karta raqami</label>
-                    <input
-                      type="text"
-                      value={formData.cardNumber}
-                      onChange={e => setFormData({ ...formData, cardNumber: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Karta egasi</label>
-                    <input
-                      type="text"
-                      value={formData.cardHolder}
-                      onChange={e => setFormData({ ...formData, cardHolder: e.target.value })}
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Bank nomi</label>
-                  <input
-                    type="text"
-                    value={formData.bankName || ''}
-                    onChange={e => setFormData({ ...formData, bankName: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Telefon (ixtiyoriy)</label>
-                  <input
-                    type="text"
-                    value={formData.phone || ''}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Payme URL (ixtiyoriy)</label>
-                  <input
-                    type="text"
-                    value={formData.paymeUrl || ''}
-                    onChange={e => setFormData({ ...formData, paymeUrl: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Click URL (ixtiyoriy)</label>
-                  <input
-                    type="text"
-                    value={formData.clickUrl || ''}
-                    onChange={e => setFormData({ ...formData, clickUrl: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Holat</label>
-                <select
-                  value={String(formData.isActive)}
-                  onChange={e => setFormData({ ...formData, isActive: e.target.value === 'true' })}
-                >
-                  <option value="true">Aktiv</option>
-                  <option value="false">Noaktiv</option>
-                </select>
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? <><FaSave /> Saqlanmoqda...</> : <><FaSave /> Saqlash</>}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
