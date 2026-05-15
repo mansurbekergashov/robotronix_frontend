@@ -281,7 +281,7 @@ export default function Products() {
                 />
               </div>
               <div className="form-group">
-                <label>To'lov uchun karta</label>
+                <label>Naqd to'lov kartasi <span style={{fontSize:'12px',color:'#8b92a7',fontWeight:'normal'}}>(ixtiyoriy — Payme avtomatik)</span></label>
                 <select
                   value={formData.paymentCardId ?? ''}
                   onChange={e => {
@@ -289,7 +289,7 @@ export default function Products() {
                     setFormData({ ...formData, paymentCardId: value });
                   }}
                 >
-                  <option value="">Tanlanmagan</option>
+                  <option value="">Tanlanmagan (Payme)</option>
                   {paymentCards.map(card => (
                     <option key={card.id} value={card.id}>
                       {card.label} • {card.cardNumber}

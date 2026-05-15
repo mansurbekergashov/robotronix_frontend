@@ -10,16 +10,14 @@ export default class CheckoutModal {
         this.items     = options.items     || [];
         this.isCartCheckout = options.isCartCheckout || false;
 
-        this.regions = [
-            "Toshkent sh.", "Toshkent vil.", "Andijon", "Buxoro", "Farg'ona",
-            "Jizzax", "Xorazm", "Namangan", "Navoiy", "Qashqadaryo",
-            "Samarqand", "Sirdaryo", "Surxondaryo", "Qoraqalpog'iston"
-        ];
-
-        this.selectedRegion = this.regions[0];
+        this.regions = [];
+        this.districts = [];
+        this.selectedRegion = '';
+        this.districtSearch = '';
         this.phone = localStorage.getItem('userPhone') || '';
         this._pollTimer = null;
         this._pollTimeout = null;
+        this._modal = null;
     }
 
     render() {
@@ -39,27 +37,34 @@ export default class CheckoutModal {
                     <form class="checkout-form" id="checkoutForm">
                         <div class="detail-grid">
                             <div class="detail-item full-width">
-                                <label><i class="fas fa-map-marker-alt"></i> Tanlangan viloyat</label>
+                                <label><i class="fas fa-map-marker-alt"></i> Viloyat / Shahar</label>
                                 <select id="regionSelect" class="form-input" required>
-                                    ${this.regions.map(r =>
-                                        `<option value="${r}" ${r === this.selectedRegion ? 'selected' : ''}>${r}</option>`
-                                    ).join('')}
+                                    <option value="">— Tanlang —</option>
                                 </select>
                             </div>
-                            <div class="detail-item">
-                                <label><i class="fas fa-city"></i> Shahar / Tuman</label>
-                                <input type="text" id="cityInput" class="form-input"
-                                       placeholder="Masalan: Chirchiq sh." required>
-                            </div>
-                            <div class="detail-item">
-                                <label><i class="fas fa-phone"></i> Aloqa telefoni</label>
-                                <input type="tel" id="phoneInput" class="form-input"
-                                       value="${this.phone}" placeholder="+998 90 123 45 67" required>
+                            <div class="detail-item full-width">
+                                <label><i class="fas fa-city"></i> Tuman / Shahar</label>
+                                <div style="position:relative">
+                                    <input type="text" id="districtSearch" class="form-input"
+                                           placeholder="Qidirish..." autocomplete="off"
+                                           style="margin-bottom:0">
+                                    <div id="districtDropdown" style="
+                                        display:none; position:absolute; top:100%; left:0; right:0;
+                                        background:#1e2535; border:1px solid #2d3748; border-radius:8px;
+                                        max-height:180px; overflow-y:auto; z-index:9999; margin-top:2px;
+                                    "></div>
+                                </div>
+                                <input type="hidden" id="districtValue" required>
                             </div>
                             <div class="detail-item full-width">
                                 <label><i class="fas fa-road"></i> Ko'cha / Uy raqami</label>
-                                <input type="text" id="districtInput" class="form-input"
-                                       placeholder="Masalan: Navoiy mfy, 12-uy" required>
+                                <input type="text" id="streetInput" class="form-input"
+                                       placeholder="Masalan: Navoiy ko'chasi, 12-uy" required>
+                            </div>
+                            <div class="detail-item full-width">
+                                <label><i class="fas fa-phone"></i> Aloqa telefoni</label>
+                                <input type="tel" id="phoneInput" class="form-input"
+                                       value="${this.phone}" placeholder="+998 90 123 45 67" required>
                             </div>
                         </div>
 
@@ -119,12 +124,119 @@ export default class CheckoutModal {
         document.body.appendChild(modal);
         this._modal = modal;
         this._setupEventListeners(modal);
+        this._loadRegions(modal);
+    }
+
+    async _loadRegions(modal) {
+        const regionSelect = modal.querySelector('#regionSelect');
+        try {
+            const regions = await api.get('/geography/regions');
+            this.regions = Array.isArray(regions) ? regions : [];
+        } catch {
+            // Fallback to static list if API unavailable
+            this.regions = [
+                "Toshkent sh.", "Toshkent vil.", "Andijon", "Buxoro", "Farg'ona",
+                "Jizzax", "Xorazm", "Namangan", "Navoiy", "Qashqadaryo",
+                "Samarqand", "Sirdaryo", "Surxondaryo", "Qoraqalpog'iston"
+            ];
+        }
+        this.regions.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r;
+            opt.textContent = r;
+            regionSelect.appendChild(opt);
+        });
+    }
+
+    async _loadDistricts(region, modal) {
+        const searchInput = modal.querySelector('#districtSearch');
+        const districtValue = modal.querySelector('#districtValue');
+        const dropdown = modal.querySelector('#districtDropdown');
+
+        searchInput.value = '';
+        districtValue.value = '';
+        dropdown.style.display = 'none';
+        this.districts = [];
+
+        if (!region) return;
+
+        searchInput.placeholder = 'Yuklanmoqda...';
+        try {
+            const districts = await api.get(`/geography/districts?region=${encodeURIComponent(region)}`);
+            this.districts = Array.isArray(districts) ? districts : [];
+        } catch {
+            this.districts = [];
+        }
+        searchInput.placeholder = this.districts.length ? 'Qidirish...' : 'Tuman/shahar kiriting';
+        this._renderDistrictDropdown(modal, '');
+    }
+
+    _renderDistrictDropdown(modal, query) {
+        const dropdown = modal.querySelector('#districtDropdown');
+        const districtValue = modal.querySelector('#districtValue');
+        const searchInput = modal.querySelector('#districtSearch');
+
+        const filtered = query
+            ? this.districts.filter(d => d.toLowerCase().includes(query.toLowerCase()))
+            : this.districts;
+
+        if (!filtered.length) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        dropdown.innerHTML = filtered.map(d => `
+            <div class="district-option" data-value="${d}" style="
+                padding:10px 14px; cursor:pointer; color:#e2e8f0; font-size:14px;
+                border-bottom:1px solid #2d3748;
+            " onmouseover="this.style.background='#2d3748'" onmouseout="this.style.background=''">${d}</div>
+        `).join('');
+
+        dropdown.querySelectorAll('.district-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const val = opt.dataset.value;
+                searchInput.value = val;
+                districtValue.value = val;
+                dropdown.style.display = 'none';
+            });
+        });
+
+        dropdown.style.display = 'block';
     }
 
     _setupEventListeners(modal) {
         modal.querySelector('#closeCheckout').onclick = () => this.close();
         modal.onclick = (e) => { if (e.target === modal) this.close(); };
 
+        // Region change → load districts
+        modal.querySelector('#regionSelect').onchange = async (e) => {
+            this.selectedRegion = e.target.value;
+            await this._loadDistricts(this.selectedRegion, modal);
+        };
+
+        // District search
+        const searchInput = modal.querySelector('#districtSearch');
+        const dropdown = modal.querySelector('#districtDropdown');
+
+        searchInput.addEventListener('input', (e) => {
+            const q = e.target.value.trim();
+            modal.querySelector('#districtValue').value = q;
+            if (this.districts.length) {
+                this._renderDistrictDropdown(modal, q);
+            }
+        });
+
+        searchInput.addEventListener('focus', () => {
+            if (this.districts.length) this._renderDistrictDropdown(modal, searchInput.value);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && e.target !== searchInput) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Quantity controls
         modal.querySelectorAll('.qty-btn').forEach(btn => {
             btn.onclick = (e) => {
                 const container = e.currentTarget.closest('.quantity-control');
@@ -147,22 +259,29 @@ export default class CheckoutModal {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buyurtma yaratilmoqda...';
 
+            const region   = modal.querySelector('#regionSelect').value;
+            const district = modal.querySelector('#districtValue').value.trim();
+            const street   = modal.querySelector('#streetInput').value.trim();
+            const phone    = modal.querySelector('#phoneInput').value.trim();
+
+            const reset = (msg) => {
+                alert(msg);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
+            };
+
+            if (!region)   return reset('Viloyatni tanlang');
+            if (!district) return reset('Tuman/shaharni kiriting');
+            if (!street)   return reset("Ko'cha/uy raqamini kiriting");
+            if (!phone)    return reset('Telefon raqamini kiriting');
+
+            localStorage.setItem('userPhone', phone);
+
             try {
-                const region   = modal.querySelector('#regionSelect').value;
-                const city     = modal.querySelector('#cityInput').value.trim();
-                const district = modal.querySelector('#districtInput').value.trim();
-                const phone    = modal.querySelector('#phoneInput').value.trim();
-
-                if (!city)     { alert("Shahar/tuman kiriting"); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash'; return; }
-                if (!district) { alert("Ko'cha/uy raqamini kiriting"); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash'; return; }
-                if (!phone)    { alert("Telefon raqamini kiriting"); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash'; return; }
-
-                localStorage.setItem('userPhone', phone);
-
                 const orderData = {
                     items: this.items.map(item => ({ productId: item.id, quantity: item.quantity })),
-                    shippingAddress: `${region}, ${city}, ${district}`,
-                    contactPhone: phone
+                    shippingAddress: `${region}, ${district}, ${street}`,
+                    contactPhone: phone,
                 };
 
                 const response = await api.post('/orders', orderData);
@@ -174,14 +293,10 @@ export default class CheckoutModal {
                 this._showWaitingState(orderId, paymentUrl);
                 this._startPolling(orderId);
 
-                if (this.isCartCheckout) {
-                    localStorage.removeItem('userCart');
-                }
+                if (this.isCartCheckout) localStorage.removeItem('userCart');
             } catch (error) {
                 console.error('Order error:', error);
-                alert('Buyurtma berishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
+                reset('Buyurtma berishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
             }
         };
     }
