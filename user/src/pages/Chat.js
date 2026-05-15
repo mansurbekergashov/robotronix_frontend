@@ -182,8 +182,8 @@ export default class Chat {
 
         // Close text tools if clicking outside
         document.addEventListener('click', (e) => {
-            if (emojiPicker && emojiPicker.style.display === 'block' && !emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
-                emojiPicker.style.display = 'none';
+            if (emojiPickerEl && emojiPickerEl.style.display === 'block' && !emojiPickerEl.contains(e.target) && !emojiBtn.contains(e.target)) {
+                emojiPickerEl.style.display = 'none';
             }
         });
 
