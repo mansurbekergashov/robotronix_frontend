@@ -139,10 +139,12 @@ const Navbar = () => {
                     </ul>
 
                     <div className="nav-actions">
-                        <Link to="/cart" className="cart-nav-btn" aria-label="Savat">
-                            <i className="fas fa-shopping-cart"></i>
-                            {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
-                        </Link>
+                        {isAuthenticated && (
+                            <Link to="/cart" className="cart-nav-btn" aria-label="Savat">
+                                <i className="fas fa-shopping-cart"></i>
+                                {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
+                            </Link>
+                        )}
 
                         <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Mavzuni almashtirish">
                             {dark ? <Sun size={16} /> : <Moon size={16} />}
