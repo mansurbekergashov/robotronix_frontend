@@ -1,4 +1,6 @@
 // Contact Page
+import toast from '../services/toast.js';
+
 export default class Contact {
     constructor() {
         this.container = document.getElementById('main-content');
@@ -74,11 +76,11 @@ export default class Contact {
                     await api.post('/contact', requestData);
                     
                     form.reset();
-                    alert('Xabaringiz muvaffaqiyatli yuborildi!');
-                    
+                    toast.success('Xabaringiz muvaffaqiyatli yuborildi!');
+
                 } catch (error) {
                     console.error('Contact submit error:', error);
-                    alert('Xatolik yuz berdi. Iltimos qaytadan urinib ko\'ring.');
+                    toast.error('Xatolik yuz berdi. Iltimos qaytadan urinib ko\'ring.');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = 'Yuborish';

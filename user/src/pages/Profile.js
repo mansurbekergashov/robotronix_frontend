@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '../config.js';
 import { AuthService } from '../services/auth.js';
 import { ProfileService } from '../services/profile.js';
+import showConfirm from '../services/confirm.js';
 
 export default class Profile {
     constructor() {
@@ -380,7 +381,7 @@ export default class Profile {
     }
 
     async handleDeleteAvatar() {
-        if (!confirm('Avatarni o\'chirishni xohlaysizmi?')) return;
+        if (!await showConfirm({ message: 'Avatarni o\'chirishni xohlaysizmi?', danger: true })) return;
 
         try {
             await this.profileService.deleteAvatar();

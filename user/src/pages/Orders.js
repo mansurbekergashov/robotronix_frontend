@@ -1,4 +1,6 @@
 // Orders Page with List View + Detail Modal
+import showConfirm from '../services/confirm.js';
+
 export default class Orders {
   constructor() {
     this.container = document.getElementById("main-content");
@@ -369,7 +371,7 @@ export default class Orders {
   }
 
   async confirmDelivery(orderId) {
-    if (!confirm("Buyurtmani qabul qildingizmi?")) return;
+    if (!await showConfirm({ message: "Buyurtmani qabul qildingizmi?" })) return;
 
     try {
       const { default: api } = await import("../services/api.js");

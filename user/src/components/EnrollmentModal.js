@@ -1,4 +1,5 @@
 import api from '../services/api.js';
+import toast from '../services/toast.js';
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS  = 900000; // 15 daqiqa
@@ -90,7 +91,7 @@ export default class EnrollmentModal {
                 this._startPolling(enrollId);
             } catch (error) {
                 console.error('Enrollment error:', error);
-                alert('Ariza yuborishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+                toast.error('Ariza yuborishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to\'lash';
             }

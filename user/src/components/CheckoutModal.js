@@ -1,4 +1,5 @@
 import api from '../services/api.js';
+import toast from '../services/toast.js';
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS  = 900000; // 15 daqiqa
@@ -265,7 +266,7 @@ export default class CheckoutModal {
             const phone    = modal.querySelector('#phoneInput').value.trim();
 
             const reset = (msg) => {
-                alert(msg);
+                toast.warning(msg);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
             };

@@ -1,5 +1,6 @@
 import { AuthService } from '../services/auth.js';
 import { API_BASE_URL, getFileUrl } from '../config.js';
+import showConfirm from '../services/confirm.js';
 
 export class Sidebar {
     constructor() {
@@ -211,19 +212,15 @@ export class Sidebar {
         // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                if (confirm('Haqiqatan ham chiqmoqchimisiz?')) {
-                    // Clear auth data
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('userCart');
-                    sessionStorage.removeItem('robotronix_active_app');
-
-                    // Redirect to main site
-                    const mainSiteUrl = '/';
-                    window.location.href = mainSiteUrl;
-                }
+            logoutBtn.addEventListener('click', async () => {
+                const ok = await showConfirm({ message: 'Haqiqatan ham chiqmoqchimisiz?' });
+                if (!ok) return;
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('user');
+                localStorage.removeItem('userCart');
+                sessionStorage.removeItem('robotronix_active_app');
+                window.location.href = '/';
             });
         }
 

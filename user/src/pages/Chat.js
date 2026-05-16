@@ -1,6 +1,7 @@
 // Chat Page
 import { AuthService } from '../services/auth.js';
 import api from '../services/api.js';
+import toast from '../services/toast.js';
 
 
 export default class Chat {
@@ -422,7 +423,7 @@ export default class Chat {
 
     async handleFileUpload(files) {
         if (!this.roomId || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            alert('Chat ulanmagan. Iltimos sahifani yangilang.');
+            toast.warning('Chat ulanmagan. Iltimos sahifani yangilang.');
             return;
         }
 
@@ -442,7 +443,7 @@ export default class Chat {
                 }));
             } catch (error) {
                 console.error('Error uploading file:', error);
-                alert('Fayl yuklashda xatolik yuz berdi: ' + file.name);
+                toast.error('Fayl yuklashda xatolik yuz berdi: ' + file.name);
             }
         }
 
