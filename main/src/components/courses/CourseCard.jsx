@@ -44,8 +44,6 @@ const CourseCard = memo(({ course }) => {
             </div>
         </div>
     );
-};
-
 });
 
 export default CourseCard;

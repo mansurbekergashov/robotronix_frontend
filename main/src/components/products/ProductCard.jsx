@@ -51,8 +51,6 @@ const ProductCard = memo(({ product, onAddToCart }) => {
             </div>
         </div>
     );
-};
-
 });
 
 export default ProductCard;
