@@ -5,6 +5,7 @@ import {
   FaGlobe, FaUsers, FaCalendarAlt, FaChevronDown
 } from 'react-icons/fa';
 import api from '../services/api';
+import { useToast } from '../hooks/useToast';
 import './News.css';
 
 interface NewsItem {
@@ -34,6 +35,7 @@ const emptyItem: NewsItem = {
 };
 
 export default function News() {
+  const toast = useToast();
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');
@@ -104,7 +106,7 @@ export default function News() {
 
   const handleSave = async () => {
     if (!editItem.title.trim() || !editItem.content.trim()) {
-      alert('Sarlavha va matn kiritilishi shart!');
+      toast.warning('Sarlavha va matn kiritilishi shart!');
       return;
     }
 
@@ -141,7 +143,7 @@ export default function News() {
       fetchItems();
     } catch (err) {
       console.error('Error saving news:', err);
-      alert('Saqlashda xatolik yuz berdi');
+      toast.error('Saqlashda xatolik yuz berdi');
     } finally {
       setSaving(false);
     }
@@ -154,7 +156,7 @@ export default function News() {
       fetchItems();
     } catch (err) {
       console.error('Error deleting news:', err);
-      alert("O'chirishda xatolik");
+      toast.error("O'chirishda xatolik yuz berdi");
     }
   };
 

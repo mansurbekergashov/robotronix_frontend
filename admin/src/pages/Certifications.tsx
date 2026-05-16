@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaCertificate, FaSearch, FaChevronLeft, FaUpload, FaTimes, FaCheckCircle, FaFileDownload, FaEye } from 'react-icons/fa';
 import api from '../services/api';
+import { useToast } from '../hooks/useToast';
 import './Certifications.css';
 
 interface Course {
@@ -33,6 +34,7 @@ interface Certificate {
 }
 
 export default function Certifications() {
+  const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [graduates, setGraduates] = useState<EnrollmentResponse[]>([]);
@@ -132,10 +134,10 @@ export default function Certifications() {
       });
       setUploadUser(null);
       setFile(null);
-      alert('Sertifikat muvaffaqiyatli yuklandi!');
+      toast.success('Sertifikat muvaffaqiyatli yuklandi!');
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Sertifikat yuklashda xatolik yuz berdi.');
+      toast.error('Sertifikat yuklashda xatolik yuz berdi');
     } finally {
       setUploading(false);
     }

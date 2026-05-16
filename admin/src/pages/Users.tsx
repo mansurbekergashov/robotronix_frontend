@@ -3,6 +3,8 @@ import { FaEdit, FaTrash, FaSearch, FaUsers, FaTimes, FaSave, FaUserShield, FaUs
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { downloadFromApi } from '../utils/download';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import './Users.css';
 
 interface UserData {
@@ -25,6 +27,8 @@ const initialUser: Omit<UserData, 'id' | 'createdAt'> = {
 
 export default function Users() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -52,18 +56,18 @@ export default function Users() {
       await downloadFromApi('/admin/users/export', 'users.csv', 'text/csv;charset=utf-8');
     } catch (error) {
       console.error('Export users failed:', error);
-      alert('Export qilishda xatolik yuz berdi');
+      toast.error('Export qilishda xatolik yuz berdi');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Foydalanuvchini o'chirishni tasdiqlaysizmi?")) return;
+    if (!(await confirm({ message: "Foydalanuvchini o'chirishni tasdiqlaysizmi?" }))) return;
     try {
       await api.delete(`/admin/users/${id}`);
       setUsers(users.filter(u => u.id !== id));
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Xatolik yuz berdi');
+      toast.error("O'chirishda xatolik yuz berdi");
     }
   };
 
@@ -92,7 +96,7 @@ export default function Users() {
       setIsModalOpen(false);
     } catch (error: any) {
       console.error('Error saving user:', error);
-      alert(error.response?.data?.message || "Xatolik yuz berdi");
+      toast.error(error.response?.data?.message || "Xatolik yuz berdi");
     }
   };
 

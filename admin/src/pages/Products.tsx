@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaBox, FaTimes, FaSave } from 'react-icons/fa';
 import api from '../services/api';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import './Products.css';
 
 interface ProductData {
@@ -35,6 +37,8 @@ const initialProduct: Omit<ProductData, 'id'> = {
 };
 
 export default function Products() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [products, setProducts] = useState<ProductData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -83,12 +87,13 @@ export default function Products() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Mahsulotni o'chirishni tasdiqlaysizmi?")) return;
+    if (!(await confirm({ message: "Mahsulotni o'chirishni tasdiqlaysizmi?" }))) return;
     try {
       await api.delete(`/admin/products/${id}`);
       setProducts(products.filter(p => p.id !== id));
     } catch (error) {
       console.error('Error deleting product:', error);
+      toast.error("O'chirishda xatolik yuz berdi");
     }
   };
 
@@ -115,7 +120,7 @@ export default function Products() {
 
     // Basic validation
     if (!formData.title.trim()) {
-      alert("Mahsulot nomi kiritilishi shart");
+      toast.warning("Mahsulot nomi kiritilishi shart");
       return;
     }
 
@@ -146,7 +151,7 @@ export default function Products() {
     } catch (error: any) {
       console.error('Error saving product:', error);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
-      alert(errorMsg);
+      toast.error(errorMsg);
     } finally {
       // Small timeout to prevent accidental double-clicks even after submission ends
       setTimeout(() => setIsSubmitting(false), 500);

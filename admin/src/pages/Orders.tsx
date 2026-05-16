@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
 import { syncService } from '../services/SyncService';
+import { useConfirm } from '../hooks/useConfirm';
 import './Orders.css';
 
 interface OrderData {
@@ -21,6 +22,7 @@ interface OrderData {
 
 export default function Orders() {
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderData | null>(null);
@@ -60,7 +62,7 @@ export default function Orders() {
   };
 
   const handleDeleteOrder = async (id: number) => {
-    if (!confirm("Ushbu buyurtmani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!")) return;
+    if (!(await confirm({ message: "Ushbu buyurtmani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!" }))) return;
     
     try {
       await api.delete(`/admin/orders/${id}`);

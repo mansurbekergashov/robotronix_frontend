@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { FaComments, FaPaperPlane, FaArrowLeft, FaPaperclip, FaFileAlt, FaSmile } from 'react-icons/fa';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../hooks/useToast';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import type { EmojiClickData } from 'emoji-picker-react';
 import './Chat.css';
@@ -30,6 +31,7 @@ interface Message {
 export default function Chat() {
     const location = useLocation();
     const { user } = useAuth();
+    const toast = useToast();
 
     const [rooms, setRooms] = useState<Room[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
@@ -276,7 +278,7 @@ export default function Chat() {
         const ws = wsRef.current;
         if (!ws || ws.readyState !== WebSocket.OPEN) {
             // If WS is not ready, try connecting again or notify
-            alert('Muloqot ulanishi hali tayyor emas. Iltimos bir necha soniya kuting.');
+            toast.warning('Muloqot ulanishi hali tayyor emas. Iltimos bir necha soniya kuting.');
             if (ws?.readyState === WebSocket.CLOSED) {
                 connectWebSocket(selectedRoom);
             }
@@ -293,7 +295,7 @@ export default function Chat() {
 
         const ws = wsRef.current;
         if (!ws || ws.readyState !== WebSocket.OPEN) {
-            alert('WebSocket ulanmagan. Iltimos qaytadan urinib ko\'ring.');
+            toast.error("WebSocket ulanmagan. Iltimos qaytadan urinib ko'ring.");
             return;
         }
 
@@ -317,7 +319,7 @@ export default function Chat() {
             );
         } catch (err) {
             console.error('Error uploading file:', err);
-            alert('Fayl yuklashda xatolik yuz berdi');
+            toast.error('Fayl yuklashda xatolik yuz berdi');
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';

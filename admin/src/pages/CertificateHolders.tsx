@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FaCertificate, FaDownload, FaExternalLinkAlt, FaSearch, FaTimes, FaUserCheck } from 'react-icons/fa';
 import api from '../services/api';
 import { downloadFromApi, downloadPublicFile } from '../utils/download';
+import { useToast } from '../hooks/useToast';
 import './CertificateHolders.css';
 
 interface CertificateHolder {
@@ -63,6 +64,7 @@ function inferExtension(fileUrl?: string) {
 }
 
 export default function CertificateHolders() {
+  const toast = useToast();
   const [holders, setHolders] = useState<CertificateHolder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export default function CertificateHolders() {
       setIsModalOpen(true);
     } catch (error) {
       console.error('Error fetching holder details:', error);
-      alert('Maʼlumotlarni olishda xatolik yuz berdi');
+      toast.error("Ma'lumotlarni olishda xatolik yuz berdi");
     } finally {
       setDetailsLoading(false);
     }
@@ -121,7 +123,7 @@ export default function CertificateHolders() {
       await downloadFromApi('/admin/certificates/export', 'certificates.csv', 'text/csv;charset=utf-8');
     } catch (error) {
       console.error('Export certificates failed:', error);
-      alert('Export qilishda xatolik yuz berdi');
+      toast.error('Export qilishda xatolik yuz berdi');
     }
   };
 
@@ -244,7 +246,7 @@ export default function CertificateHolders() {
                                   await downloadPublicFile(cert.fileUrl, filename);
                                 } catch (e) {
                                   console.error('Certificate download failed:', e);
-                                  alert('Faylni yuklab olishda xatolik yuz berdi');
+                                  toast.error('Faylni yuklab olishda xatolik yuz berdi');
                                 }
                               }}
                             >

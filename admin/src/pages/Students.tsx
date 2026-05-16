@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaUserGraduate, FaSearch, FaChevronLeft, FaTimes, FaDownload } from 'react-icons/fa';
 import api from '../services/api';
 import { downloadFromApi } from '../utils/download';
+import { useToast } from '../hooks/useToast';
 import './Students.css';
 
 interface Course {
@@ -26,6 +27,7 @@ interface EnrollmentResponse {
 }
 
 export default function Students() {
+  const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [enrollments, setEnrollments] = useState<EnrollmentResponse[]>([]);
@@ -107,7 +109,7 @@ export default function Students() {
       await downloadFromApi(endpoint, filename, 'text/csv;charset=utf-8');
     } catch (error) {
       console.error('Export students failed:', error);
-      alert('Export qilishda xatolik yuz berdi');
+      toast.error('Export qilishda xatolik yuz berdi');
     }
   };
 
@@ -118,10 +120,10 @@ export default function Students() {
       // Remove from current list or update status
       setEnrollments(prev => prev.filter(e => e.id !== id));
       setSelectedStudent(null);
-      alert('O\'quvchi holati muvaffaqiyatli yangilandi!');
+      toast.success("O'quvchi holati muvaffaqiyatli yangilandi!");
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Holatni yangilashda xatolik yuz berdi');
+      toast.error('Holatni yangilashda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }

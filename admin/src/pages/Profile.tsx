@@ -6,11 +6,13 @@ import {
   FaIdCard, FaCalendarAlt, FaClock, FaShieldAlt, FaBolt, FaLock,
   FaTrashAlt, FaCheckCircle, FaExclamationCircle
 } from 'react-icons/fa';
+import { useConfirm } from '../hooks/useConfirm';
 import './Profile.css';
 
 
 const Profile: React.FC = () => {
   const { user, updateProfile, refreshUser } = useAuth();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -123,7 +125,7 @@ const Profile: React.FC = () => {
   };
 
   const handleDeleteAvatar = async () => {
-    if (!confirm('Avatarni o\'chirishni xohlaysizmi?')) return;
+    if (!(await confirm({ message: "Avatarni o'chirishni xohlaysizmi?", danger: false }))) return;
 
     try {
       setLoading(true);

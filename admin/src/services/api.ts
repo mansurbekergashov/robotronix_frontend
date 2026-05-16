@@ -88,11 +88,10 @@ api.interceptors.response.use(
             }
         }
 
-        // Global check for Internal Server Error or Network Down
         if (status && status >= 500) {
-            alert("Server xatosi: Iltimos, birozdan so'ng qayta urinib ko'ring yoki administratorga murojaat qiling.");
+            console.error('Server xatosi:', status, error.response?.data)
         } else if (!error.response && error.message === 'Network Error') {
-            alert("Internetga ulanishda xatolik! Server ishlamayapti yoki tarmoq uzildi.");
+            console.error('Tarmoq xatosi: server yoki internet muammosi')
         }
 
         return Promise.reject(error);

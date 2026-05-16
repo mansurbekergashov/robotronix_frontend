@@ -3,6 +3,7 @@ import { FaGraduationCap, FaSearch, FaTimes, FaComments, FaClock, FaTrash, FaChe
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { syncService } from '../services/SyncService';
+import { useConfirm } from '../hooks/useConfirm';
 import './Applications.css';
 
 interface Application {
@@ -17,6 +18,7 @@ interface Application {
 }
 
 export default function Applications() {
+  const confirm = useConfirm();
   const [applications, setApplications] = useState<Application[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -109,7 +111,7 @@ export default function Applications() {
   };
 
   const handleDeleteApplication = async (id: number) => {
-    if (!confirm("Ushbu arizani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!")) return;
+    if (!(await confirm({ message: "Ushbu arizani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!" }))) return;
     
     try {
       await api.delete(`/admin/enrollments/${id}`);

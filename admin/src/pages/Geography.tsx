@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaChevronRight, FaMapMarkerAlt, FaBuilding, FaCity } from 'react-icons/fa';
 import api from '../services/api';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import './Geography.css';
 
 interface PostLocation {
@@ -13,6 +15,8 @@ interface PostLocation {
 }
 
 export default function Geography() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [locations, setLocations] = useState<PostLocation[]>([]);
     const [loading, setLoading] = useState(true);
     
@@ -44,7 +48,7 @@ export default function Geography() {
             setLocations(response.data || []);
         } catch (error) {
             console.error('Error fetching locations:', error);
-            alert('Manzillarni yuklashda xatolik! Backend ishlayotganiga ishonch hosil qiling.');
+            toast.error('Manzillarni yuklashda xatolik yuz berdi');
         } finally {
             setLoading(false);
         }
@@ -73,45 +77,42 @@ export default function Geography() {
             fetchLocations();
         } catch (error) {
             console.error('Error saving location:', error);
-            alert('Saqlashda xatolik yuz berdi!');
+            toast.error('Saqlashda xatolik yuz berdi');
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (window.confirm("Rostdan ham bu manzilni o'chirmoqchimisiz?")) {
-            try {
-                await api.delete(`/admin/geography/${id}`);
-                fetchLocations();
-            } catch (error) {
-                console.error('Error deleting location:', error);
-                alert("O'chirishda xatolik!");
-            }
+        if (!(await confirm({ message: "Rostdan ham bu manzilni o'chirmoqchimisiz?" }))) return;
+        try {
+            await api.delete(`/admin/geography/${id}`);
+            fetchLocations();
+        } catch (error) {
+            console.error('Error deleting location:', error);
+            toast.error("O'chirishda xatolik yuz berdi");
         }
     };
 
     const handleDeleteDistrict = async (district: string) => {
-        if (window.confirm(`Rostdan ham "${district}" tumanini va uning ichidagi barcha pochta manzillarini o'chirmoqchimisiz?`)) {
-            const locsToDelete = locations.filter(loc => loc.region === selectedRegion && loc.district === district);
-            for (const loc of locsToDelete) {
-                await api.delete(`/admin/geography/${loc.id}`);
-            }
-            if (selectedDistrict === district) setSelectedDistrict(null);
-            fetchLocations();
+        if (!(await confirm({ message: `"${district}" tumanini va uning ichidagi barcha pochta manzillarini o'chirmoqchimisiz?` }))) return;
+        const locsToDelete = locations.filter(loc => loc.region === selectedRegion && loc.district === district);
+        for (const loc of locsToDelete) {
+            await api.delete(`/admin/geography/${loc.id}`);
         }
+        if (selectedDistrict === district) setSelectedDistrict(null);
+        fetchLocations();
     };
 
     const handleDeleteRegion = async (region: string) => {
-        if (window.confirm(`Rostdan ham "${region}" ni va uning ichidagi barcha ma'lumotlarni o'chirmoqchimisiz?`)) {
-            const locsToDelete = locations.filter(loc => loc.region === region);
-            for (const loc of locsToDelete) {
-                await api.delete(`/admin/geography/${loc.id}`);
-            }
-            if (selectedRegion === region) {
-                setSelectedRegion(null);
-                setSelectedDistrict(null);
-            }
-            fetchLocations();
+        if (!(await confirm({ message: `"${region}" va uning ichidagi barcha ma'lumotlarni o'chirmoqchimisiz?` }))) return;
+        const locsToDelete = locations.filter(loc => loc.region === region);
+        for (const loc of locsToDelete) {
+            await api.delete(`/admin/geography/${loc.id}`);
         }
+        if (selectedRegion === region) {
+            setSelectedRegion(null);
+            setSelectedDistrict(null);
+        }
+        fetchLocations();
     };
 
     const openAddModal = (type: 'region' | 'district' | 'location') => {

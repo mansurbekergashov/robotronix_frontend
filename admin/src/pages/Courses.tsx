@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaBook, FaTimes, FaSave } from 'react-icons/fa';
 import api from '../services/api';
+import { useToast } from '../hooks/useToast';
+import { useConfirm } from '../hooks/useConfirm';
 import './Courses.css';
 
 interface CourseData {
@@ -30,6 +32,8 @@ const initialCourse: Omit<CourseData, 'id'> = {
 
 
 export default function Courses() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -67,12 +71,13 @@ export default function Courses() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Kursni o'chirishni tasdiqlaysizmi?")) return;
+    if (!(await confirm({ message: "Kursni o'chirishni tasdiqlaysizmi?" }))) return;
     try {
       await api.delete(`/admin/courses/${id}`);
       setCourses(courses.filter(c => c.id !== id));
     } catch (error) {
       console.error('Error deleting course:', error);
+      toast.error("O'chirishda xatolik yuz berdi");
     }
   };
 
@@ -99,7 +104,7 @@ export default function Courses() {
 
     // Basic validation
     if (!formData.title.trim()) {
-      alert("Kurs nomi kiritilishi shart");
+      toast.warning("Kurs nomi kiritilishi shart");
       return;
     }
 
@@ -129,7 +134,7 @@ export default function Courses() {
     } catch (error: any) {
       console.error('Error saving course:', error);
       const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
-      alert(errorMsg);
+      toast.error(errorMsg);
     } finally {
       // Small timeout to prevent accidental double-clicks even after submission ends
       setTimeout(() => setIsSubmitting(false), 500);
