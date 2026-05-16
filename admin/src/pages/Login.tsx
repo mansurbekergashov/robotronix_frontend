@@ -36,8 +36,8 @@ export default function Login() {
       
       // Admin user - proceed to dashboard
       navigate('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Email yoki parol noto\'g\'ri');
     } finally {
       setLoading(false);
     }

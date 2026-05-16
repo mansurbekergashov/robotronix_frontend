@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data.user)
             return { success: true }
         } catch (error) {
-            return { success: false, error: error.response?.data?.message || error.message }
+            return { success: false, error: error.response?.data?.message || 'Email yoki parol noto\'g\'ri' }
         }
     }
 
