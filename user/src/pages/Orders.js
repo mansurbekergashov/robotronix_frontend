@@ -291,6 +291,17 @@ export default class Orders {
                 </div>`
                     : ""
                 }
+                ${
+                  order.trackingNumber
+                    ? `
+                <div class="detail-item full-width">
+                    <label><i class="fas fa-truck"></i> Pochta kuzatuv raqami</label>
+                    <p style="font-family: monospace; font-size: 1rem; font-weight: 600;">${order.trackingNumber}
+                      ${order.shippingStatus ? `<span style="margin-left:8px; font-size:0.8rem; color:#8b92a7; font-family:sans-serif;">(${order.shippingStatus})</span>` : ""}
+                    </p>
+                </div>`
+                    : ""
+                }
             </div>
 
             <div class="detail-section-title">
