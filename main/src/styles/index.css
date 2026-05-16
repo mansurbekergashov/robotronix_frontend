@@ -31,11 +31,14 @@ body {
     --bg: #fff;
     --darker-bg: #214291;
     --card-bg: #fff;
+    --text-primary: #0a0a0a;
     --text-secondary: #a0a9c0;
     --text-muted: #76797f;
     --border-color: #b8b8b8;
     --success-color: #10b981;
     --warning-color: #f59e0b;
+    --dark-bg: #fff;
+    --gradient-primary: linear-gradient(135deg, #214291 0%, #1565c0 100%);
 
     /* Shadows */
     --shadow-sm: 0 2px 4px rgba(70, 71, 73, 0.1);
@@ -50,14 +53,15 @@ body {
 
 .dark {
     --primary-color: #fff;
-    /* --inline-color: #fff; */
     --hover-color: #fff;
     --extra-color: #0a0e1a;
     --bg: #0a0e1a;
     --darker-bg: #214291;
     --border-color: #737373;
     --card-bg: #1a1f2e;
-
+    --text-primary: #fff;
+    --dark-bg: #0a0e1a;
+    --gradient-primary: linear-gradient(135deg, #214291 0%, #3557cc 100%);
 }
 
 
@@ -237,7 +241,7 @@ body.menu-open {
     left: 0;
     width: 0;
     height: 2px;
-    background: var(--inline-color);
+    background: var(--darker-bg);
     transition: width var(--transition-fast);
 }
 
@@ -321,6 +325,70 @@ body.menu-open {
 .mobile-user-name i {
     font-size: 1.4rem;
     color: var(--primary-color);
+}
+
+/* Cart icon in navbar */
+.cart-nav-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    text-decoration: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    transition: all var(--transition-fast);
+    background: transparent;
+    border: 1px solid var(--border-color);
+}
+
+.cart-nav-btn:hover {
+    color: var(--inline-color);
+    background: var(--darker-bg);
+    border-color: transparent;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--darker-bg);
+    color: white;
+    border-color: transparent;
 }
 
 .hamburger {

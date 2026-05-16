@@ -39,10 +39,10 @@
 
 .news-filter-btn:hover,
 .news-filter-btn.active {
-    color: #76797f;
+    color: white;
     border-color: transparent;
     background: var(--gradient-primary);
-    box-shadow: 0 12px 30px rgba(70, 71, 73, 0.1);
+    box-shadow: 0 4px 15px rgba(33, 66, 145, 0.3);
 }
 
 .news-grid {

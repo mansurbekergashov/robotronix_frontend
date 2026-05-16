@@ -255,9 +255,9 @@
     width: 100%;
     padding: 16px;
     background: var(--gradient-primary);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: 12px;
-    color: var(--primary-color);
+    color: white;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -266,10 +266,12 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    box-shadow: 0 4px 15px rgba(33, 66, 145, 0.3);
 }
 
 .auth-submit-btn:hover:not(:disabled) {
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(33, 66, 145, 0.45);
 }
 
 .auth-submit-btn:active:not(:disabled) {
