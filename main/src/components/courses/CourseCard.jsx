@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getFileUrl } from '../../utils';
 
-const CourseCard = ({ course }) => {
+const CourseCard = memo(({ course }) => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
@@ -25,7 +26,7 @@ const CourseCard = ({ course }) => {
             </div>
             <div className="course-content">
                 <h3 className="course-title">{course.title}</h3>
-                <p className="course-description">{course.description ? course.description.substring(0, 100) + '...' : ''}</p>
+                <p className="course-description">{course.description ? course.description.substring(0, 100) + '...' : ' '}</p>
                 <div className="course-meta">
                     {course.duration && (
                         <span className="course-duration">
@@ -44,5 +45,7 @@ const CourseCard = ({ course }) => {
         </div>
     );
 };
+
+});
 
 export default CourseCard;

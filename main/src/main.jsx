@@ -15,10 +15,10 @@ import 'aos/dist/aos.css'
 
 // Initialize AOS when DOM is ready
 AOS.init({
-  duration: 800,
-  easing: 'ease-in-out',
-  once: false,
-  offset: 50
+  duration: 700,
+  easing: 'ease-out-cubic',
+  once: true,
+  offset: 60
 })
 
 ReactDOM.createRoot(document.getElementById('root')).render(

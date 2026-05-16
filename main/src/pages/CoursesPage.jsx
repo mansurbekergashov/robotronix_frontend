@@ -1,38 +1,12 @@
-import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { useState } from 'react';
+import useFetch from '../hooks/useFetch';
 import CourseCard from '../components/courses/CourseCard';
 
 const CoursesPage = () => {
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('kids');
+    const { data: courses, loading } = useFetch('/courses');
 
-    const fetchCourses = async () => {
-        try {
-            const response = await api.get('/courses');
-            const data = Array.isArray(response.data) ? response.data : [];
-            setCourses(data);
-        } catch (error) {
-            console.error('Error fetching courses:', error);
-            setCourses([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCourses();
-
-        const handleVisibility = () => {
-            if (document.visibilityState === 'visible') fetchCourses();
-        };
-        document.addEventListener('visibilitychange', handleVisibility);
-        return () => document.removeEventListener('visibilitychange', handleVisibility);
-    }, []);
-
-    const filteredCourses = Array.isArray(courses) ? courses.filter(course => course.category === activeTab) : [];
-
-    if (loading) return <div className="loading">Yuklanmoqda...</div>;
+    const filteredCourses = (courses || []).filter(c => c.category === activeTab);
 
     return (
         <section className="courses-page courses">
@@ -59,7 +33,9 @@ const CoursesPage = () => {
 
                 <div className="courses-content">
                     <div className="courses-grid">
-                        {filteredCourses.length > 0 ? (
+                        {loading ? (
+                            [1, 2, 3].map(i => <div key={i} className="skeleton-card" />)
+                        ) : filteredCourses.length > 0 ? (
                             filteredCourses.map((course, index) => (
                                 <CourseCard
                                     key={course.id}

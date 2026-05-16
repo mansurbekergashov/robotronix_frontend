@@ -1,43 +1,19 @@
-import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { useState } from 'react';
+import useFetch from '../hooks/useFetch';
+import useDebounce from '../hooks/useDebounce';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/products/ProductCard';
 
 const ProductsPage = () => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearch = useDebounce(searchTerm, 300);
+    const { data: products, loading } = useFetch('/products');
     const { addToCart } = useCart();
 
-    const fetchProducts = async () => {
-        try {
-            const response = await api.get('/products');
-            const data = Array.isArray(response.data) ? response.data : [];
-            setProducts(data);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            setProducts([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchProducts();
-
-        const handleVisibility = () => {
-            if (document.visibilityState === 'visible') fetchProducts();
-        };
-        document.addEventListener('visibilitychange', handleVisibility);
-        return () => document.removeEventListener('visibilitychange', handleVisibility);
-    }, []);
-
-    const filteredProducts = Array.isArray(products) ? products.filter(product =>
-        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    ) : [];
-
-    if (loading) return <div className="loading">Yuklanmoqda...</div>;
+    const filteredProducts = (products || []).filter(p =>
+        p.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(debouncedSearch.toLowerCase()))
+    );
 
     return (
         <section className="products-page products">
@@ -59,7 +35,9 @@ const ProductsPage = () => {
                 </div>
 
                 <div className="products-grid">
-                    {filteredProducts.length > 0 ? (
+                    {loading ? (
+                        [1, 2, 3].map(i => <div key={i} className="skeleton-card" />)
+                    ) : filteredProducts.length > 0 ? (
                         filteredProducts.map((product, index) => (
                             <ProductCard
                                 key={product.id}

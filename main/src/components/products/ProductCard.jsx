@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getFileUrl } from '../../utils';
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = memo(({ product, onAddToCart }) => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
@@ -51,5 +52,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         </div>
     );
 };
+
+});
 
 export default ProductCard;

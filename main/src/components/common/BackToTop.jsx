@@ -5,23 +5,23 @@ const BackToTop = () => {
     const [isVisible, setIsVisible] = useState(false)
 
     useEffect(() => {
-        const toggleVisibility = () => {
-            if (window.pageYOffset > 300) {
-                setIsVisible(true)
-            } else {
-                setIsVisible(false)
+        let ticking = false
+        const handleScroll = () => {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    setIsVisible(window.pageYOffset > 300)
+                    ticking = false
+                })
+                ticking = true
             }
         }
 
-        window.addEventListener('scroll', toggleVisibility)
-        return () => window.removeEventListener('scroll', toggleVisibility)
+        window.addEventListener('scroll', handleScroll, { passive: true })
+        return () => window.removeEventListener('scroll', handleScroll)
     }, [])
 
     const scrollToTop = () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        })
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     return (
