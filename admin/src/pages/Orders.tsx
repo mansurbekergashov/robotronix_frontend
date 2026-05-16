@@ -15,6 +15,8 @@ interface OrderData {
   shippingAddress: string;
   contactPhone: string;
   createdAt: string;
+  trackingNumber?: string;
+  shippingStatus?: string;
 }
 
 export default function Orders() {
@@ -96,6 +98,18 @@ export default function Orders() {
 
   const requestConfirm = (id: number, status: string) => {
     updateStatus(id, status);
+  };
+
+  const shipOrder = async (id: number) => {
+    try {
+      const res = await api.post(`/admin/orders/${id}/ship`);
+      const updated = res.data;
+      setOrders(orders.map(o => o.id === id ? { ...o, ...updated } : o));
+      if (selectedOrder?.id === id) setSelectedOrder({ ...selectedOrder, ...updated });
+      showNotification(`UzPost ga yuborildi. Tracking: ${updated.trackingNumber || '—'}`, 'success');
+    } catch (error: any) {
+      showNotification(error?.response?.data?.message || 'UzPost ga yuborishda xatolik', 'error');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -275,6 +289,9 @@ export default function Orders() {
                   <p><strong>Ism:</strong> {selectedOrder.user?.fullName}</p>
                   <p><strong>Telefon:</strong> {selectedOrder.contactPhone || selectedOrder.user?.phone}</p>
                   <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}</p>
+                  {selectedOrder.trackingNumber && (
+                    <p><strong>Tracking:</strong> <code>{selectedOrder.trackingNumber}</code> <span style={{ color: '#8b92a7', fontSize: '12px' }}>({selectedOrder.shippingStatus})</span></p>
+                  )}
                 </div>
               </div>
 
@@ -322,10 +339,10 @@ export default function Orders() {
                   </button>
                   <button
                     className="btn-status btn-secondary"
-                    disabled={selectedOrder.status === 'SHIPPED' || selectedOrder.status === 'RECEIVED'}
-                    onClick={() => updateStatus(selectedOrder.id, 'SHIPPED')}
+                    disabled={selectedOrder.status === 'SHIPPED' || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'RECEIVED'}
+                    onClick={() => shipOrder(selectedOrder.id)}
                   >
-                    <FaTruck /> Yuborish
+                    <FaTruck /> UzPost ga yuborish
                   </button>
                   <button
                     className="btn-status btn-success"
