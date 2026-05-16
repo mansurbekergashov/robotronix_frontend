@@ -110,7 +110,7 @@ const CartPage = () => {
                     onClick={() => {
                         const url = pendingOrderId
                             ? `/orders/${pendingOrderId}/payment-url` : null;
-                        if (url) api.get(url).then(r => window.open(r.data.url, '_blank')).catch(() => {});
+                        if (url) api.get(url).then(r => window.open(r.data.paymentUrl, '_blank')).catch(() => {});
                     }}
                     style={{ marginRight: '12px' }}
                 >
