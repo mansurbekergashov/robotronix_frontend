@@ -3,77 +3,108 @@ import { Link } from 'react-router-dom'
 const Hero = () => {
     return (
         <section id="home" className="hero">
-            <div className="hero-background">
-            </div>
+            <div className="hero-bg-glow"></div>
 
             <div className="container">
                 <div className="hero-content">
-                    <div className="hero-text" data-aos="fade-up">
+
+                    {/* ── LEFT ── */}
+                    <div className="hero-text">
+                        <div className="hero-badge">
+                            <span>⭐</span> Hamma yosh uchun
+                        </div>
+
                         <h1 className="hero-title">
-                            <span className="gradient-text">Robotlar sizni emas,</span>
-                            <br />
-                            <span className="highlight">siz robotlarni boshqaring!</span>
+                            Robotlar sizni emas,<br />
+                            <span className="hero-title__blue">siz robotlarni boshqaring!</span>
                         </h1>
+
                         <p className="hero-description">
-                            Robotronix - Farg'ona va Namangan viloyatlaridagi
-                            yetakchi robototexnika markazi. Biz bolalar va
-                            o'qituvchilarni kelajak texnologiyalari bilan
-                            tanishtiramiz.
+                            Robotronix — Farg'ona va Namangan viloyatlaridagi yetakchi
+                            robototexnika markazi...
                         </p>
-                        <div className="hero-stats">
-                            <div className="stat-item">
-                                <span className="stat-number">500+</span>
-                                <span className="stat-label">O'qituvchi</span>
+
+                        <div className="hero-features">
+                            <div className="hero-feature-item">
+                                <div className="hero-feature-icon hero-feature-icon--blue">
+                                    <i className="fas fa-robot"></i>
+                                </div>
+                                <span>Robototexnika</span>
                             </div>
-                            <div className="stat-item">
-                                <span className="stat-number">2000+</span>
-                                <span className="stat-label">O'quvchi</span>
+                            <div className="hero-feature-item">
+                                <div className="hero-feature-icon hero-feature-icon--orange">
+                                    <span className="hero-feature-code">&lt;/&gt;</span>
+                                </div>
+                                <span>Dasturlash</span>
                             </div>
-                            <div className="stat-item">
-                                <span className="stat-number">10+</span>
-                                <span className="stat-label">Filial</span>
+                            <div className="hero-feature-item">
+                                <div className="hero-feature-icon hero-feature-icon--green">
+                                    <i className="fas fa-brain"></i>
+                                </div>
+                                <span>Sun'iy intellekt</span>
                             </div>
                         </div>
+
                         <div className="hero-buttons">
-                            <Link to="/courses" className="btn-primary btn-large">
-                                <i className="fas fa-robot"></i>
+                            <Link to="/courses" className="btn-hero-start">
+                                <i className="fas fa-th"></i>
                                 Kursni boshlash
+                                <span className="btn-hero-arrow">→</span>
                             </Link>
-                            <a href="#about" className="btn-outline btn-large">
-                                <i className="fas fa-play"></i>
-                                Batafsil
-                            </a>
+                            <a href="#about" className="btn-hero-more">Batafsil</a>
                         </div>
                     </div>
 
-                    <div className="hero-visual" data-aos="fade-left">
-                        <div className="robot-showcase">
-                            <div className="main-robot">
-                                <div className="robot-body">
-                                    <div className="robot-head-main">
-                                        <div className="robot-eye-main left-eye"></div>
-                                        <div className="robot-eye-main right-eye"></div>
-                                        <div className="robot-antenna"></div>
-                                    </div>
-                                    <div className="robot-torso">
-                                        <div className="led-indicator"></div>
-                                        <div className="led-indicator"></div>
-                                        <div className="led-indicator"></div>
-                                    </div>
-                                    <div className="robot-arms">
-                                        <div className="arm left-arm"></div>
-                                        <div className="arm right-arm"></div>
-                                    </div>
+                    {/* ── RIGHT ── */}
+                    <div className="hero-visual">
+                        <div className="hero-scene">
+
+                            {/* Code editor window */}
+                            <div className="hero-editor">
+                                <div className="hero-editor__bar">
+                                    <span className="dot dot--red"></span>
+                                    <span className="dot dot--yellow"></span>
+                                    <span className="dot dot--green"></span>
+                                    <span className="hero-editor__label">Arduino IDE 2.1</span>
+                                </div>
+                                <div className="hero-editor__body">
+                                    <div className="ced-line"><span className="ced-kw">void</span> <span className="ced-fn">setup</span>() {'{'}</div>
+                                    <div className="ced-line">&nbsp;&nbsp;Serial.<span className="ced-fn">begin</span>(<span className="ced-num">9600</span>);</div>
+                                    <div className="ced-line">&nbsp;&nbsp;pinMode(LED, <span className="ced-const">OUTPUT</span>);</div>
+                                    <div className="ced-line">{'}'}</div>
+                                    <div className="ced-line"><span className="ced-kw">void</span> <span className="ced-fn">loop</span>() {'{'}</div>
+                                    <div className="ced-line">&nbsp;&nbsp;digitalWrite(LED, <span className="ced-const">HIGH</span>);</div>
+                                    <div className="ced-line">&nbsp;&nbsp;delay(<span className="ced-num">1000</span>);</div>
+                                    <div className="ced-line">{'}'}</div>
                                 </div>
                             </div>
-                            <div className="code-lines">
-                                <div className="code-line">void setup() {'{'}</div>
-                                <div className="code-line">Serial.begin(9600);</div>
-                                <div className="code-line">pinMode(LED, OUTPUT);</div>
-                                <div className="code-line">{'}'}</div>
+
+                            {/* Robot showcase */}
+                            <div className="hero-robot-frame">
+                                <img
+                                    src="/assets/images/robot-kit.png"
+                                    alt="Robotronix Robot"
+                                    className="hero-robot-img"
+                                />
                             </div>
+
+                            {/* Floating icon badges */}
+                            <div className="hero-float-badge hero-float-badge--chip">
+                                <i className="fas fa-microchip"></i>
+                            </div>
+                            <div className="hero-float-badge hero-float-badge--code">
+                                <span>&lt;/&gt;</span>
+                            </div>
+                            <div className="hero-float-badge hero-float-badge--cpu">
+                                <i className="fas fa-memory"></i>
+                            </div>
+
+                            {/* Decorative 3D gems */}
+                            <div className="hero-gem hero-gem--1"></div>
+                            <div className="hero-gem hero-gem--2"></div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </section>
@@ -81,4 +112,3 @@ const Hero = () => {
 }
 
 export default Hero
-
