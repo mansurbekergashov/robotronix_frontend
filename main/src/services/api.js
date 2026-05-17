@@ -9,6 +9,14 @@ const api = axios.create({
 
 let refreshInFlight = null;
 
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+const isNetworkError = (error) => !error.response && (
+    error.code === 'ERR_NETWORK' ||
+    error.code === 'ERR_NETWORK_CHANGED' ||
+    error.message === 'Network Error'
+);
+
 const refreshAccessToken = async () => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) return null;
@@ -54,6 +62,13 @@ api.interceptors.response.use(
     async (error) => {
         const status = error?.response?.status;
         const originalRequest = error?.config;
+
+        // Retry up to 2 times on transient network errors (ERR_NETWORK_CHANGED, etc.)
+        if (isNetworkError(error) && originalRequest && (originalRequest._retryCount || 0) < 2) {
+            originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+            await delay(originalRequest._retryCount * 800);
+            return api(originalRequest);
+        }
 
         if (status === 401 && originalRequest && !originalRequest._retry) {
             const url = String(originalRequest.url || '');
