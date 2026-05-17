@@ -9,6 +9,7 @@ import Preloader from './components/common/Preloader'
 import ScrollToHash from './components/common/ScrollToHash'
 import ChatWidget from './components/common/ChatWidget'
 import BackToTop from './components/common/BackToTop'
+import DroneBackground from './components/common/DroneBackground'
 
 // Lazy loaded pages
 import HomePage from './pages/HomePage'
@@ -34,6 +35,7 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <DroneBackground />
         <Preloader />
         <ScrollToHash />
         <Navbar />

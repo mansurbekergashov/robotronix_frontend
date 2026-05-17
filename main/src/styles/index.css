@@ -3109,3 +3109,84 @@ input:focus:not(:focus-visible) {
     transform: scale(1.03);
 }
 
+/* ═══════════════════════════════════════
+   DRONE BACKGROUND
+═══════════════════════════════════════ */
+.drone-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.drone-parallax {
+    position: absolute;
+    will-change: transform;
+    transition: transform 0.05s linear;
+}
+
+.drone-float {
+    animation: droneHover ease-in-out infinite;
+    will-change: transform;
+}
+
+.drone-float svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 8px 20px rgba(33, 66, 145, 0.22));
+}
+
+.dark .drone-float svg {
+    filter: drop-shadow(0 8px 20px rgba(33, 66, 145, 0.45));
+    opacity: 0.75;
+}
+
+/* ── Propeller spin ── */
+.dp {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+.dp--tl { animation: dpSpin 0.20s linear infinite; }
+.dp--tr { animation: dpSpin 0.20s linear infinite reverse; }
+.dp--bl { animation: dpSpin 0.20s linear infinite reverse; }
+.dp--br { animation: dpSpin 0.20s linear infinite; }
+
+@keyframes dpSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Drone float ── */
+@keyframes droneHover {
+    0%   { transform: translateY(0px)   rotate(0deg); }
+    20%  { transform: translateY(-10px) rotate(1.5deg); }
+    50%  { transform: translateY(-18px) rotate(0deg); }
+    80%  { transform: translateY(-8px)  rotate(-1.5deg); }
+    100% { transform: translateY(0px)   rotate(0deg); }
+}
+
+/* ── LEDs ── */
+.drone-led-g {
+    animation: droneLedG 2.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 5px #00e676);
+}
+.drone-led-r {
+    animation: droneLedG 2.8s ease-in-out infinite 1.4s;
+    filter: drop-shadow(0 0 5px #ff5252);
+}
+
+@keyframes droneLedG {
+    0%, 80%, 100% { opacity: 1; }
+    90%            { opacity: 0.08; }
+}
+
+/* ── Mobile: dronlar kichikroq ── */
+@media (max-width: 768px) {
+    .drone-parallax:nth-child(3),
+    .drone-parallax:nth-child(4) {
+        display: none;
+    }
+    .drone-parallax:nth-child(1) { opacity: 0.3 !important; }
+    .drone-parallax:nth-child(2) { opacity: 0.18 !important; }
+}
+
