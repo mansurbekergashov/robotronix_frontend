@@ -114,7 +114,7 @@ const NewsSection = ({ preview = false }) => {
                             >
                                 <div className="news-card-media">
                                     {item.imageUrl ? (
-                                        <img src={getFileUrl(item.imageUrl)} alt={item.title} />
+                                        <img src={getFileUrl(item.imageUrl)} alt={item.title} loading="lazy" decoding="async" />
                                     ) : (
                                         <div className="news-card-placeholder">
                                             <i className={`fas ${item.type === 'ANNOUNCEMENT' ? 'fa-bullhorn' : 'fa-newspaper'}`}></i>

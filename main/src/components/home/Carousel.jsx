@@ -92,7 +92,11 @@ export default function Carousel() {
                   <img
                     src={member.imageUrl}
                     alt={member.name}
+                    loading={index === current ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={index === current ? "high" : "low"}
                     style={{ objectPosition: member.imagePosition || "50% 20%" }}
+                    onLoad={e => e.currentTarget.classList.add("loaded")}
                   />
                 ) : (
                   <div

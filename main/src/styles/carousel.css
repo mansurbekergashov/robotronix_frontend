@@ -125,6 +125,14 @@
   object-fit: cover;
   object-position: top center;
   display: block;
+  /* fade-in when image finishes loading */
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.team-card__photo img.loaded,
+.team-card__photo img[loading="eager"] {
+  opacity: 1;
 }
 
 .team-card__avatar {
