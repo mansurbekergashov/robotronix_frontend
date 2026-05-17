@@ -102,7 +102,11 @@ export default function Carousel() {
             >
               <div className="team-card__photo">
                 {member.imageUrl ? (
-                  <img src={member.imageUrl} alt={member.name} />
+                  <img
+                    src={member.imageUrl}
+                    alt={member.name}
+                    style={{ objectPosition: member.imagePosition || '50% 20%' }}
+                  />
                 ) : (
                   <div
                     className="team-card__avatar"

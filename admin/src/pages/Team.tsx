@@ -10,6 +10,7 @@ interface TeamMember {
   name: string;
   position: string;
   imageUrl?: string;
+  imagePosition: string;
   displayOrder: number;
   isActive: boolean;
 }
@@ -18,8 +19,17 @@ const emptyMember: TeamMember = {
   name: '',
   position: '',
   imageUrl: '',
+  imagePosition: '50% 20%',
   displayOrder: 0,
   isActive: true,
+};
+
+const parsePosition = (pos: string): { x: number; y: number } => {
+  const parts = pos.replace(/%/g, '').split(' ');
+  return {
+    x: parseInt(parts[0] ?? '50') || 50,
+    y: parseInt(parts[1] ?? '20') || 20,
+  };
 };
 
 export default function Team() {
@@ -32,6 +42,8 @@ export default function Team() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
+  const [posX, setPosX] = useState(50);
+  const [posY, setPosY] = useState(20);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMembers = async () => {
@@ -51,6 +63,8 @@ export default function Team() {
     setEditMember({ ...emptyMember });
     setImageFile(null);
     setImagePreview('');
+    setPosX(50);
+    setPosY(20);
     setModalOpen(true);
   };
 
@@ -58,6 +72,9 @@ export default function Team() {
     setEditMember({ ...m });
     setImageFile(null);
     setImagePreview(m.imageUrl || '');
+    const p = parsePosition(m.imagePosition || '50% 20%');
+    setPosX(p.x);
+    setPosY(p.y);
     setModalOpen(true);
   };
 
@@ -79,11 +96,13 @@ export default function Team() {
     if (!editMember.position.trim()) { toast.error('Lavozim kiritilishi shart'); return; }
 
     setSaving(true);
+    const imagePosition = `${posX}% ${posY}%`;
     try {
       const formData = new FormData();
       formData.append('member', new Blob([JSON.stringify({
         name: editMember.name.trim(),
         position: editMember.position.trim(),
+        imagePosition,
         displayOrder: editMember.displayOrder,
         isActive: editMember.isActive,
       })], { type: 'application/json' }));
@@ -123,6 +142,7 @@ export default function Team() {
       formData.append('member', new Blob([JSON.stringify({
         name: m.name,
         position: m.position,
+        imagePosition: m.imagePosition || '50% 20%',
         displayOrder: m.displayOrder,
         isActive: !m.isActive,
       })], { type: 'application/json' }));
@@ -132,6 +152,10 @@ export default function Team() {
       toast.error('Xatolik yuz berdi');
     }
   };
+
+  const previewStyle = imagePreview
+    ? { backgroundImage: `url(${imagePreview})`, backgroundPosition: `${posX}% ${posY}%` }
+    : {};
 
   return (
     <div className="team-admin-page">
@@ -165,7 +189,11 @@ export default function Team() {
             <div key={m.id} className={`team-member-card${!m.isActive ? ' inactive' : ''}`}>
               <div className="member-photo">
                 {m.imageUrl ? (
-                  <img src={m.imageUrl} alt={m.name} />
+                  <img
+                    src={m.imageUrl}
+                    alt={m.name}
+                    style={{ objectPosition: m.imagePosition || '50% 20%' }}
+                  />
                 ) : (
                   <div className="member-avatar">
                     <span>{m.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</span>
@@ -205,9 +233,10 @@ export default function Team() {
             </div>
 
             <div className="team-modal-body">
+              {/* Photo upload */}
               <div className="photo-upload-area" onClick={() => fileInputRef.current?.click()}>
                 {imagePreview ? (
-                  <img src={imagePreview} alt="preview" className="photo-preview" />
+                  <div className="photo-preview-crop" style={previewStyle} />
                 ) : (
                   <div className="photo-placeholder">
                     <FaImage size={32} />
@@ -222,8 +251,43 @@ export default function Team() {
                   style={{ display: 'none' }}
                   onChange={handleImageChange}
                 />
+                {imagePreview && (
+                  <div className="photo-change-hint">Bosib yangi rasm tanlang</div>
+                )}
               </div>
 
+              {/* Position sliders — only when image is selected */}
+              {imagePreview && (
+                <div className="position-controls">
+                  <div className="position-label">
+                    <span>Rasm pozitsiyasi</span>
+                    <span className="position-value">{posX}% {posY}%</span>
+                  </div>
+                  <div className="position-sliders">
+                    <div className="slider-row">
+                      <span>↔ Gorizontal</span>
+                      <input
+                        type="range" min={0} max={100} value={posX}
+                        onChange={e => setPosX(Number(e.target.value))}
+                        className="pos-slider"
+                      />
+                      <span className="slider-val">{posX}%</span>
+                    </div>
+                    <div className="slider-row">
+                      <span>↕ Vertikal</span>
+                      <input
+                        type="range" min={0} max={100} value={posY}
+                        onChange={e => setPosY(Number(e.target.value))}
+                        className="pos-slider"
+                      />
+                      <span className="slider-val">{posY}%</span>
+                    </div>
+                  </div>
+                  <p className="position-hint">Yuqori qismi ko'rinsin: Vertikalni kamaytiring (0% = eng yuqori)</p>
+                </div>
+              )}
+
+              {/* Form fields */}
               <div className="form-row">
                 <div className="form-group">
                   <label>Ism Familiya *</label>
@@ -249,8 +313,7 @@ export default function Team() {
                 <div className="form-group">
                   <label>Tartib raqami</label>
                   <input
-                    type="number"
-                    min={0}
+                    type="number" min={0}
                     value={editMember.displayOrder}
                     onChange={e => setEditMember(p => ({ ...p, displayOrder: parseInt(e.target.value) || 0 }))}
                   />
