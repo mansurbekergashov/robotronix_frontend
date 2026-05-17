@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "../../styles/carousel.css";
 
 const AVATAR_COLORS = [
@@ -17,7 +17,7 @@ export default function Carousel() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
-  const intervalRef = useRef(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     fetch("/api/team")
@@ -27,26 +27,15 @@ export default function Carousel() {
       .finally(() => setLoading(false));
   }, []);
 
-  const startInterval = () => {
-    clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % members.length);
-    }, 3000);
-  };
-
   useEffect(() => {
-    if (members.length < 2) return;
-    startInterval();
-    return () => clearInterval(intervalRef.current);
-  }, [members]);
+    if (members.length < 2 || paused) return;
+    const id = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % members.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [members.length, paused]);
 
-  const goTo = (index) => {
-    setCurrent(index);
-    startInterval();
-  };
-
-  const prevSlide = () => goTo((current - 1 + members.length) % members.length);
-  const nextSlide = () => goTo((current + 1) % members.length);
+  const goTo = (index) => setCurrent(index);
 
   const getCardClass = (index) => {
     const total = members.length;
@@ -84,15 +73,13 @@ export default function Carousel() {
         </p>
       </div>
 
-      <div className="team-carousel">
-        {members.length > 1 && (
-          <button className="team-nav left" onClick={prevSlide} aria-label="Oldingi">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-        )}
-
+      <div
+        className="team-carousel"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
+      >
         <div className="team-track">
           {members.map((member, index) => (
             <div
@@ -105,7 +92,7 @@ export default function Carousel() {
                   <img
                     src={member.imageUrl}
                     alt={member.name}
-                    style={{ objectPosition: member.imagePosition || '50% 20%' }}
+                    style={{ objectPosition: member.imagePosition || "50% 20%" }}
                   />
                 ) : (
                   <div
@@ -124,14 +111,6 @@ export default function Carousel() {
             </div>
           ))}
         </div>
-
-        {members.length > 1 && (
-          <button className="team-nav right" onClick={nextSlide} aria-label="Keyingi">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        )}
       </div>
 
       {members.length > 1 && (
