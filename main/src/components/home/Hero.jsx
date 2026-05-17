@@ -76,7 +76,7 @@ const Hero = () => {
                             {/* Main robot image */}
                             <div className="hero-image-wrapper">
                                 <img
-                                    src="https://png.pngtree.com/png-vector/20241009/ourlarge/pngtree-3d-robots-png-image_14024071.png"
+                                    src="/assets/images/robot-3d.png"
                                     alt="Robotronix 3D Robot"
                                     className="hero-main-3d-img"
                                 />
