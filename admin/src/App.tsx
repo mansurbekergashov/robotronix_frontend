@@ -23,6 +23,7 @@ const Applications = lazy(() => import('./pages/Applications'));
 const Audit = lazy(() => import('./pages/Audit'));
 const Chat = lazy(() => import('./pages/Chat'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Team = lazy(() => import('./pages/Team'));
 const News = lazy(() => import('./pages/News'));
 
 function ProtectedRoute() {
@@ -136,6 +137,7 @@ function AppRoutes() {
           <Route path="audit" element={<Audit />} />
           <Route path="chat" element={<Chat />} />
           <Route path="news" element={<News />} />
+          <Route path="team" element={<Team />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Route>

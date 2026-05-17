@@ -3,7 +3,7 @@ import {
   FaHome, FaUsers, FaBook, FaBox, FaShoppingCart,
   FaClipboardList, FaComments, FaUserGraduate, FaCertificate,
   FaHistory, FaGlobe, FaSignOutAlt, FaChevronDown, FaUserCircle, FaUserCheck, FaNewspaper, FaCreditCard,
-  FaMapMarkerAlt
+  FaMapMarkerAlt, FaIdBadge
 } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -33,6 +33,7 @@ const menuItems: MenuItem[] = [
   { id: 'geography', label: 'Pochta manzillari', icon: <FaMapMarkerAlt />, path: '/geography' },
   { id: 'applications', label: "Arizalar", icon: <FaClipboardList />, path: '/applications' },
   { id: 'news', label: 'Yangiliklar', icon: <FaNewspaper />, path: '/news' },
+  { id: 'team', label: 'Jamoa', icon: <FaIdBadge />, path: '/team' },
   { id: 'audit', label: 'Audit Jurnali', icon: <FaHistory />, path: '/audit' },
   { id: 'chat', label: 'Chat', icon: <FaComments />, path: '/chat' },
 ];

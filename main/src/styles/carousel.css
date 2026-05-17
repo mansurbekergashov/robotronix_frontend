@@ -238,6 +238,33 @@
   background: #214291;
 }
 
+/* ===== SKELETON ===== */
+.team-skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+.team-skeleton-card {
+  width: 260px;
+  height: 380px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--card-bg) 25%, rgba(128,128,128,0.07) 50%, var(--card-bg) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.team-skeleton-card:nth-child(2) { transform: scale(1); opacity: 1; }
+.team-skeleton-card:nth-child(1),
+.team-skeleton-card:nth-child(3) { transform: scale(0.88); opacity: 0.6; }
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
   .team-card {
