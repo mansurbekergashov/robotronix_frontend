@@ -31,7 +31,7 @@ export default function Carousel() {
     if (members.length < 2 || paused) return;
     const id = setInterval(() => {
       setCurrent((prev) => (prev + 1) % members.length);
-    }, 5000);
+    }, 3000);
     return () => clearInterval(id);
   }, [members.length, paused]);
 
