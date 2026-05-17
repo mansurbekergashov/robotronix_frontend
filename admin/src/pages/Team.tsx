@@ -106,7 +106,7 @@ export default function Team() {
   };
 
   const handleDelete = async (m: TeamMember) => {
-    const ok = await confirm(`"${m.name}" ni o'chirishni tasdiqlaysizmi?`);
+    const ok = await confirm({ message: `"${m.name}" ni o'chirishni tasdiqlaysizmi?`, danger: true });
     if (!ok) return;
     try {
       await api.delete(`/admin/team/${m.id}`);
