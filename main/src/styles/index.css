@@ -3094,8 +3094,15 @@ input:focus:not(:focus-visible) {
     width: 100%;
     height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 30px 50px rgba(33, 66, 145, 0.18));
+    mix-blend-mode: multiply;
+    filter: drop-shadow(0 24px 40px rgba(33, 66, 145, 0.15));
     transition: transform 0.3s ease;
+}
+
+/* dark modeda oq fon ko'rinmasligi uchun screen blend */
+.dark .hero-main-3d-img {
+    mix-blend-mode: screen;
+    filter: drop-shadow(0 24px 40px rgba(33, 66, 145, 0.4));
 }
 
 .hero-main-3d-img:hover {
