@@ -73,19 +73,17 @@ export default function Carousel() {
         </p>
       </div>
 
-      <div
-        className="team-carousel"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onTouchStart={() => setPaused(true)}
-        onTouchEnd={() => setPaused(false)}
-      >
+      <div className="team-carousel">
         <div className="team-track">
           {members.map((member, index) => (
             <div
               className={getCardClass(index)}
               key={member.id}
               onClick={() => index !== current && goTo(index)}
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+              onTouchStart={() => setPaused(true)}
+              onTouchEnd={() => setPaused(false)}
             >
               <div className="team-card__photo">
                 {member.imageUrl ? (
