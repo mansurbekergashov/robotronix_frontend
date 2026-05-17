@@ -186,12 +186,13 @@
         gap: 0;
         border-radius: 0;
         transition: left 0.3s ease;
-        overflow-y: auto;
+        overflow: hidden;
         z-index: 999;
     }
 
     .nav-menu.active {
         left: 0;
+        overflow-y: auto;
     }
 
     .nav-menu li {

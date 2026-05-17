@@ -2003,12 +2003,13 @@ select option {
         padding-top: 60px;
         gap: 0;
         transition: left var(--transition-smooth);
-        overflow-y: auto;
+        overflow: hidden;
         z-index: 999;
     }
 
     .nav-menu.active {
         left: 0;
+        overflow-y: auto;
     }
 
     .nav-menu li {
