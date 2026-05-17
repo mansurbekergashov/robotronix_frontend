@@ -57,38 +57,8 @@ const Hero = () => {
 
                     {/* ── RIGHT ── */}
                     <div className="hero-visual">
-                        <div className="hero-scene">
-
-                            {/* Code editor window */}
-                            <div className="hero-editor">
-                                <div className="hero-editor__bar">
-                                    <span className="dot dot--red"></span>
-                                    <span className="dot dot--yellow"></span>
-                                    <span className="dot dot--green"></span>
-                                    <span className="hero-editor__label">Arduino IDE 2.1</span>
-                                </div>
-                                <div className="hero-editor__body">
-                                    <div className="ced-line"><span className="ced-kw">void</span> <span className="ced-fn">setup</span>() {'{'}</div>
-                                    <div className="ced-line">&nbsp;&nbsp;Serial.<span className="ced-fn">begin</span>(<span className="ced-num">9600</span>);</div>
-                                    <div className="ced-line">&nbsp;&nbsp;pinMode(LED, <span className="ced-const">OUTPUT</span>);</div>
-                                    <div className="ced-line">{'}'}</div>
-                                    <div className="ced-line"><span className="ced-kw">void</span> <span className="ced-fn">loop</span>() {'{'}</div>
-                                    <div className="ced-line">&nbsp;&nbsp;digitalWrite(LED, <span className="ced-const">HIGH</span>);</div>
-                                    <div className="ced-line">&nbsp;&nbsp;delay(<span className="ced-num">1000</span>);</div>
-                                    <div className="ced-line">{'}'}</div>
-                                </div>
-                            </div>
-
-                            {/* Robot showcase */}
-                            <div className="hero-robot-frame">
-                                <img
-                                    src="/assets/images/robot-kit.png"
-                                    alt="Robotronix Robot"
-                                    className="hero-robot-img"
-                                />
-                            </div>
-
-                            {/* Floating icon badges */}
+                        <div className="hero-scene hero-scene--clean">
+                            {/* Floating tech badges */}
                             <div className="hero-float-badge hero-float-badge--chip">
                                 <i className="fas fa-microchip"></i>
                             </div>
@@ -99,9 +69,18 @@ const Hero = () => {
                                 <i className="fas fa-memory"></i>
                             </div>
 
-                            {/* Decorative 3D gems */}
+                            {/* Decorative gems */}
                             <div className="hero-gem hero-gem--1"></div>
                             <div className="hero-gem hero-gem--2"></div>
+
+                            {/* Main robot image */}
+                            <div className="hero-image-wrapper">
+                                <img
+                                    src="https://png.pngtree.com/png-vector/20241009/ourlarge/pngtree-3d-robots-png-image_14024071.png"
+                                    alt="Robotronix 3D Robot"
+                                    className="hero-main-3d-img"
+                                />
+                            </div>
                         </div>
                     </div>
 
