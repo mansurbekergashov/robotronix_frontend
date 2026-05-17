@@ -285,22 +285,25 @@
 /* Photo Upload */
 .photo-upload-area {
   width: 100%;
-  height: 200px;
+  height: 220px;
   border: 2px dashed var(--border-color);
   border-radius: 14px;
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.2s;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .photo-upload-area:hover { border-color: #214291; }
 
 .photo-preview-crop {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  align-self: stretch;
   background-size: cover;
   background-repeat: no-repeat;
   transition: background-position 0.1s ease;

@@ -154,7 +154,7 @@ export default function Team() {
   };
 
   const previewStyle = imagePreview
-    ? { backgroundImage: `url(${imagePreview})`, backgroundPosition: `${posX}% ${posY}%` }
+    ? { backgroundImage: `url("${imagePreview}")`, backgroundPosition: `${posX}% ${posY}%` }
     : {};
 
   return (
