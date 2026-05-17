@@ -25,12 +25,15 @@ const emptyMember: TeamMember = {
 };
 
 const parsePosition = (pos: string): { x: number; y: number } => {
-  const parts = pos.replace(/%/g, '').split(' ');
+  const parts = (pos || '50% 20%').replace(/%/g, '').split(' ');
   return {
     x: parseInt(parts[0] ?? '50') || 50,
     y: parseInt(parts[1] ?? '20') || 20,
   };
 };
+
+const getInitials = (name: string) =>
+  name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
 export default function Team() {
   const toast = useToast();
@@ -72,7 +75,7 @@ export default function Team() {
     setEditMember({ ...m });
     setImageFile(null);
     setImagePreview(m.imageUrl || '');
-    const p = parsePosition(m.imagePosition || '50% 20%');
+    const p = parsePosition(m.imagePosition);
     setPosX(p.x);
     setPosY(p.y);
     setModalOpen(true);
@@ -153,10 +156,6 @@ export default function Team() {
     }
   };
 
-  const previewStyle = imagePreview
-    ? { backgroundImage: `url("${imagePreview}")`, backgroundPosition: `${posX}% ${posY}%` }
-    : {};
-
   return (
     <div className="team-admin-page">
       <div className="team-admin-header">
@@ -189,14 +188,10 @@ export default function Team() {
             <div key={m.id} className={`team-member-card${!m.isActive ? ' inactive' : ''}`}>
               <div className="member-photo">
                 {m.imageUrl ? (
-                  <img
-                    src={m.imageUrl}
-                    alt={m.name}
-                    style={{ objectPosition: m.imagePosition || '50% 20%' }}
-                  />
+                  <img src={m.imageUrl} alt={m.name} style={{ objectPosition: m.imagePosition || '50% 20%' }} />
                 ) : (
                   <div className="member-avatar">
-                    <span>{m.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</span>
+                    <span>{getInitials(m.name)}</span>
                   </div>
                 )}
                 <span className={`member-status-badge ${m.isActive ? 'active' : 'hidden'}`}>
@@ -233,101 +228,119 @@ export default function Team() {
             </div>
 
             <div className="team-modal-body">
-              {/* Photo upload */}
-              <div className="photo-upload-area" onClick={() => fileInputRef.current?.click()}>
-                {imagePreview ? (
-                  <div className="photo-preview-crop" style={previewStyle} />
-                ) : (
-                  <div className="photo-placeholder">
-                    <FaImage size={32} />
-                    <span>Rasm yuklash</span>
+              <div className="modal-layout">
+
+                {/* LEFT — live card preview */}
+                <div className="modal-preview-col">
+                  <p className="preview-col-label">Karuselda ko'rinishi</p>
+                  <div className="card-preview">
+                    <div className="card-preview__photo">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="preview"
+                          style={{ objectPosition: `${posX}% ${posY}%` }}
+                        />
+                      ) : (
+                        <div className="card-preview__avatar">
+                          <span>{editMember.name ? getInitials(editMember.name) : '?'}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="card-preview__info">
+                      <p className="card-preview__name">{editMember.name || 'Ism Familiya'}</p>
+                      <p className="card-preview__position">{editMember.position || 'Lavozim'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT — controls */}
+                <div className="modal-controls-col">
+                  {/* Upload button */}
+                  <div className="photo-upload-btn" onClick={() => fileInputRef.current?.click()}>
+                    <FaImage size={18} />
+                    <span>{imagePreview ? 'Rasmni o\'zgartirish' : 'Rasm yuklash'}</span>
                     <small>.jpg, .png, .webp — max 5MB</small>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      style={{ display: 'none' }}
+                      onChange={handleImageChange}
+                    />
                   </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.webp"
-                  style={{ display: 'none' }}
-                  onChange={handleImageChange}
-                />
-                {imagePreview && (
-                  <div className="photo-change-hint">Bosib yangi rasm tanlang</div>
-                )}
-              </div>
 
-              {/* Position sliders — only when image is selected */}
-              {imagePreview && (
-                <div className="position-controls">
-                  <div className="position-label">
-                    <span>Rasm pozitsiyasi</span>
-                    <span className="position-value">{posX}% {posY}%</span>
-                  </div>
-                  <div className="position-sliders">
-                    <div className="slider-row">
-                      <span>↔ Gorizontal</span>
-                      <input
-                        type="range" min={0} max={100} value={posX}
-                        onChange={e => setPosX(Number(e.target.value))}
-                        className="pos-slider"
-                      />
-                      <span className="slider-val">{posX}%</span>
+                  {/* Position sliders */}
+                  {imagePreview && (
+                    <div className="position-controls">
+                      <div className="position-label">
+                        <span>Rasm pozitsiyasi</span>
+                        <span className="position-value">{posX}% {posY}%</span>
+                      </div>
+                      <div className="position-sliders">
+                        <div className="slider-row">
+                          <span>↔ Gorizontal</span>
+                          <input
+                            type="range" min={0} max={100} value={posX}
+                            onChange={e => setPosX(Number(e.target.value))}
+                            className="pos-slider"
+                          />
+                          <span className="slider-val">{posX}%</span>
+                        </div>
+                        <div className="slider-row">
+                          <span>↕ Vertikal</span>
+                          <input
+                            type="range" min={0} max={100} value={posY}
+                            onChange={e => setPosY(Number(e.target.value))}
+                            className="pos-slider"
+                          />
+                          <span className="slider-val">{posY}%</span>
+                        </div>
+                      </div>
+                      <p className="position-hint">0% = eng yuqori · 100% = eng pastki</p>
                     </div>
-                    <div className="slider-row">
-                      <span>↕ Vertikal</span>
+                  )}
+
+                  {/* Form fields */}
+                  <div className="form-group">
+                    <label>Ism Familiya *</label>
+                    <input
+                      type="text"
+                      placeholder="Shukurjon Abdullayev"
+                      value={editMember.name}
+                      onChange={e => setEditMember(p => ({ ...p, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Lavozim *</label>
+                    <input
+                      type="text"
+                      placeholder="CEO & Asoschisi"
+                      value={editMember.position}
+                      onChange={e => setEditMember(p => ({ ...p, position: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Tartib raqami</label>
                       <input
-                        type="range" min={0} max={100} value={posY}
-                        onChange={e => setPosY(Number(e.target.value))}
-                        className="pos-slider"
+                        type="number" min={0}
+                        value={editMember.displayOrder}
+                        onChange={e => setEditMember(p => ({ ...p, displayOrder: parseInt(e.target.value) || 0 }))}
                       />
-                      <span className="slider-val">{posY}%</span>
+                    </div>
+                    <div className="form-group form-group-toggle">
+                      <label>Ko'rinish</label>
+                      <button
+                        type="button"
+                        className={`toggle-btn ${editMember.isActive ? 'on' : 'off'}`}
+                        onClick={() => setEditMember(p => ({ ...p, isActive: !p.isActive }))}
+                      >
+                        <span className="toggle-thumb" />
+                        <span className="toggle-label">{editMember.isActive ? 'Faol' : 'Yashirin'}</span>
+                      </button>
                     </div>
                   </div>
-                  <p className="position-hint">Yuqori qismi ko'rinsin: Vertikalni kamaytiring (0% = eng yuqori)</p>
-                </div>
-              )}
-
-              {/* Form fields */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Ism Familiya *</label>
-                  <input
-                    type="text"
-                    placeholder="Masalan: Shukurjon Abdullayev"
-                    value={editMember.name}
-                    onChange={e => setEditMember(p => ({ ...p, name: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Lavozim *</label>
-                  <input
-                    type="text"
-                    placeholder="Masalan: CEO & Asoschisi"
-                    value={editMember.position}
-                    onChange={e => setEditMember(p => ({ ...p, position: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Tartib raqami</label>
-                  <input
-                    type="number" min={0}
-                    value={editMember.displayOrder}
-                    onChange={e => setEditMember(p => ({ ...p, displayOrder: parseInt(e.target.value) || 0 }))}
-                  />
-                </div>
-                <div className="form-group form-group-toggle">
-                  <label>Ko'rinish</label>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${editMember.isActive ? 'on' : 'off'}`}
-                    onClick={() => setEditMember(p => ({ ...p, isActive: !p.isActive }))}
-                  >
-                    <span className="toggle-thumb" />
-                    <span className="toggle-label">{editMember.isActive ? 'Faol' : 'Yashirin'}</span>
-                  </button>
                 </div>
               </div>
             </div>
