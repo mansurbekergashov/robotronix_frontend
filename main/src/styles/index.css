@@ -3127,7 +3127,7 @@ input:focus:not(:focus-visible) {
 }
 
 .drone-3d {
-    transform: perspective(220px) rotateX(var(--tx)) rotateY(var(--ty));
+    transform: perspective(600px) rotateX(var(--tx)) rotateY(var(--ty));
     transform-style: preserve-3d;
     width: 100%;
     height: 100%;

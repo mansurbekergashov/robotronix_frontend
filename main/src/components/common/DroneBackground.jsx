@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 
 const DRONES = [
-  { id: 1, top: '10vh', left: '86%', size: 96,  parallax: 0.11, dur: '4.4s', delay: '0s',    opacity: 0.52, tx: 13,  ty: -8  },
-  { id: 2, top: '40vh', left: '3%',  size: 64,  parallax: 0.07, dur: '5.8s', delay: '-2.2s', opacity: 0.30, tx: 18,  ty: 7   },
-  { id: 3, top: '66vh', left: '80%', size: 50,  parallax: 0.14, dur: '4.0s', delay: '-1.5s', opacity: 0.22, tx: 15,  ty: -12 },
-  { id: 4, top: '82vh', left: '16%', size: 38,  parallax: 0.05, dur: '6.4s', delay: '-3.8s', opacity: 0.14, tx: 20,  ty: 5   },
+  { id: 1, top: '10vh', left: '86%', size: 96,  parallax: 0.11, dur: '4.4s', delay: '0s',    opacity: 0.52, tx: 42, ty: 28 },
+  { id: 2, top: '40vh', left: '3%',  size: 64,  parallax: 0.07, dur: '5.8s', delay: '-2.2s', opacity: 0.30, tx: 38, ty: 24 },
+  { id: 3, top: '66vh', left: '80%', size: 50,  parallax: 0.14, dur: '4.0s', delay: '-1.5s', opacity: 0.22, tx: 45, ty: 30 },
+  { id: 4, top: '82vh', left: '16%', size: 38,  parallax: 0.05, dur: '6.4s', delay: '-3.8s', opacity: 0.14, tx: 40, ty: 26 },
 ]
 
 /* ── Unique gradient IDs per instance ── */
@@ -77,18 +77,21 @@ function DroneSVG() {
       <g className="dp dp--bl"><ellipse cx="18"  cy="102" rx="15" ry="2" fill="#7ab0ff" opacity="0.85"/></g>
       <g className="dp dp--br"><ellipse cx="102" cy="102" rx="15" ry="2" fill="#7ab0ff" opacity="0.85"/></g>
 
-      {/* ── Body — 3D layers ── */}
-      {/* Bottom shadow face */}
-      <rect x="42" y="46" width="36" height="36" rx="9" fill="#060e28" opacity="0.35"/>
+      {/* ── Body — extruded 3D box ── */}
+      {/* Right side face (visible due to rotateY+) */}
+      <rect x="76" y="42" width="11" height="33" rx="3" fill="#060e22" opacity="0.95"/>
+      {/* Front/bottom face (visible due to rotateX+) */}
+      <rect x="42" y="76" width="33" height="11" rx="3" fill="#0a1530" opacity="0.88"/>
+      {/* Corner: where right meets front */}
+      <rect x="76" y="76" width="11" height="11" rx="2" fill="#030810" opacity="1"/>
       {/* Main top face */}
       <rect x="40" y="40" width="36" height="36" rx="9" fill={`url(#${bg})`}/>
       {/* Inner panel */}
       <rect x="46" y="46" width="24" height="24" rx="6" fill={`url(#${inn})`}/>
       {/* Top-face specular strip */}
       <ellipse cx="51" cy="44" rx="10" ry="3.5" fill="white" opacity="0.13" transform="rotate(-18,51,44)"/>
-      {/* Side face illusion (right + bottom) */}
-      <rect x="76" y="44" width="4"  height="32" rx="2" fill="#0b1736" opacity="0.45"/>
-      <rect x="44" y="76" width="32" height="4"  rx="2" fill="#0b1736" opacity="0.35"/>
+      {/* Top-edge highlight (rim light) */}
+      <rect x="40" y="40" width="36" height="2" rx="1" fill="white" opacity="0.10"/>
 
       {/* ── Camera gimbal ── */}
       <circle cx="60" cy="73" r="8.5" fill="#0a1020" stroke="#3a6acc" strokeWidth="1.2"/>
