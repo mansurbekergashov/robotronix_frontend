@@ -7,7 +7,6 @@ import Navbar from './components/common/Navbar'
 import Footer from './components/common/Footer'
 import Preloader from './components/common/Preloader'
 import ScrollToHash from './components/common/ScrollToHash'
-import ChatWidget from './components/common/ChatWidget'
 import BackToTop from './components/common/BackToTop'
 import DroneBackground from './components/common/DroneBackground'
 
@@ -55,7 +54,6 @@ function App() {
             </Routes>
           </Suspense>
         </main>
-        <ChatWidget />
         <BackToTop />
         <Footer />
       </CartProvider>

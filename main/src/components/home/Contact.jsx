@@ -88,7 +88,7 @@ const Contact = () => {
 
                         <div className="social-links">
                             <a
-                                href="https://t.me/robotronixuz"
+                                href="https://t.me/Robotronix_LLC"
                                 className="social-link"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -104,7 +104,7 @@ const Contact = () => {
                                 <i className="fab fa-instagram"></i>
                             </a>
                             <a
-                                href="https://youtube.com/robotronixuz"
+                                href="https://www.youtube.com/@robotronixuz"
                                 className="social-link"
                                 target="_blank"
                                 rel="noopener noreferrer"

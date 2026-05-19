@@ -269,6 +269,25 @@
     color: var(--text-secondary);
 }
 
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #214291;
+  border: none;
+  border-radius: 10px;
+  color: white !important;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .geography-page {

@@ -34,8 +34,8 @@
 .modal-body {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  padding: 1rem 0;
+  gap: 2rem;
+  padding: 1rem 1rem;
 }
 
 .form-row {
@@ -58,7 +58,7 @@
 
 .form-group input,
 .form-group select {
-  padding: 0.8rem 1rem;
+  padding: 0.8rem 2rem;
   border-radius: 8px;
   border: var(--border-color);
   background: var(--card-bg) !important;
@@ -79,10 +79,24 @@
 }
 
 .form-actions {
+  gap: 1rem;
   display: flex;
   justify-content: flex-end;
   margin-top: 1rem;
 }
+
+.btn-secondary {
+  background: var(--btn-bg);
+  color: #8b92a7;
+  border: var(--border-color);
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { color: #b8b8b8; background: rgba(255, 255, 255, 0.1); }
 
 @media (max-width: 600px) {
   .form-row {

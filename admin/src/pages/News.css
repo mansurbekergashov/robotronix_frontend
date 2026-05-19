@@ -248,6 +248,8 @@
   animation: slideDown 0.3s ease;
 }
 
+
+
 @keyframes slideDown {
   from { opacity: 0; max-height: 0; }
   to { opacity: 1; max-height: 500px; }
@@ -475,7 +477,7 @@
 
 /* Image upload */
 .image-upload-area {
-  border: 2px dashed #aaaaaa;
+  border: var(--image-upload-border);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
@@ -560,6 +562,9 @@
   align-items: center;
   gap: 8px;
   transition: all 0.25s ease;
+}
+.btn-primary svg {
+  color: #fff;
 }
 .btn-primary:hover { transform: translateY(-1px); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }

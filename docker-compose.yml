@@ -65,6 +65,5 @@ services:
       retries: 3
 
 networks:
-  robotronix-network:
-    name: robotronix-network
-    driver: bridge
+   robotronix-network:
+    external: true

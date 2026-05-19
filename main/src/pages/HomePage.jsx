@@ -8,10 +8,13 @@ import FAQ from "../components/home/FAQ";
 import NewsSection from "../components/home/NewsSection";
 import Contact from "../components/home/Contact";
 import Carousel from "../components/home/Carousel";
+import SocialModal from "../components/common/SocialModal";
+import Map from "../components/home/Map";
 
 const HomePage = () => {
   return (
     <>
+      <SocialModal/>
       <Hero />
       <Features />
       <Courses />
@@ -22,6 +25,7 @@ const HomePage = () => {
       <FAQ />
       <NewsSection preview />
       <Contact />
+      <Map/>
     </>
   );
 };

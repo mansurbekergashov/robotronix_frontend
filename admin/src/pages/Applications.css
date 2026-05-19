@@ -73,7 +73,7 @@
   width: 100%;
   padding: 0.8rem 1rem 0.8rem 2.8rem;
   background: var(--card-bg) !important;
-  border: var(--border-color) !important;
+  border: var(--border-color);
   border-radius: 10px;
   color: var(--text-primary);
   font-size: 0.9rem;
@@ -83,8 +83,6 @@
 .search-input:focus {
   outline: none;
   background: var(--card-bg);
-  border-color: #0066ff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 
 .filter-group {
@@ -346,7 +344,7 @@
   color: #8b92a7;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border: var(--border-color);
 }
 
 
