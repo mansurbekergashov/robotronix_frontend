@@ -1,5 +1,12 @@
 import { API_BASE_URL, getFileUrl } from "../config.js";
 
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+const safeTelegramUrl = url => {
+  if (!url) return '#';
+  try { const p = new URL(url); return (p.protocol === 'https:' || p.protocol === 'http:') ? url : '#'; }
+  catch { return '#'; }
+};
+
 export default class MyCourses {
   constructor() {
     this.container = document.getElementById("main-content");
@@ -128,14 +135,14 @@ export default class MyCourses {
                             </div>
 
                             <div class="enrollment-image" style="position: relative;">
-                                <img src="${imageUrl}" alt="${course.title}">
+                                <img src="${imageUrl}" alt="${esc(course.title)}">
                                 <div style="position: absolute; bottom: 0.5rem; left: 0.5rem; background: ${course.isOnline ? "var(--success, #22c55e)" : "var(--warning, #f59e0b)"}; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 4px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                                     <i class="fas ${course.isOnline ? "fa-globe" : "fa-building"}"></i> ${course.isOnline ? "Online" : "Oflayn"}
                                 </div>
                             </div>
 
                             <div class="enrollment-content">
-                                <h3 class="course-title">${course.title}</h3>
+                                <h3 class="course-title">${esc(course.title)}</h3>
 
                                 <div class="course-meta-grid">
                                     <div class="meta-pill">
@@ -144,7 +151,7 @@ export default class MyCourses {
                                     </div>
                                     <div class="meta-pill">
                                         <i class="fas fa-clock"></i>
-                                        <span>${course.duration || "Noma'lum"}</span>
+                                        <span>${esc(course.duration) || "Noma'lum"}</span>
                                     </div>
                                 </div>
 
@@ -159,7 +166,7 @@ export default class MyCourses {
                                           enrollment.status === "CONFIRMED"
                                             ? course.isOnline
                                               ? `
-                                                <a href="${course.telegramUrl || "#"}" target="_blank" rel="noopener noreferrer" class="btn-start-course" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                                                <a href="${safeTelegramUrl(course.telegramUrl)}" target="_blank" rel="noopener noreferrer" class="btn-start-course" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                                                     <span>Darsni boshlash</span>
                                                     <i class="fas fa-arrow-right"></i>
                                                 </a>

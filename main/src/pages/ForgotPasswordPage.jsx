@@ -188,16 +188,15 @@ const ForgotPasswordPage = () => {
                                     id="token"
                                     name="token"
                                     className="auth-form-input"
-                                    placeholder="123456"
+                                    placeholder="Tasdiqlash kodini kiriting"
                                     value={formData.token}
                                     onChange={handleChange}
                                     required
-                                    maxLength="6"
-                                    pattern="[0-9]{6}"
+                                    autoComplete="off"
                                 />
                             </div>
                             <small style={{ color: '#8b98a5', fontSize: '0.875rem', marginTop: '0.5rem', display: 'block' }}>
-                                Emailingizga yuborilgan 6 raqamli kodni kiriting
+                                Emailingizga yuborilgan tasdiqlash kodini kiriting
                             </small>
                         </div>
 

@@ -1,6 +1,8 @@
 // Orders Page with List View + Detail Modal
 import showConfirm from '../services/confirm.js';
 
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 export default class Orders {
   constructor() {
     this.container = document.getElementById("main-content");
@@ -188,9 +190,7 @@ export default class Orders {
                         ? items
                             .map(
                               (i) =>
-                                i.product?.title ||
-                                i.product?.name ||
-                                "Mahsulot",
+                                esc(i.product?.title || i.product?.name || "Mahsulot"),
                             )
                             .slice(0, 2)
                             .join(", ") +
@@ -279,7 +279,7 @@ export default class Orders {
                     ? `
                 <div class="detail-item">
                     <label><i class="fas fa-phone"></i> Aloqa telefon</label>
-                    <p>${order.contactPhone}</p>
+                    <p>${esc(order.contactPhone)}</p>
                 </div>`
                     : ""
                 }
@@ -289,7 +289,7 @@ export default class Orders {
                     ? `
                 <div class="detail-item full-width">
                     <label><i class="fas fa-map-marker-alt"></i> Yetkazib berish manzili</label>
-                    <p>${order.shippingAddress}</p>
+                    <p>${esc(order.shippingAddress)}</p>
                 </div>`
                     : ""
                 }
@@ -298,8 +298,8 @@ export default class Orders {
                     ? `
                 <div class="detail-item full-width">
                     <label><i class="fas fa-truck"></i> Pochta kuzatuv raqami</label>
-                    <p style="font-family: monospace; font-size: 1rem; font-weight: 600;">${order.trackingNumber}
-                      ${order.shippingStatus ? `<span style="margin-left:8px; font-size:0.8rem; color:#8b92a7; font-family:sans-serif;">(${order.shippingStatus})</span>` : ""}
+                    <p style="font-family: monospace; font-size: 1rem; font-weight: 600;">${esc(order.trackingNumber)}
+                      ${order.shippingStatus ? `<span style="margin-left:8px; font-size:0.8rem; color:#8b92a7; font-family:sans-serif;">(${esc(order.shippingStatus)})</span>` : ""}
                     </p>
                 </div>`
                     : ""
@@ -316,7 +316,7 @@ export default class Orders {
                     (item) => `
                     <div class="order-item-row">
                         <div class="order-item-info">
-                            <span class="order-item-name">${item.product?.title || item.product?.name || "Mahsulot"}</span>
+                            <span class="order-item-name">${esc(item.product?.title || item.product?.name || "Mahsulot")}</span>
                             <span class="order-item-details">${item.quantity} ta x ${(item.price || 0).toLocaleString()} so'm</span>
                         </div>
                         <span class="order-item-total">${((item.price || 0) * item.quantity).toLocaleString()} so'm</span>

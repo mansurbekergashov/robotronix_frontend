@@ -1,4 +1,6 @@
 // Dashboard Page
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 export default class Dashboard {
   constructor() {
     this.container = document.getElementById("main-content");
@@ -147,8 +149,8 @@ export default class Dashboard {
                         <i class="fas ${course.isOnline ? "fa-globe" : "fa-building"}"></i>
                     </div>
                     <div class="course-details">
-                        <h4>${course.title}</h4>
-                        <p>${course.category || "Robototexnika"}</p>
+                        <h4>${esc(course.title)}</h4>
+                        <p>${esc(course.category) || "Robototexnika"}</p>
                         <div class="progress-bar">
                             <div class="progress" style="width: ${enrollment.status === "COMPLETED" ? "100%" : "20%"}"></div>
                         </div>
@@ -200,7 +202,7 @@ export default class Dashboard {
           order.items && Array.isArray(order.items) ? order.items : [];
         const firstItemName =
           items.length > 0 && items[0] && items[0].product
-            ? items[0].product.title
+            ? esc(items[0].product.title)
             : "Mahsulot";
         const itemsText =
           items.length > 1
