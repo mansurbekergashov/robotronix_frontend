@@ -8,6 +8,8 @@ function Map() {
         style={{ border: 0, borderRadius: "20px" }}
         allowFullScreen=""
         loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        allow="fullscreen"
       ></iframe>
     </div>
   );
