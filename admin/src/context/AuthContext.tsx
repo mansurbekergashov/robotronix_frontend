@@ -62,24 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshId = setInterval(async () => {
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          logout();
-          return;
-        }
-
-        const response = await api.post('/auth/refresh', { refreshToken });
-        const { token, refreshToken: newRefreshToken, user: userData } = response.data || {};
+        // Refresh token is in httpOnly cookie — no body needed
+        const response = await api.post('/auth/refresh', {});
+        const { token, user: userData } = response.data || {};
 
         if (token) localStorage.setItem('token', token);
-        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
         if (userData) {
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
         }
       } catch (error) {
         console.error('Failed to refresh token:', error);
-        // If refresh fails (session truly expired), logout
         logout();
       }
     }, 14 * 60 * 1000);
@@ -121,9 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     localStorage.setItem('token', token);
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
-    }
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
@@ -140,10 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try { await api.post('/auth/logout') } catch { /* ignore */ }
     setUser(null);
     localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
   };
 

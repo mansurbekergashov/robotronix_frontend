@@ -43,15 +43,15 @@ export class AuthService {
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || 'User')}&background=0066ff&color=fff`;
     }
 
-    logout() {
+    async logout() {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        } catch { /* ignore */ }
         localStorage.removeItem(this.tokenKey);
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem(this.userKey);
         localStorage.removeItem('userCart');
         sessionStorage.removeItem('robotronix_active_app');
 
-        // Redirect to main site
-        const mainSiteUrl = '/';
-        window.location.href = mainSiteUrl;
+        window.location.href = '/';
     }
 }

@@ -101,7 +101,6 @@ export const AuthProvider = ({ children }) => {
             const data = response.data
 
             localStorage.setItem('token', data.token)
-            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
             localStorage.setItem('user', JSON.stringify(data.user))
             localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString())
             setToken(data.token)
@@ -118,7 +117,6 @@ export const AuthProvider = ({ children }) => {
             const data = response.data
 
             localStorage.setItem('token', data.token)
-            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
             localStorage.setItem('user', JSON.stringify(data.user))
             localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString())
             setToken(data.token)
@@ -129,9 +127,9 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    const logout = () => {
+    const logout = async () => {
+        try { await api.post('/auth/logout') } catch { /* ignore */ }
         localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
         localStorage.removeItem(LAST_ACTIVE_KEY)
         setToken(null)

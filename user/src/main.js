@@ -48,9 +48,7 @@ class App {
         const urlToken = urlParams.get('token');
         if (urlToken) {
             localStorage.setItem('token', urlToken);
-            const urlRefresh = urlParams.get('refreshToken');
-            if (urlRefresh) localStorage.setItem('refreshToken', urlRefresh);
-            // Remove tokens from URL without triggering navigation
+            // Remove token from URL without triggering navigation
             const cleanUrl = window.location.pathname + window.location.hash;
             history.replaceState(null, '', cleanUrl);
         }

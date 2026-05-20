@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: '/api',
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -18,17 +19,15 @@ const isNetworkError = (error) => !error.response && (
 );
 
 const refreshAccessToken = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) return null;
-
     try {
-        const response = await axios.post('/api/auth/refresh', { refreshToken }, {
+        // Refresh token is in httpOnly cookie — no body needed
+        const response = await axios.post('/api/auth/refresh', {}, {
+            withCredentials: true,
             headers: { 'Content-Type': 'application/json' },
         });
-        const { token, refreshToken: newRefreshToken, user } = response.data || {};
+        const { token, user } = response.data || {};
 
         if (token) localStorage.setItem('token', token);
-        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
         if (user) localStorage.setItem('user', JSON.stringify(user));
 
         return token || null;
@@ -91,12 +90,9 @@ api.interceptors.response.use(
         }
 
         if (status === 401) {
-            // Auto logout if 401 Unauthorized
             localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
-            
-            // Prevent infinite loop if already on login/register page
+
             const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register';
             if (!isAuthPage) {
                 window.location.href = '/login';

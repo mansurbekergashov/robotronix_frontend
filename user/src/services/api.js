@@ -7,14 +7,12 @@ class ApiClient {
     }
 
     async refreshAccessToken() {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) return null;
-
         try {
+            // Refresh token is in httpOnly cookie — no body needed
             const response = await fetch(`${this.baseURL}/auth/refresh`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken }),
             });
 
             if (!response.ok) return null;
@@ -23,7 +21,6 @@ class ApiClient {
             if (!data?.token) return null;
 
             localStorage.setItem('token', data.token);
-            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
             if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
 
             return data.token;
@@ -41,19 +38,16 @@ class ApiClient {
             ...options.headers,
         };
 
-        // Only set Content-Type for non-FormData requests
-        // If Content-Type is explicitly set to undefined (FormData), skip it
-        // Otherwise, default to application/json
         if (!('Content-Type' in headers)) {
             headers['Content-Type'] = 'application/json';
         }
-        // Remove explicitly undefined headers (for FormData)
         Object.keys(headers).forEach(key => {
             if (headers[key] === undefined) delete headers[key];
         });
 
         const config = {
             ...options,
+            credentials: 'include',
             headers,
         };
 
@@ -70,10 +64,8 @@ class ApiClient {
             if (response.status === 401) {
                 console.error('Unauthorized - clearing auth data');
                 localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
-                
-                // Prevent infinite loop if already on login page
+
                 if (window.location.pathname !== '/login') {
                     window.location.href = '/login';
                 }
@@ -86,23 +78,19 @@ class ApiClient {
                 throw new Error(error.message || 'Request failed');
             }
 
-            // Check if response has content
             const contentType = response.headers.get('content-type');
             const contentLength = response.headers.get('content-length');
 
-            // If no content or empty response, return null
             if (response.status === 204 || contentLength === '0' || !contentType?.includes('application/json')) {
                 return null;
             }
 
-            // Try to parse JSON, return null if empty
             const text = await response.text();
             if (!text || text.trim() === '') {
                 return null;
             }
 
-            const data = JSON.parse(text);
-            return data;
+            return JSON.parse(text);
         } catch (error) {
             console.error('API Error:', error);
             throw error;
@@ -123,7 +111,7 @@ class ApiClient {
         }
         return this.request(endpoint, {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: data !== undefined ? JSON.stringify(data) : undefined,
         });
     }
 
@@ -148,10 +136,8 @@ class ApiClient {
 
 const api = new ApiClient(API_BASE_URL);
 
-// Export API client
 export default api;
 
-// Export convenience methods
 export const apiGet = (endpoint) => api.get(endpoint);
 export const apiPost = (endpoint, data) => api.post(endpoint, data);
 export const apiPut = (endpoint, data) => api.put(endpoint, data);
