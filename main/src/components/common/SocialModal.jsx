@@ -1,4 +1,3 @@
-import { Send } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function SocialModal() {
