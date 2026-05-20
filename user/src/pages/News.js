@@ -1,4 +1,6 @@
 // News & Announcements Page (User Panel)
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 export default class News {
   constructor() {
     this.container = document.getElementById('main-content');
@@ -114,7 +116,7 @@ export default class News {
       }) : '';
 
       const imageHtml = item.imageUrl
-        ? `<div class="news-card-img"><img src="${item.imageUrl}" alt="${item.title}" loading="lazy" /></div>`
+        ? `<div class="news-card-img"><img src="${esc(item.imageUrl)}" alt="${esc(item.title)}" loading="lazy" /></div>`
         : '';
 
       const pinHtml = item.isPinned
@@ -122,7 +124,7 @@ export default class News {
         : '';
 
       const summaryHtml = item.summary
-        ? `<p class="news-card-desc">${item.summary}</p>`
+        ? `<p class="news-card-desc">${esc(item.summary)}</p>`
         : '';
 
       return `
@@ -135,7 +137,7 @@ export default class News {
               </span>
               ${pinHtml}
             </div>
-            <h3 class="news-card-title">${item.title}</h3>
+            <h3 class="news-card-title">${esc(item.title)}</h3>
             ${summaryHtml}
             <div class="news-card-bottom">
               <span class="news-card-date"><i class="fas fa-calendar-alt"></i> ${dateStr}</span>
@@ -179,7 +181,7 @@ export default class News {
     }) : '';
 
     const imageHtml = item.imageUrl
-      ? `<div class="detail-image"><img src="${item.imageUrl}" alt="${item.title}" /></div>`
+      ? `<div class="detail-image"><img src="${esc(item.imageUrl)}" alt="${esc(item.title)}" /></div>`
       : '';
 
     const overlay = document.createElement('div');
@@ -195,9 +197,9 @@ export default class News {
             </span>
             <span class="news-detail-date"><i class="fas fa-calendar-alt"></i> ${dateStr}</span>
           </div>
-          <h2 class="news-detail-title">${item.title}</h2>
-          ${item.summary ? `<p class="news-detail-summary">${item.summary}</p>` : ''}
-          <div class="news-detail-content">${item.content}</div>
+          <h2 class="news-detail-title">${esc(item.title)}</h2>
+          ${item.summary ? `<p class="news-detail-summary">${esc(item.summary)}</p>` : ''}
+          <div class="news-detail-content">${esc(item.content)}</div>
         </div>
       </div>
     `;

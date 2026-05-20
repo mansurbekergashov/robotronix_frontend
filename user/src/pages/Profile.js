@@ -3,6 +3,8 @@ import { AuthService } from '../services/auth.js';
 import { ProfileService } from '../services/profile.js';
 import showConfirm from '../services/confirm.js';
 
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 export default class Profile {
     constructor() {
         this.container = document.getElementById('main-content');
@@ -79,10 +81,10 @@ export default class Profile {
                             <input type="file" id="avatarInput" accept="image/*" style="display: none;">
                         </div>
                         <div class="profile-header-info">
-                            <h2 class="profile-name" id="profileHeaderName">${this.user.fullName}</h2>
-                            <p class="profile-email"><i class="fas fa-envelope"></i> ${this.user.email}</p>
+                            <h2 class="profile-name" id="profileHeaderName">${esc(this.user.fullName)}</h2>
+                            <p class="profile-email"><i class="fas fa-envelope"></i> ${esc(this.user.email)}</p>
                             <span class="profile-role-badge">
-                                <i class="fas fa-shield-alt"></i> ${this.user.role || 'USER'}
+                                <i class="fas fa-shield-alt"></i> ${esc(this.user.role) || 'USER'}
                             </span>
                         </div>
                     </div>
@@ -105,35 +107,35 @@ export default class Profile {
                                         <i class="fas fa-id-card"></i>
                                         <span>To'liq ism</span>
                                     </div>
-                                    <div class="info-display-value">${this.user.fullName}</div>
+                                    <div class="info-display-value">${esc(this.user.fullName)}</div>
                                 </div>
                                 <div class="info-display-row">
                                     <div class="info-display-label">
                                         <i class="fas fa-envelope"></i>
                                         <span>Email</span>
                                     </div>
-                                    <div class="info-display-value">${this.user.email}</div>
+                                    <div class="info-display-value">${esc(this.user.email)}</div>
                                 </div>
                                 <div class="info-display-row">
                                     <div class="info-display-label">
                                         <i class="fas fa-phone"></i>
                                         <span>Telefon</span>
                                     </div>
-                                    <div class="info-display-value">${this.user.phone || 'Kiritilmagan'}</div>
+                                    <div class="info-display-value">${esc(this.user.phone) || 'Kiritilmagan'}</div>
                                 </div>
                             </div>
                             <form id="editProfileForm" class="profile-form" style="display: none;">
                                 <div class="form-group">
                                     <label>To'liq ism</label>
-                                    <input type="text" name="fullName" value="${this.user.fullName}" required class="form-control">
+                                    <input type="text" name="fullName" value="${esc(this.user.fullName)}" required class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Email</label>
-                                    <input type="email" name="email" value="${this.user.email}" required class="form-control">
+                                    <input type="email" name="email" value="${esc(this.user.email)}" required class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Telefon</label>
-                                    <input type="tel" name="phone" value="${this.user.phone || ''}" 
+                                    <input type="tel" name="phone" value="${esc(this.user.phone) || ''}"
                                            pattern="^\\+998[0-9]{9}$" placeholder="+998901234567" class="form-control">
                                 </div>
                                 <div class="form-footer">
