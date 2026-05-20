@@ -1,6 +1,8 @@
 import { API_BASE_URL, getFileUrl } from '../config.js';
 import CheckoutModal from '../components/CheckoutModal.js';
 
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 
 export default class Products {
     constructor() {
@@ -66,27 +68,27 @@ export default class Products {
         grid.innerHTML = this.products.map(product => `
             <div class="product-card">
                 <div class="product-image">
-                    <img src="${getFileUrl(product.imageUrl)}" alt="${product.title}">
+                    <img src="${getFileUrl(product.imageUrl)}" alt="${esc(product.title)}">
                 </div>
                 <div class="product-content">
-                    <h3>${product.title}</h3>
-                    <p>${product.description || 'Arduino va elektronika sohasidagi eng sara to\'plam'}</p>
+                    <h3>${esc(product.title)}</h3>
+                    <p>${esc(product.description) || 'Arduino va elektronika sohasidagi eng sara to\'plam'}</p>
                     <div class="product-price">
                         <span class="price-main">${(product.price || 0).toLocaleString()} so'm</span>
                     </div>
                     <div class="product-actions">
                         <button class="btn-order-now buy-now"
                             data-id="${product.id}"
-                            data-title="${product.title}"
+                            data-title="${esc(product.title)}"
                             data-price="${product.price}"
-                            data-image="${product.imageUrl || ''}">
+                            data-image="${esc(product.imageUrl || '')}">
                             <i class="fas fa-bolt"></i> Buyurtma berish
                         </button>
                         <button class="btn-add-cart-outline add-to-cart"
                             data-id="${product.id}"
-                            data-title="${product.title}"
+                            data-title="${esc(product.title)}"
                             data-price="${product.price}"
-                            data-image="${product.imageUrl || ''}"
+                            data-image="${esc(product.imageUrl || '')}"
                             title="Savatga qo'shish">
                             <i class="fas fa-shopping-cart"></i>
                         </button>
