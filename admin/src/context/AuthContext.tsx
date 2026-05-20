@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
-    const { token, refreshToken, user: userData } = response.data;
+    const { token, user: userData } = response.data;
 
     if (userData.role !== 'ADMIN') {
       throw new Error('Faqat admin foydalanuvchilar kirishi mumkin');
