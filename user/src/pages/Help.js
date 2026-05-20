@@ -53,9 +53,9 @@ export default class Help {
                             <p class="help-desc">Sayt ishlashida kuzatilgan texnik xatoliklar, xatolar yoki yangi imkoniyatlar qo'shish bo'yicha takliflar bo'lsa dasturchiga murojaat qiling.</p>
                             
                             <div class="contact-methods">
-                                <a href="https://t.me/Bilmadm_0" target="_blank" class="contact-btn btn-telegram">
+                                <a href="https://t.me/Just_Boqiyev" target="_blank" class="contact-btn btn-telegram">
                                     <i class="fab fa-telegram"></i>
-                                    <span>@Bilmadm_0</span>
+                                    <span>@Just_Boqiyev</span>
                                 </a>
                                 
                                 <a href="tel:+998938090312" class="contact-btn btn-phone">
