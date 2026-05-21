@@ -18,6 +18,7 @@ interface OrderData {
   createdAt: string;
   trackingNumber?: string;
   shippingStatus?: string;
+  receiverJurisdictionId?: number;
 }
 
 export default function Orders() {
@@ -112,11 +113,21 @@ export default function Orders() {
   };
 
   const openShipModal = (id: number) => {
+    const order = orders.find(o => o.id === id);
     setSelectedJur(null);
     setJurSearch('');
     setJurisdictions([]);
     setServiceTypeCode('PARCEL');
     setShipModal({ open: true, orderId: id });
+    // Pre-fill if order already has a jurisdiction from user checkout
+    if (order?.receiverJurisdictionId) {
+      const preId = order.receiverJurisdictionId;
+      api.get('/geography/jurisdictions', { params: { levelId: 3, size: 1, search: String(preId) } })
+        .then(r => {
+          const found = (r.data?.data ?? []).find((j: any) => j.id === preId);
+          if (found) { setSelectedJur({ id: found.id, name: found.name }); setJurSearch(found.name); }
+        }).catch(() => {});
+    }
   };
 
   const searchJurisdictions = async (q: string) => {
@@ -154,6 +165,18 @@ export default function Orders() {
       setShipModal({ open: false, orderId: null });
     } catch (error: any) {
       showNotification(error?.response?.data?.message || 'UzPost ga yuborishda xatolik', 'error');
+    }
+  };
+
+  const cancelShipment = async (id: number) => {
+    try {
+      const res = await api.post(`/admin/orders/${id}/cancel-shipment`);
+      const updated = res.data;
+      setOrders(orders.map(o => o.id === id ? { ...o, ...updated } : o));
+      if (selectedOrder?.id === id) setSelectedOrder({ ...selectedOrder, ...updated });
+      showNotification('UzPost dan bekor qilindi', 'success');
+    } catch (error: any) {
+      showNotification(error?.response?.data?.message || 'UzPost bekor qilishda xatolik', 'error');
     }
   };
 
@@ -365,45 +388,62 @@ export default function Orders() {
                 ))}
               </div>
 
+              {/* Order management — admin only confirms or cancels */}
               <div className="status-management">
-                <h3>Holatni boshqarish</h3>
+                <h3>Buyurtmani boshqarish</h3>
                 <div className="status-actions">
                   <button
                     className="btn-status btn-info"
-                    disabled={selectedOrder.status === 'CONFIRMED' || selectedOrder.status === 'RECEIVED'}
+                    disabled={selectedOrder.status === 'CONFIRMED' || selectedOrder.status === 'SHIPPED'
+                      || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'RECEIVED'}
                     onClick={() => requestConfirm(selectedOrder.id, 'CONFIRMED')}
                   >
                     <FaCheck /> Tasdiqlash
                   </button>
                   <button
-                    className="btn-status btn-primary"
-                    disabled={selectedOrder.status === 'PREPARING' || selectedOrder.status === 'RECEIVED'}
-                    onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}
-                  >
-                    <FaBoxOpen /> Tayyorlash
-                  </button>
-                  <button
-                    className="btn-status btn-secondary"
-                    disabled={selectedOrder.status === 'SHIPPED' || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'RECEIVED'}
-                    onClick={() => openShipModal(selectedOrder.id)}
-                  >
-                    <FaTruck /> UzPost ga yuborish
-                  </button>
-                  <button
-                    className="btn-status btn-success"
-                    disabled={selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'RECEIVED'}
-                    onClick={() => updateStatus(selectedOrder.id, 'DELIVERED')}
-                  >
-                    <FaCheck /> Yetkazilgan qilish
-                  </button>
-                  <button
                     className="btn-status btn-danger"
-                    disabled={selectedOrder.status === 'CANCELLED' || selectedOrder.status === 'RECEIVED'}
+                    disabled={selectedOrder.status === 'CANCELLED' || selectedOrder.status === 'RECEIVED'
+                      || selectedOrder.status === 'SHIPPED' || selectedOrder.status === 'DELIVERED'}
                     onClick={() => updateStatus(selectedOrder.id, 'CANCELLED')}
                   >
                     <FaBan /> Bekor qilish
                   </button>
                 </div>
+              </div>
+
+              {/* UzPost — separate section */}
+              <div className="status-management" style={{ marginTop: '1rem', borderTop: '1px solid #2d3250', paddingTop: '1rem' }}>
+                <h3><FaTruck /> UzPost pochta</h3>
+                {selectedOrder.trackingNumber && (
+                  <p style={{ fontSize: '13px', color: '#8b92a7', marginBottom: '8px' }}>
+                    Tracking: <code>{selectedOrder.trackingNumber}</code>
+                    {selectedOrder.shippingStatus && (
+                      <span style={{ marginLeft: '8px', color: '#4ade80' }}>({selectedOrder.shippingStatus})</span>
+                    )}
+                  </p>
+                )}
+                <div className="status-actions">
+                  <button
+                    className="btn-status btn-secondary"
+                    disabled={!!selectedOrder.trackingNumber
+                      || (selectedOrder.status !== 'CONFIRMED' && selectedOrder.status !== 'PREPARING')}
+                    onClick={() => openShipModal(selectedOrder.id)}
+                    title={selectedOrder.trackingNumber ? 'Allaqachon yuborilgan' : ''}
+                  >
+                    <FaTruck /> UzPostga yuborish
+                  </button>
+                  <button
+                    className="btn-status btn-danger"
+                    disabled={!selectedOrder.trackingNumber}
+                    onClick={() => cancelShipment(selectedOrder.id)}
+                    title={!selectedOrder.trackingNumber ? 'Hali yuborilmagan' : ''}
+                  >
+                    <FaBan /> UzPost bekor qilish
+                  </button>
+                </div>
+                <p style={{ fontSize: '12px', color: '#8b92a7', marginTop: '6px' }}>
+                  Holat (SHIPPED → DELIVERED) UzPost dan avtomatik yangilanadi (har 30 daqiqada)
+                </p>
               </div>
             </div>
           </div>

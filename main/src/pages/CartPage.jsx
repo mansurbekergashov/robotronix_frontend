@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -14,10 +14,17 @@ const CartPage = () => {
     const navigate = useNavigate();
 
     const [isOrdering, setIsOrdering]     = useState(false);
-    const [orderData, setOrderData]        = useState({ shippingAddress: '', contactPhone: '' });
+    const [orderData, setOrderData]        = useState({ detailAddress: '', contactPhone: '' });
     const [paymentState, setPaymentState]  = useState(null); // null | 'waiting' | 'confirmed' | 'timeout'
     const [pendingOrderId, setPendingOrderId] = useState(null);
     const pollingRef = useRef(null);
+
+    // Jurisdiction (UzPost) state
+    const [jurSearch, setJurSearch]                 = useState('');
+    const [jurResults, setJurResults]               = useState([]);
+    const [jurLoading, setJurLoading]               = useState(false);
+    const [selectedJur, setSelectedJur]             = useState(null); // { id, name }
+    const jurTimer = useRef(null);
 
     // Polling tozalash
     const stopPolling = () => {
@@ -50,6 +57,23 @@ const CartPage = () => {
         }, POLL_TIMEOUT_MS);
     };
 
+    const searchJur = useCallback(async (q) => {
+        if (!q || q.length < 2) { setJurResults([]); return; }
+        setJurLoading(true);
+        try {
+            const res = await api.get('/geography/jurisdictions', { params: { levelId: 3, search: q, size: 20 } });
+            setJurResults(res.data?.data ?? []);
+        } catch { setJurResults([]); }
+        finally { setJurLoading(false); }
+    }, []);
+
+    const handleJurInput = (val) => {
+        setJurSearch(val);
+        setSelectedJur(null);
+        if (jurTimer.current) clearTimeout(jurTimer.current);
+        jurTimer.current = setTimeout(() => searchJur(val), 350);
+    };
+
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
         if (!isAuthenticated) {
@@ -57,11 +81,14 @@ const CartPage = () => {
             return;
         }
 
-        const shippingAddress = orderData.shippingAddress.trim();
-        const contactPhone    = orderData.contactPhone.trim();
+        if (!selectedJur) { alert("Shahar yoki tumaningizni tanlang"); return; }
 
-        if (!shippingAddress) { alert("Yetkazib berish manzilini kiriting"); return; }
-        if (!contactPhone)    { alert("Telefon raqamini kiriting");           return; }
+        const detailAddress   = orderData.detailAddress.trim();
+        const contactPhone    = orderData.contactPhone.trim();
+        const shippingAddress = `${selectedJur.name}, ${detailAddress}`;
+
+        if (!detailAddress)   { alert("Ko'cha va uy raqamini kiriting"); return; }
+        if (!contactPhone)    { alert("Telefon raqamini kiriting");      return; }
 
         setIsOrdering(true);
         try {
@@ -70,7 +97,10 @@ const CartPage = () => {
                 quantity:  item.quantity
             }));
 
-            const res = await api.post('/orders', { items, shippingAddress, contactPhone });
+            const res = await api.post('/orders', {
+                items, shippingAddress, contactPhone,
+                receiverJurisdictionId: selectedJur.id,
+            });
             const { id: orderId, paymentUrl } = res.data;
 
             setPendingOrderId(orderId);
@@ -210,16 +240,56 @@ const CartPage = () => {
                     </div>
 
                     <form onSubmit={handlePlaceOrder} className="checkout-form">
+                        {/* Jurisdiction search */}
+                        <div className="form-group" style={{ position: 'relative' }}>
+                            <label>Shahar / tuman (UzPost):</label>
+                            <input
+                                type="text"
+                                value={jurSearch}
+                                onChange={(e) => handleJurInput(e.target.value)}
+                                placeholder="Tuman yoki shaharni qidiring..."
+                                autoComplete="off"
+                                style={{ width: '100%' }}
+                            />
+                            {jurLoading && (
+                                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>Qidirilmoqda...</div>
+                            )}
+                            {jurResults.length > 0 && !selectedJur && (
+                                <div style={{
+                                    position: 'absolute', zIndex: 999, background: '#1e2235',
+                                    border: '1px solid #374151', borderRadius: '8px',
+                                    width: '100%', maxHeight: '180px', overflowY: 'auto', top: '100%', left: 0,
+                                }}>
+                                    {jurResults.map(j => (
+                                        <div
+                                            key={j.id}
+                                            onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurResults([]); }}
+                                            style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid #2d3250' }}
+                                        >
+                                            {j.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {selectedJur && (
+                                <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
+                                    ✓ Tanlandi: {selectedJur.name}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Detail address */}
                         <div className="form-group">
-                            <label>Yetkazib berish manzili:</label>
+                            <label>Ko'cha va uy raqami:</label>
                             <input
                                 type="text"
                                 required
-                                value={orderData.shippingAddress}
-                                onChange={(e) => setOrderData({ ...orderData, shippingAddress: e.target.value })}
-                                placeholder="Shahar, tuman, ko'cha, uy raqami..."
+                                value={orderData.detailAddress}
+                                onChange={(e) => setOrderData({ ...orderData, detailAddress: e.target.value })}
+                                placeholder="Ko'cha nomi, uy/kvartira raqami"
                             />
                         </div>
+
                         <div className="form-group">
                             <label>Telefon raqami:</label>
                             <input
