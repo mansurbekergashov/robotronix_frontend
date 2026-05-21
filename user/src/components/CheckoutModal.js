@@ -11,14 +11,14 @@ export default class CheckoutModal {
         this.items     = options.items     || [];
         this.isCartCheckout = options.isCartCheckout || false;
 
-        this.regions = [];
-        this.districts = [];
-        this.selectedRegion = '';
-        this.districtSearch = '';
+        this.selectedJurisdiction = null; // { id, name }
+        this._jurResults = [];
+        this._jurTimer = null;
         this.phone = localStorage.getItem('userPhone') || '';
         this._pollTimer = null;
         this._pollTimeout = null;
         this._modal = null;
+        this._submitting = false;
     }
 
     render() {
@@ -37,25 +37,19 @@ export default class CheckoutModal {
                 <div class="modal-body" id="checkoutBody">
                     <form class="checkout-form" id="checkoutForm">
                         <div class="detail-grid">
-                            <div class="detail-item full-width">
-                                <label><i class="fas fa-map-marker-alt"></i> Viloyat / Shahar</label>
-                                <select id="regionSelect" class="form-input" required>
-                                    <option value="">— Tanlang —</option>
-                                </select>
-                            </div>
-                            <div class="detail-item full-width">
-                                <label><i class="fas fa-city"></i> Tuman / Shahar</label>
-                                <div style="position:relative">
-                                    <input type="text" id="districtSearch" class="form-input"
-                                           placeholder="Qidirish..." autocomplete="off"
-                                           style="margin-bottom:0">
-                                    <div id="districtDropdown" style="
-                                        display:none; position:absolute; top:100%; left:0; right:0;
-                                        background:#1e2535; border:1px solid #2d3748; border-radius:8px;
-                                        max-height:180px; overflow-y:auto; z-index:9999; margin-top:2px;
-                                    "></div>
+                            <div class="detail-item full-width" style="position:relative">
+                                <label><i class="fas fa-map-marker-alt"></i> Shahar / Tuman (UzPost)</label>
+                                <input type="text" id="jurSearchInput" class="form-input"
+                                       placeholder="Tuman yoki shahar nomini kiriting..."
+                                       autocomplete="off">
+                                <div id="jurDropdown" style="
+                                    display:none; position:absolute; top:100%; left:0; right:0;
+                                    background:#1e2535; border:1px solid #2d3748; border-radius:8px;
+                                    max-height:180px; overflow-y:auto; z-index:9999; margin-top:2px;
+                                "></div>
+                                <div id="jurSelected" style="display:none; font-size:12px; color:#10b981; margin-top:4px;">
+                                    <i class="fas fa-check-circle"></i> <span id="jurSelectedName"></span>
                                 </div>
-                                <input type="hidden" id="districtValue" required>
                             </div>
                             <div class="detail-item full-width">
                                 <label><i class="fas fa-road"></i> Ko'cha / Uy raqami</label>
@@ -125,114 +119,79 @@ export default class CheckoutModal {
         document.body.appendChild(modal);
         this._modal = modal;
         this._setupEventListeners(modal);
-        this._loadRegions(modal);
     }
 
-    async _loadRegions(modal) {
-        const regionSelect = modal.querySelector('#regionSelect');
-        try {
-            const regions = await api.get('/geography/regions');
-            this.regions = Array.isArray(regions) ? regions : [];
-        } catch {
-            // Fallback to static list if API unavailable
-            this.regions = [
-                "Toshkent sh.", "Toshkent vil.", "Andijon", "Buxoro", "Farg'ona",
-                "Jizzax", "Xorazm", "Namangan", "Navoiy", "Qashqadaryo",
-                "Samarqand", "Sirdaryo", "Surxondaryo", "Qoraqalpog'iston"
-            ];
-        }
-        this.regions.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r;
-            opt.textContent = r;
-            regionSelect.appendChild(opt);
-        });
-    }
-
-    async _loadDistricts(region, modal) {
-        const searchInput = modal.querySelector('#districtSearch');
-        const districtValue = modal.querySelector('#districtValue');
-        const dropdown = modal.querySelector('#districtDropdown');
-
-        searchInput.value = '';
-        districtValue.value = '';
-        dropdown.style.display = 'none';
-        this.districts = [];
-
-        if (!region) return;
-
-        searchInput.placeholder = 'Yuklanmoqda...';
-        try {
-            const districts = await api.get(`/geography/districts?region=${encodeURIComponent(region)}`);
-            this.districts = Array.isArray(districts) ? districts : [];
-        } catch {
-            this.districts = [];
-        }
-        searchInput.placeholder = this.districts.length ? 'Qidirish...' : 'Tuman/shahar kiriting';
-        this._renderDistrictDropdown(modal, '');
-    }
-
-    _renderDistrictDropdown(modal, query) {
-        const dropdown = modal.querySelector('#districtDropdown');
-        const districtValue = modal.querySelector('#districtValue');
-        const searchInput = modal.querySelector('#districtSearch');
-
-        const filtered = query
-            ? this.districts.filter(d => d.toLowerCase().includes(query.toLowerCase()))
-            : this.districts;
-
-        if (!filtered.length) {
-            dropdown.style.display = 'none';
+    async _searchJurisdictions(query) {
+        if (!query || query.length < 2) {
+            this._hideDropdown();
             return;
         }
+        try {
+            const res = await api.get(`/geography/jurisdictions?levelId=3&search=${encodeURIComponent(query)}&size=20`);
+            this._jurResults = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+        } catch {
+            this._jurResults = [];
+        }
+        this._renderDropdown();
+    }
 
-        dropdown.innerHTML = filtered.map(d => `
-            <div class="district-option" data-value="${d}" style="
+    _renderDropdown() {
+        const modal = this._modal;
+        if (!modal) return;
+        const dropdown = modal.querySelector('#jurDropdown');
+        if (!this._jurResults.length) { dropdown.style.display = 'none'; return; }
+
+        dropdown.innerHTML = this._jurResults.map(j => `
+            <div class="district-option" data-id="${j.id}" data-name="${j.name}" style="
                 padding:10px 14px; cursor:pointer; color:#e2e8f0; font-size:14px;
                 border-bottom:1px solid #2d3748;
-            " onmouseover="this.style.background='#2d3748'" onmouseout="this.style.background=''">${d}</div>
+            " onmouseover="this.style.background='#2d3748'" onmouseout="this.style.background=''">
+                ${j.name}
+            </div>
         `).join('');
 
         dropdown.querySelectorAll('.district-option').forEach(opt => {
             opt.addEventListener('click', () => {
-                const val = opt.dataset.value;
-                searchInput.value = val;
-                districtValue.value = val;
-                dropdown.style.display = 'none';
+                const id   = parseInt(opt.dataset.id);
+                const name = opt.dataset.name;
+                this._selectJurisdiction(id, name);
             });
         });
 
         dropdown.style.display = 'block';
     }
 
+    _selectJurisdiction(id, name) {
+        this.selectedJurisdiction = { id, name };
+        const modal = this._modal;
+        modal.querySelector('#jurSearchInput').value = name;
+        modal.querySelector('#jurDropdown').style.display = 'none';
+        modal.querySelector('#jurSelected').style.display = 'block';
+        modal.querySelector('#jurSelectedName').textContent = name;
+    }
+
+    _hideDropdown() {
+        if (this._modal) this._modal.querySelector('#jurDropdown').style.display = 'none';
+    }
+
     _setupEventListeners(modal) {
         modal.querySelector('#closeCheckout').onclick = () => this.close();
         modal.onclick = (e) => { if (e.target === modal) this.close(); };
 
-        // Region change → load districts
-        modal.querySelector('#regionSelect').onchange = async (e) => {
-            this.selectedRegion = e.target.value;
-            await this._loadDistricts(this.selectedRegion, modal);
-        };
-
-        // District search
-        const searchInput = modal.querySelector('#districtSearch');
-        const dropdown = modal.querySelector('#districtDropdown');
-
-        searchInput.addEventListener('input', (e) => {
+        // Jurisdiction search input
+        const jurInput = modal.querySelector('#jurSearchInput');
+        jurInput.addEventListener('input', (e) => {
             const q = e.target.value.trim();
-            modal.querySelector('#districtValue').value = q;
-            if (this.districts.length) {
-                this._renderDistrictDropdown(modal, q);
-            }
-        });
-
-        searchInput.addEventListener('focus', () => {
-            if (this.districts.length) this._renderDistrictDropdown(modal, searchInput.value);
+            // Clear selection if user edits
+            this.selectedJurisdiction = null;
+            modal.querySelector('#jurSelected').style.display = 'none';
+            if (this._jurTimer) clearTimeout(this._jurTimer);
+            this._jurTimer = setTimeout(() => this._searchJurisdictions(q), 350);
         });
 
         document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target) && e.target !== searchInput) {
+            const dropdown = modal.querySelector('#jurDropdown');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== jurInput) {
                 dropdown.style.display = 'none';
             }
         });
@@ -256,33 +215,35 @@ export default class CheckoutModal {
 
         modal.querySelector('#checkoutForm').onsubmit = async (e) => {
             e.preventDefault();
-            const submitBtn = modal.querySelector('#submitOrderBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buyurtma yaratilmoqda...';
+            if (this._submitting) return;
 
-            const region   = modal.querySelector('#regionSelect').value;
-            const district = modal.querySelector('#districtValue').value.trim();
-            const street   = modal.querySelector('#streetInput').value.trim();
-            const phone    = modal.querySelector('#phoneInput').value.trim();
+            const submitBtn = modal.querySelector('#submitOrderBtn');
+            const street = modal.querySelector('#streetInput').value.trim();
+            const phone  = modal.querySelector('#phoneInput').value.trim();
 
             const reset = (msg) => {
                 toast.warning(msg);
+                this._submitting = false;
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
             };
 
-            if (!region)   return reset('Viloyatni tanlang');
-            if (!district) return reset('Tuman/shaharni kiriting');
-            if (!street)   return reset("Ko'cha/uy raqamini kiriting");
-            if (!phone)    return reset('Telefon raqamini kiriting');
+            if (!this.selectedJurisdiction) return reset('Shahar yoki tumaningizni tanlang');
+            if (!street)                     return reset("Ko'cha/uy raqamini kiriting");
+            if (!phone)                      return reset('Telefon raqamini kiriting');
+
+            this._submitting = true;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buyurtma yaratilmoqda...';
 
             localStorage.setItem('userPhone', phone);
 
             try {
                 const orderData = {
                     items: this.items.map(item => ({ productId: item.id, quantity: item.quantity })),
-                    shippingAddress: `${region}, ${district}, ${street}`,
+                    shippingAddress: `${this.selectedJurisdiction.name}, ${street}`,
                     contactPhone: phone,
+                    receiverJurisdictionId: this.selectedJurisdiction.id,
                 };
 
                 const response = await api.post('/orders', orderData);
