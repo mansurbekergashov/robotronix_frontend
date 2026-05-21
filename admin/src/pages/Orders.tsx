@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
@@ -29,6 +29,15 @@ export default function Orders() {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // UzPost ship modal state
+  const [shipModal, setShipModal] = useState<{ open: boolean; orderId: number | null }>({ open: false, orderId: null });
+  const [jurSearch, setJurSearch] = useState('');
+  const [jurisdictions, setJurisdictions] = useState<{ id: number; name: string }[]>([]);
+  const [jurLoading, setJurLoading] = useState(false);
+  const [selectedJur, setSelectedJur] = useState<{ id: number; name: string } | null>(null);
+  const [serviceTypeCode, setServiceTypeCode] = useState('PARCEL');
+  const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -102,13 +111,47 @@ export default function Orders() {
     updateStatus(id, status);
   };
 
-  const shipOrder = async (id: number) => {
+  const openShipModal = (id: number) => {
+    setSelectedJur(null);
+    setJurSearch('');
+    setJurisdictions([]);
+    setServiceTypeCode('PARCEL');
+    setShipModal({ open: true, orderId: id });
+  };
+
+  const searchJurisdictions = async (q: string) => {
+    if (!q.trim()) { setJurisdictions([]); return; }
+    setJurLoading(true);
     try {
-      const res = await api.post(`/admin/orders/${id}/ship`);
+      const res = await api.get('/geography/jurisdictions', { params: { levelId: 3, search: q, size: 30 } });
+      const items = res.data?.data ?? [];
+      setJurisdictions(items.map((j: any) => ({ id: j.id, name: j.name })));
+    } catch {
+      setJurisdictions([]);
+    } finally {
+      setJurLoading(false);
+    }
+  };
+
+  const handleJurSearchChange = (val: string) => {
+    setJurSearch(val);
+    setSelectedJur(null);
+    if (jurSearchTimer.current) clearTimeout(jurSearchTimer.current);
+    jurSearchTimer.current = setTimeout(() => searchJurisdictions(val), 400);
+  };
+
+  const confirmShip = async () => {
+    if (!selectedJur || !shipModal.orderId) return;
+    try {
+      const res = await api.post(`/admin/orders/${shipModal.orderId}/ship`, {
+        receiverJurisdictionId: selectedJur.id,
+        serviceTypeCode,
+      });
       const updated = res.data;
-      setOrders(orders.map(o => o.id === id ? { ...o, ...updated } : o));
-      if (selectedOrder?.id === id) setSelectedOrder({ ...selectedOrder, ...updated });
+      setOrders(orders.map(o => o.id === shipModal.orderId ? { ...o, ...updated } : o));
+      if (selectedOrder?.id === shipModal.orderId) setSelectedOrder({ ...selectedOrder, ...updated });
       showNotification(`UzPost ga yuborildi. Tracking: ${updated.trackingNumber || '—'}`, 'success');
+      setShipModal({ open: false, orderId: null });
     } catch (error: any) {
       showNotification(error?.response?.data?.message || 'UzPost ga yuborishda xatolik', 'error');
     }
@@ -342,7 +385,7 @@ export default function Orders() {
                   <button
                     className="btn-status btn-secondary"
                     disabled={selectedOrder.status === 'SHIPPED' || selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'RECEIVED'}
-                    onClick={() => shipOrder(selectedOrder.id)}
+                    onClick={() => openShipModal(selectedOrder.id)}
                   >
                     <FaTruck /> UzPost ga yuborish
                   </button>
@@ -362,6 +405,83 @@ export default function Orders() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {shipModal.open && (
+        <div className="modal-overlay" onClick={() => setShipModal({ open: false, orderId: null })}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h2><FaTruck /> UzPost ga yuborish</h2>
+              <button className="modal-close" onClick={() => setShipModal({ open: false, orderId: null })}><FaTimes /></button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                  Qabul qiluvchi tumani / shahri *
+                </label>
+                <div className="search-wrapper" style={{ marginBottom: '6px' }}>
+                  <FaSearch className="search-icon" />
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Tuman yoki shahar nomini kiriting..."
+                    value={jurSearch}
+                    onChange={e => handleJurSearchChange(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                {jurLoading && <p style={{ color: '#8b92a7', fontSize: '13px' }}>Qidirilmoqda...</p>}
+                {!jurLoading && jurisdictions.length > 0 && (
+                  <div style={{ border: '1px solid #2d3250', borderRadius: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                    {jurisdictions.map(j => (
+                      <div
+                        key={j.id}
+                        onClick={() => { setSelectedJur(j); setJurSearch(j.name); setJurisdictions([]); }}
+                        style={{
+                          padding: '8px 12px', cursor: 'pointer', fontSize: '14px',
+                          background: selectedJur?.id === j.id ? '#2d3250' : 'transparent',
+                        }}
+                      >
+                        {j.name} <span style={{ color: '#8b92a7', fontSize: '12px' }}>#{j.id}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!jurLoading && jurSearch.length > 1 && jurisdictions.length === 0 && !selectedJur && (
+                  <p style={{ color: '#8b92a7', fontSize: '13px' }}>Natija topilmadi</p>
+                )}
+                {selectedJur && (
+                  <p style={{ color: '#4ade80', fontSize: '13px', marginTop: '4px' }}>
+                    ✓ Tanlandi: {selectedJur.name} (ID: {selectedJur.id})
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Xizmat turi</label>
+                <select
+                  className="filter-select"
+                  style={{ width: '100%' }}
+                  value={serviceTypeCode}
+                  onChange={e => setServiceTypeCode(e.target.value)}
+                >
+                  <option value="PARCEL">PARCEL — Pochta jo'natmasi</option>
+                  <option value="LETTER">LETTER — Xat</option>
+                  <option value="BANDEROL">BANDEROL — Banderol</option>
+                  <option value="EMS">EMS — Tezkor pochta</option>
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', padding: '1rem' }}>
+              <button className="btn-status btn-danger" onClick={() => setShipModal({ open: false, orderId: null })}>
+                <FaTimes /> Bekor qilish
+              </button>
+              <button className="btn-status btn-secondary" disabled={!selectedJur} onClick={confirmShip}>
+                <FaTruck /> Yuborish
+              </button>
             </div>
           </div>
         </div>
