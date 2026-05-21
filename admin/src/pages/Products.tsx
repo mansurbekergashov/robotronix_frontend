@@ -134,18 +134,16 @@ export default function Products() {
         data.append('image', imageFile);
       }
 
-      let response: any;
       if (selectedProduct) {
-        response = await api.put(`/admin/products/${selectedProduct.id}`, data, {
+        await api.put(`/admin/products/${selectedProduct.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        setProducts(products.map(p => p.id === selectedProduct.id ? response.data : p));
       } else {
-        response = await api.post('/admin/products', data, {
+        await api.post('/admin/products', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        setProducts([response.data, ...products]);
       }
+      await fetchProducts();
       setIsModalOpen(false);
       setImageFile(null);
     } catch (error: any) {
