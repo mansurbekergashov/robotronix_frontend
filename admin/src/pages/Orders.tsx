@@ -136,7 +136,7 @@ export default function Orders() {
     try {
       const res = await api.get('/geography/jurisdictions', { params: { levelId: 3, search: q, size: 30 } });
       const items = res.data?.data ?? [];
-      setJurisdictions(items.map((j: any) => ({ id: j.id, name: j.name })));
+      setJurisdictions(items);
     } catch {
       setJurisdictions([]);
     } finally {
@@ -476,18 +476,23 @@ export default function Orders() {
                 {jurLoading && <p style={{ color: '#8b92a7', fontSize: '13px' }}>Qidirilmoqda...</p>}
                 {!jurLoading && jurisdictions.length > 0 && (
                   <div style={{ border: '1px solid #2d3250', borderRadius: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                    {jurisdictions.map(j => (
-                      <div
-                        key={j.id}
-                        onClick={() => { setSelectedJur(j); setJurSearch(j.name); setJurisdictions([]); }}
-                        style={{
-                          padding: '8px 12px', cursor: 'pointer', fontSize: '14px',
-                          background: selectedJur?.id === j.id ? '#2d3250' : 'transparent',
-                        }}
-                      >
-                        {j.name} <span style={{ color: '#8b92a7', fontSize: '12px' }}>#{j.id}</span>
-                      </div>
-                    ))}
+                    {jurisdictions.map((j: any) => {
+                      const path = Array.isArray(j.hierarchy) && j.hierarchy.length
+                        ? j.hierarchy.map((h: any) => h.name).join(' > ') : '';
+                      return (
+                        <div
+                          key={j.id}
+                          onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurisdictions([]); }}
+                          style={{
+                            padding: '8px 12px', cursor: 'pointer',
+                            background: selectedJur?.id === j.id ? '#2d3250' : 'transparent',
+                          }}
+                        >
+                          <div style={{ fontSize: '14px' }}>{j.name}</div>
+                          {path && <div style={{ fontSize: '11px', color: '#8b92a7', marginTop: '2px' }}>{path}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {!jurLoading && jurSearch.length > 1 && jurisdictions.length === 0 && !selectedJur && (

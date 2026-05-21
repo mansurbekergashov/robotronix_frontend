@@ -260,15 +260,20 @@ const CartPage = () => {
                                     border: '1px solid #374151', borderRadius: '8px',
                                     width: '100%', maxHeight: '180px', overflowY: 'auto', top: '100%', left: 0,
                                 }}>
-                                    {jurResults.map(j => (
-                                        <div
-                                            key={j.id}
-                                            onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurResults([]); }}
-                                            style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid #2d3250' }}
-                                        >
-                                            {j.name}
-                                        </div>
-                                    ))}
+                                    {jurResults.map(j => {
+                                        const path = Array.isArray(j.hierarchy) && j.hierarchy.length
+                                            ? j.hierarchy.map(h => h.name).join(' > ') : '';
+                                        return (
+                                            <div
+                                                key={j.id}
+                                                onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurResults([]); }}
+                                                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #2d3250' }}
+                                            >
+                                                <div style={{ fontSize: '14px' }}>{j.name}</div>
+                                                {path && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{path}</div>}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                             {selectedJur && (

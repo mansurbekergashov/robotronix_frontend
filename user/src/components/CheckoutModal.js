@@ -141,14 +141,18 @@ export default class CheckoutModal {
         const dropdown = modal.querySelector('#jurDropdown');
         if (!this._jurResults.length) { dropdown.style.display = 'none'; return; }
 
-        dropdown.innerHTML = this._jurResults.map(j => `
+        dropdown.innerHTML = this._jurResults.map(j => {
+            const path = Array.isArray(j.hierarchy) && j.hierarchy.length
+                ? j.hierarchy.map(h => h.name).join(' > ')
+                : '';
+            return `
             <div class="district-option" data-id="${j.id}" data-name="${j.name}" style="
-                padding:10px 14px; cursor:pointer; color:#e2e8f0; font-size:14px;
-                border-bottom:1px solid #2d3748;
+                padding:10px 14px; cursor:pointer; border-bottom:1px solid #2d3748;
             " onmouseover="this.style.background='#2d3748'" onmouseout="this.style.background=''">
-                ${j.name}
-            </div>
-        `).join('');
+                <div style="color:#e2e8f0; font-size:14px;">${j.name}</div>
+                ${path ? `<div style="color:#8b92a7; font-size:12px; margin-top:2px;">${path}</div>` : ''}
+            </div>`;
+        }).join('');
 
         dropdown.querySelectorAll('.district-option').forEach(opt => {
             opt.addEventListener('click', () => {
