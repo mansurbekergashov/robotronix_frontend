@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaBox, FaTimes, FaSave } from 'react-icons/fa';
 import api from '../services/api';
 import { useToast } from '../hooks/useToast';
@@ -50,6 +50,7 @@ export default function Products() {
   const [paymentCards, setPaymentCards] = useState<PaymentCardOption[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     fetchProducts();
@@ -116,15 +117,17 @@ export default function Products() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setIsSubmitting(true);
 
     // Basic validation
     if (!formData.title.trim()) {
+      submittingRef.current = false;
+      setIsSubmitting(false);
       toast.warning("Mahsulot nomi kiritilishi shart");
       return;
     }
-
-    setIsSubmitting(true);
     try {
       const data = new FormData();
       const { id, ...productPayload } = formData as ProductData;
@@ -151,7 +154,7 @@ export default function Products() {
       const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
       toast.error(errorMsg);
     } finally {
-      // Small timeout to prevent accidental double-clicks even after submission ends
+      submittingRef.current = false;
       setTimeout(() => setIsSubmitting(false), 500);
     }
   };
