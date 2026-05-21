@@ -7,6 +7,7 @@ export default class Orders {
   constructor() {
     this.container = document.getElementById("main-content");
     this.orders = [];
+    this.initialLoad = true;
     this.refreshInterval = null;
     this.selectedOrder = null;
     this.onOrderUpdate = (event) => {

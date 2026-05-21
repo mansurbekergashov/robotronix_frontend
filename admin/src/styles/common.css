@@ -452,3 +452,98 @@
   }
 }
 
+/* ===== MODAL & FORM BUTTON OVERRIDES =====
+   Scoped selectors (specificity 0-2-0) always beat unscoped
+   page-level .btn-* rules (specificity 0-1-0) from lazy-loaded CSS. */
+
+.modal-content .btn-primary,
+.geography-modal .btn-primary,
+.modal-footer .btn-primary,
+.form-actions .btn-primary,
+.modal-actions .btn-primary,
+.news-modal-footer .btn-primary,
+.team-modal-footer .btn-primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 20px !important;
+  background: #214291 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s !important;
+}
+
+.modal-content .btn-secondary,
+.geography-modal .btn-secondary,
+.modal-footer .btn-secondary,
+.form-actions .btn-secondary,
+.modal-actions .btn-secondary,
+.news-modal-footer .btn-secondary,
+.team-modal-footer .btn-secondary {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 20px !important;
+  background: var(--card-bg) !important;
+  border: var(--border-color) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s !important;
+}
+
+.dark .modal-content .btn-secondary,
+.dark .geography-modal .btn-secondary,
+.dark .modal-footer .btn-secondary,
+.dark .form-actions .btn-secondary,
+.dark .modal-actions .btn-secondary,
+.dark .news-modal-footer .btn-secondary,
+.dark .team-modal-footer .btn-secondary {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.modal-content .btn-primary:hover,
+.geography-modal .btn-primary:hover,
+.modal-footer .btn-primary:hover,
+.form-actions .btn-primary:hover,
+.modal-actions .btn-primary:hover,
+.news-modal-footer .btn-primary:hover,
+.team-modal-footer .btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(33, 66, 145, 0.4) !important;
+}
+
+.modal-content .btn-secondary:hover,
+.geography-modal .btn-secondary:hover,
+.modal-footer .btn-secondary:hover,
+.form-actions .btn-secondary:hover,
+.modal-actions .btn-secondary:hover,
+.news-modal-footer .btn-secondary:hover,
+.team-modal-footer .btn-secondary:hover {
+  opacity: 0.85 !important;
+  transform: translateY(-1px) !important;
+}
+
+.modal-content .btn-primary:disabled,
+.modal-footer .btn-primary:disabled,
+.form-actions .btn-primary:disabled,
+.modal-actions .btn-primary:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.modal-content .btn-secondary:disabled,
+.modal-footer .btn-secondary:disabled,
+.form-actions .btn-secondary:disabled,
+.modal-actions .btn-secondary:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+

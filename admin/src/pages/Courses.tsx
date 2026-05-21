@@ -352,6 +352,7 @@ export default function Courses() {
                 />
               </div>
               <div className="form-actions">
+                <button className="btn-secondary" onClick={handleCloseModal}>Bekor qilish</button>
                 <button type="submit" className="btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? <><FaSave /> Saqlanmoqda...</> : <><FaSave /> Saqlash</>}
                 </button>

@@ -79,6 +79,7 @@
 }
 
 .form-actions {
+  padding: 1rem 0.5rem;
   gap: 1rem;
   display: flex;
   justify-content: flex-end;

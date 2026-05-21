@@ -139,11 +139,11 @@ export default class Profile {
                                            pattern="^\\+998[0-9]{9}$" placeholder="+998901234567" class="form-control">
                                 </div>
                                 <div class="form-footer">
-                                    <button type="submit" class="btn-primary btn-sm" id="saveProfileBtn">
-                                        <i class="fas fa-save"></i> Saqlash
-                                    </button>
                                     <button type="button" class="btn-secondary btn-sm" id="cancelEditBtn">
                                         Bekor qilish
+                                    </button>
+                                    <button type="submit" class="btn-primary btn-sm" id="saveProfileBtn">
+                                        <i class="fas fa-save"></i> Saqlash
                                     </button>
                                 </div>
                             </form>

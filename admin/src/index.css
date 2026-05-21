@@ -37,10 +37,11 @@ body.dark input:-webkit-autofill:focus {
 :root {
   min-height: 100vh;  
   
-  /* Colors */  
+  /* Colors */
   --primary-color: #0066ff;
   --secondary-color: #454545;  /*76797f*/
   --accent-color: #ff6b35;
+  --accent-primary: #6366f1;
   --bg: #fff;
   --darker-bg: #214291;
   --card-bg: #fff;
@@ -64,6 +65,7 @@ body.dark input:-webkit-autofill:focus {
   --primary-color: #0066ff;
   --secondary-color: #8b92a7;
   --accent-color: #ff6b35;
+  --accent-primary: #6366f1;
   --bg: #0a0e1a;
   --darker-bg: #050810;
   --card-bg: #1a1f2e;

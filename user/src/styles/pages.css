@@ -2019,14 +2019,14 @@ body.user-logged-in {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.05);
-    color: #8b92a7;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .actions-card .info-card-body {
@@ -2112,14 +2112,14 @@ body.user-logged-in {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    border: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #8b92a7;
+    color: var(--text-primary);
     transition: all 0.3s;
 }
 
@@ -3144,15 +3144,15 @@ emoji-picker {
 }
 
 .btn-secondary {
-    background: var(--secondary-color);
-    color: #fff;
+    background: var(--card-bg);
+    color: var(--text-primary);
     text-decoration: none;
     opacity: 80%;
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background: var(--text-secondary);
-    opacity: 60%;
+    transform: translateY(-2px);
 
 }
 
@@ -3196,20 +3196,20 @@ emoji-picker {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--border-color);
-    border: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     font-size: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     transition: all 0.3s;
 }
 
 .modal-close:hover {
     background: var(--text-secondary);
-    color: white;
+    color: var(--text-primary);
 }
 
 .modal-content form {

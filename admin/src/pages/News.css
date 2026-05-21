@@ -551,7 +551,7 @@
 
 .btn-primary {
   background: #214291;
-  color: var(--text-primary);
+  color: #fff;
   border: none;
   padding: 0.7rem 1.5rem;
   border-radius: 10px;
