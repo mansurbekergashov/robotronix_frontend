@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { useEffect } from "react";
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/common/Navbar'
