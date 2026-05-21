@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useEffect } from "react";
 import { AuthProvider } from './context/AuthContext'
@@ -21,6 +21,12 @@ const CartPage = lazy(() => import('./pages/CartPage'))
 const CoursesPage = lazy(() => import('./pages/CoursesPage'))
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
+
+// Payme callback redirect: robotronix.uz/orders → /user-panel/#orders
+function OrdersRedirect() {
+  useEffect(() => { window.location.replace('/user-panel/#orders'); }, []);
+  return <div style={{ textAlign: 'center', padding: '3rem', color: '#8b92a7' }}>Buyurtmalar sahifasiga o'tilmoqda...</div>;
+}
 
 function App() {
   useEffect(() => {
@@ -51,6 +57,8 @@ function App() {
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/news" element={<NewsPage />} />
+              {/* Payme callback redirect → user panel orders */}
+              <Route path="/orders" element={<OrdersRedirect />} />
             </Routes>
           </Suspense>
         </main>
