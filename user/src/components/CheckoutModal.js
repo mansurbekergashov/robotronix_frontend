@@ -12,6 +12,7 @@ export default class CheckoutModal {
         this.isCartCheckout = options.isCartCheckout || false;
 
         this.selectedJurisdiction = null; // { id, name }
+        this._postalIndex = '';
         this._jurResults = [];
         this._jurTimer = null;
         this.phone = localStorage.getItem('userPhone') || '';
@@ -146,7 +147,7 @@ export default class CheckoutModal {
                 ? j.hierarchy.map(h => h.name).join(' > ')
                 : '';
             return `
-            <div class="district-option" data-id="${j.id}" data-name="${j.name}" style="
+            <div class="district-option" data-id="${j.id}" data-name="${j.name}" data-path="${path}" style="
                 padding:10px 14px; cursor:pointer; border-bottom:1px solid #2d3748;
             " onmouseover="this.style.background='#2d3748'" onmouseout="this.style.background=''">
                 <div style="color:#e2e8f0; font-size:14px;">${j.name}</div>
@@ -158,20 +159,36 @@ export default class CheckoutModal {
             opt.addEventListener('click', () => {
                 const id   = parseInt(opt.dataset.id);
                 const name = opt.dataset.name;
-                this._selectJurisdiction(id, name);
+                const path = opt.dataset.path || '';
+                this._selectJurisdiction(id, name, path);
             });
         });
 
         dropdown.style.display = 'block';
     }
 
-    _selectJurisdiction(id, name) {
+    async _selectJurisdiction(id, name, hierarchyPath = '') {
         this.selectedJurisdiction = { id, name };
         const modal = this._modal;
         modal.querySelector('#jurSearchInput').value = name;
         modal.querySelector('#jurDropdown').style.display = 'none';
         modal.querySelector('#jurSelected').style.display = 'block';
         modal.querySelector('#jurSelectedName').textContent = name;
+
+        // Auto-detect postal index
+        try {
+            const res = await api.get(
+                `/geography/postal-index?jurisdictionName=${encodeURIComponent(name)}&hierarchyPath=${encodeURIComponent(hierarchyPath)}`
+            );
+            const data = res && res.data ? res.data : res;
+            if (data?.found && data.postalIndex) {
+                this._postalIndex = data.postalIndex;
+                const el = modal.querySelector('#jurSelectedName');
+                if (el) el.textContent = `${name} (indeks: ${data.postalIndex})`;
+            } else {
+                this._postalIndex = '';
+            }
+        } catch { this._postalIndex = ''; }
     }
 
     _hideDropdown() {
@@ -188,6 +205,7 @@ export default class CheckoutModal {
             const q = e.target.value.trim();
             // Clear selection if user edits
             this.selectedJurisdiction = null;
+            this._postalIndex = '';
             modal.querySelector('#jurSelected').style.display = 'none';
             if (this._jurTimer) clearTimeout(this._jurTimer);
             this._jurTimer = setTimeout(() => this._searchJurisdictions(q), 350);
@@ -248,6 +266,7 @@ export default class CheckoutModal {
                     shippingAddress: `${this.selectedJurisdiction.name}, ${street}`,
                     contactPhone: phone,
                     receiverJurisdictionId: this.selectedJurisdiction.id,
+                    postalIndex: this._postalIndex || undefined,
                 };
 
                 const response = await api.post('/orders', orderData);

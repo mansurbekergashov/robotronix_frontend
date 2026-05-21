@@ -19,6 +19,7 @@ interface OrderData {
   trackingNumber?: string;
   shippingStatus?: string;
   receiverJurisdictionId?: number;
+  postalIndex?: string;
 }
 
 export default function Orders() {
@@ -38,6 +39,8 @@ export default function Orders() {
   const [jurLoading, setJurLoading] = useState(false);
   const [selectedJur, setSelectedJur] = useState<{ id: number; name: string } | null>(null);
   const [serviceTypeCode, setServiceTypeCode] = useState('PARCEL');
+  const [postalIndex, setPostalIndex] = useState('');
+  const [postalIndexDetected, setPostalIndexDetected] = useState(false);
   const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -118,6 +121,8 @@ export default function Orders() {
     setJurSearch('');
     setJurisdictions([]);
     setServiceTypeCode('PARCEL');
+    setPostalIndex(order?.postalIndex || '');
+    setPostalIndexDetected(false);
     setShipModal({ open: true, orderId: id });
     // Pre-fill if order already has a jurisdiction from user checkout
     if (order?.receiverJurisdictionId) {
@@ -125,8 +130,31 @@ export default function Orders() {
       api.get('/geography/jurisdictions', { params: { levelId: 3, size: 1, search: String(preId) } })
         .then(r => {
           const found = (r.data?.data ?? []).find((j: any) => j.id === preId);
-          if (found) { setSelectedJur({ id: found.id, name: found.name }); setJurSearch(found.name); }
+          if (found) {
+            setSelectedJur({ id: found.id, name: found.name });
+            setJurSearch(found.name);
+            // Only auto-lookup postal index if not already stored on order
+            if (!order?.postalIndex) {
+              fetchPostalIndex(found.name, '');
+            }
+          }
         }).catch(() => {});
+    }
+  };
+
+  const fetchPostalIndex = async (name: string, hierarchyPath: string) => {
+    try {
+      const res = await api.get('/geography/postal-index', {
+        params: { jurisdictionName: name, hierarchyPath }
+      });
+      if (res.data?.found) {
+        setPostalIndex(res.data.postalIndex);
+        setPostalIndexDetected(true);
+      } else {
+        setPostalIndexDetected(false);
+      }
+    } catch {
+      setPostalIndexDetected(false);
     }
   };
 
@@ -157,6 +185,7 @@ export default function Orders() {
       const res = await api.post(`/admin/orders/${shipModal.orderId}/ship`, {
         receiverJurisdictionId: selectedJur.id,
         serviceTypeCode,
+        postalIndex: postalIndex.trim() || undefined,
       });
       const updated = res.data;
       setOrders(orders.map(o => o.id === shipModal.orderId ? { ...o, ...updated } : o));
@@ -482,7 +511,12 @@ export default function Orders() {
                       return (
                         <div
                           key={j.id}
-                          onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurisdictions([]); }}
+                          onClick={() => {
+                            setSelectedJur({ id: j.id, name: j.name });
+                            setJurSearch(j.name);
+                            setJurisdictions([]);
+                            fetchPostalIndex(j.name, path);
+                          }}
                           style={{
                             padding: '8px 12px', cursor: 'pointer',
                             background: selectedJur?.id === j.id ? '#2d3250' : 'transparent',
@@ -518,6 +552,29 @@ export default function Orders() {
                   <option value="BANDEROL">BANDEROL — Banderol</option>
                   <option value="EMS">EMS — Tezkor pochta</option>
                 </select>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                  Pochta indeksi
+                  {postalIndexDetected && (
+                    <span style={{ marginLeft: '8px', fontWeight: 400, color: '#4ade80', fontSize: '12px' }}>
+                      ✓ avtomatik aniqlandi
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  className="search-input"
+                  style={{ width: '100%', maxWidth: '160px' }}
+                  placeholder="Masalan: 150100"
+                  value={postalIndex}
+                  onChange={e => { setPostalIndex(e.target.value); setPostalIndexDetected(false); }}
+                  maxLength={10}
+                />
+                <p style={{ fontSize: '12px', color: '#8b92a7', marginTop: '4px' }}>
+                  Tuman tanlanganda avtomatik to'ldiriladi. Xato bo'lsa tahrirlang.
+                </p>
               </div>
             </div>
             <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', padding: '1rem' }}>

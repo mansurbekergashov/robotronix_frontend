@@ -24,6 +24,7 @@ const CartPage = () => {
     const [jurResults, setJurResults]               = useState([]);
     const [jurLoading, setJurLoading]               = useState(false);
     const [selectedJur, setSelectedJur]             = useState(null); // { id, name }
+    const [postalIndex, setPostalIndex]             = useState('');
     const jurTimer = useRef(null);
 
     // Polling tozalash
@@ -70,8 +71,22 @@ const CartPage = () => {
     const handleJurInput = (val) => {
         setJurSearch(val);
         setSelectedJur(null);
+        setPostalIndex('');
         if (jurTimer.current) clearTimeout(jurTimer.current);
         jurTimer.current = setTimeout(() => searchJur(val), 350);
+    };
+
+    const selectJurisdiction = async (jur, hierarchyPath = '') => {
+        setSelectedJur({ id: jur.id, name: jur.name });
+        setJurSearch(jur.name);
+        setJurResults([]);
+        // Auto-detect postal index
+        try {
+            const res = await api.get('/geography/postal-index', {
+                params: { jurisdictionName: jur.name, hierarchyPath }
+            });
+            if (res.data?.found) setPostalIndex(res.data.postalIndex);
+        } catch { /* silent */ }
     };
 
     const handlePlaceOrder = async (e) => {
@@ -100,6 +115,7 @@ const CartPage = () => {
             const res = await api.post('/orders', {
                 items, shippingAddress, contactPhone,
                 receiverJurisdictionId: selectedJur.id,
+                postalIndex: postalIndex || undefined,
             });
             const { id: orderId, paymentUrl } = res.data;
 
@@ -266,7 +282,7 @@ const CartPage = () => {
                                         return (
                                             <div
                                                 key={j.id}
-                                                onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurResults([]); }}
+                                                onClick={() => selectJurisdiction(j, path)}
                                                 style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #2d3250' }}
                                             >
                                                 <div style={{ fontSize: '14px' }}>{j.name}</div>
@@ -279,6 +295,11 @@ const CartPage = () => {
                             {selectedJur && (
                                 <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
                                     ✓ Tanlandi: {selectedJur.name}
+                                    {postalIndex && (
+                                        <span style={{ marginLeft: '8px', color: '#6b7280' }}>
+                                            (indeks: {postalIndex})
+                                        </span>
+                                    )}
                                 </div>
                             )}
                         </div>
