@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaBook, FaTimes, FaSave } from 'react-icons/fa';
 import api from '../services/api';
 import { useToast } from '../hooks/useToast';
@@ -44,6 +44,7 @@ export default function Courses() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     fetchCourses();
@@ -100,15 +101,18 @@ export default function Courses() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setIsSubmitting(true);
 
     // Basic validation
     if (!formData.title.trim()) {
+      submittingRef.current = false;
+      setIsSubmitting(false);
       toast.warning("Kurs nomi kiritilishi shart");
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const data = new FormData();
 
@@ -121,14 +125,12 @@ export default function Courses() {
         data.append('image', imageFile);
       }
 
-      let response: any;
       if (selectedCourse) {
-        response = await api.put(`/admin/courses/${selectedCourse.id}`, data);
-        setCourses(courses.map(c => c.id === selectedCourse.id ? response.data : c));
+        await api.put(`/admin/courses/${selectedCourse.id}`, data);
       } else {
-        response = await api.post('/admin/courses', data);
-        setCourses([response.data, ...courses]);
+        await api.post('/admin/courses', data);
       }
+      await fetchCourses();
       setIsModalOpen(false);
       setImageFile(null);
     } catch (error: any) {
@@ -136,7 +138,7 @@ export default function Courses() {
       const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
       toast.error(errorMsg);
     } finally {
-      // Small timeout to prevent accidental double-clicks even after submission ends
+      submittingRef.current = false;
       setTimeout(() => setIsSubmitting(false), 500);
     }
   };
