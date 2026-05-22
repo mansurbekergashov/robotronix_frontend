@@ -9,7 +9,10 @@ const api = axios.create({
     },
 });
 
-type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+    _retry?: boolean;
+    _idempotencyKey?: string;
+};
 
 let refreshInFlight: Promise<string | null> | null = null;
 
@@ -32,7 +35,12 @@ async function refreshAccessToken(): Promise<string | null> {
     }
 }
 
-// Attach JWT token to every request
+// Generate a unique idempotency key for mutation requests
+function generateIdempotencyKey(): string {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+}
+
+// Attach JWT token to every request + idempotency key for mutations
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -44,6 +52,17 @@ api.interceptors.request.use(
         if (config.data instanceof FormData) {
             delete config.headers['Content-Type'];
         }
+
+        // Add idempotency key for mutation requests to prevent duplicates
+        const method = (config.method || 'GET').toUpperCase();
+        if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+            const retryableConfig = config as RetryableRequestConfig;
+            if (!retryableConfig._idempotencyKey) {
+                retryableConfig._idempotencyKey = generateIdempotencyKey();
+            }
+            config.headers['X-Idempotency-Key'] = retryableConfig._idempotencyKey;
+        }
+
         return config;
     },
     (error) => Promise.reject(error)
@@ -71,6 +90,10 @@ api.interceptors.response.use(
                 if (newToken) {
                     originalRequest.headers = originalRequest.headers || {};
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    // Retry is safe: Spring WebFlux security filter rejects
+                    // 401 BEFORE processing the request body, so the mutation
+                    // was never applied. The idempotency key header ensures
+                    // duplicate protection on the server side.
                     return api(originalRequest);
                 }
             }

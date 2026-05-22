@@ -57,7 +57,16 @@ class ApiClient {
             if (response.status === 401 && !options._retry && endpoint !== '/auth/refresh') {
                 const newToken = await this.refreshAccessToken();
                 if (newToken) {
-                    return this.request(endpoint, { ...options, _retry: true });
+                    // Only auto-retry safe (idempotent) methods.
+                    // POST/PUT/DELETE must NOT be retried — they can cause
+                    // duplicate creates/updates.
+                    const method = (options.method || 'GET').toUpperCase();
+                    if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+                        return this.request(endpoint, { ...options, _retry: true });
+                    }
+                    // For mutation requests: token was refreshed silently,
+                    // reject so the user can retry manually.
+                    throw new Error('Session yangilandi. Iltimos, qayta urinib ko\'ring.');
                 }
             }
 
