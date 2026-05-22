@@ -8,9 +8,11 @@ class SyncService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private isConnecting = false;
+  private intentionalDisconnect = false;
 
   init(token: string) {
     if (this.socket || this.isConnecting) return;
+    this.intentionalDisconnect = false;
     this.connect(token);
   }
 
@@ -18,11 +20,10 @@ class SyncService {
     this.isConnecting = true;
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?token=${encodeURIComponent(token)}&roomId=all`;
-    
+
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
-      console.log('Admin SyncService connected');
       this.isConnecting = false;
       this.reconnectAttempts = 0;
     };
@@ -32,7 +33,6 @@ class SyncService {
         const envelope = JSON.parse(event.data);
         if (envelope?.type === 'system_update') {
           const update = envelope?.payload;
-          console.log('Received system update:', update);
           if (update && update.entityType) {
             this.notifyListeners(update.entityType, update.action, update);
           }
@@ -43,11 +43,10 @@ class SyncService {
     };
 
     this.socket.onclose = () => {
-      console.log('Admin SyncService disconnected');
       this.socket = null;
       this.isConnecting = false;
-      
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+
+      if (!this.intentionalDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
         setTimeout(() => this.connect(token), 2000 * Math.pow(2, this.reconnectAttempts - 1));
       }
@@ -79,6 +78,8 @@ class SyncService {
   }
 
   disconnect() {
+    this.intentionalDisconnect = true;
+    this.reconnectAttempts = 0;
     if (this.socket) {
       this.socket.close();
       this.socket = null;
