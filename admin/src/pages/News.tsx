@@ -45,6 +45,7 @@ export default function News() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,11 +106,13 @@ export default function News() {
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!editItem.title.trim() || !editItem.content.trim()) {
       toast.warning('Sarlavha va matn kiritilishi shart!');
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
     try {
       const formData = new FormData();
@@ -145,6 +148,7 @@ export default function News() {
       console.error('Error saving news:', err);
       toast.error('Saqlashda xatolik yuz berdi');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

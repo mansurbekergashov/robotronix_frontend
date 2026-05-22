@@ -45,6 +45,7 @@ export default function Team() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [posX, setPosX] = useState(50);
   const [posY, setPosY] = useState(20);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -95,9 +96,11 @@ export default function Team() {
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!editMember.name.trim()) { toast.error('Ism kiritilishi shart'); return; }
     if (!editMember.position.trim()) { toast.error('Lavozim kiritilishi shart'); return; }
 
+    savingRef.current = true;
     setSaving(true);
     const imagePosition = `${posX}% ${posY}%`;
     try {
@@ -123,6 +126,7 @@ export default function Team() {
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Xatolik yuz berdi');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

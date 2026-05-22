@@ -22,14 +22,7 @@ class SyncService {
         const token = this.auth.getToken();
         if (!token) return;
 
-        // For users, we can just use a generic 'user_sync' roomId or their first possible room.
-        // The backend will now deliver SYSTEM_UPDATE messages to ANY room connection.
-        // We just need ANY valid connection to receive these broadcasts.
-        const roomId = 'user_monitor';
-        // Actually, let's just use 'room_all' if user was admin, but they are not.
-        // To avoid "Admin not found" or "Authorization" issues, we should ideally have a 
-        // /chat/start equivalent for sync if it doesn't already exist.
-        // But for now, let's use a very safe room ID.
+        const roomId = 'user_sync';
         
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=${encodeURIComponent(roomId)}&token=${encodeURIComponent(token)}`;
@@ -59,8 +52,8 @@ class SyncService {
         };
 
         this.ws.onclose = (event) => {
-            // If closed due to authorization error (status 4000+ or custom), don't retry automatically
-            if (event.code === 1008 || event.code === 3000) {
+            // Stop reconnecting on auth/forbidden errors
+            if (event.code === 1008 || event.code === 3000 || event.code === 3003) {
                 console.warn('Sync Service unauthorized, stopping reconnection');
                 return;
             }
