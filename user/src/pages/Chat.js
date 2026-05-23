@@ -307,20 +307,23 @@ export default class Chat {
         `;
     }
 
-    connectWebSocket() {
+    async connectWebSocket() {
         if (!this.roomId) {
             return;
         }
 
-        const token = this.auth.getToken();
-        if (!token) {
-            console.error('No authentication token found for WebSocket');
+        let ticket;
+        try {
+            const res = await api.post('/chat/ws-ticket');
+            ticket = res.ticket;
+        } catch (e) {
+            console.error('Could not get WebSocket ticket', e);
             return;
         }
 
         try {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=${encodeURIComponent(this.roomId)}&token=${encodeURIComponent(token)}`;
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=${encodeURIComponent(this.roomId)}&ticket=${encodeURIComponent(ticket)}`;
 
             if (this.ws) {
                 try { this.ws.close(); } catch (e) { }

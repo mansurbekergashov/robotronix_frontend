@@ -1,4 +1,5 @@
 
+import api from './api';
 
 type Listener = (type: string, action: string, data?: any) => void;
 
@@ -9,22 +10,25 @@ class SyncService {
   private maxReconnectAttempts = 5;
   private isConnecting = false;
   private intentionalDisconnect = false;
-  private _token: string = '';
 
-  init(token: string) {
-    // Always update the token so reconnects use the freshest one
-    this._token = token;
+  init() {
     if (this.socket || this.isConnecting) return;
     this.intentionalDisconnect = false;
-    this.connect(token);
+    this.connect();
   }
 
-  private connect(token: string) {
+  private async connect() {
     this.isConnecting = true;
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?token=${encodeURIComponent(token)}&roomId=all`;
-
-    this.socket = new WebSocket(wsUrl);
+    try {
+      const res = await api.post<{ ticket: string }>('/chat/ws-ticket');
+      const ticket = res.data.ticket;
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?ticket=${encodeURIComponent(ticket)}&roomId=all`;
+      this.socket = new WebSocket(wsUrl);
+    } catch {
+      this.isConnecting = false;
+      return;
+    }
 
     this.socket.onopen = () => {
       this.isConnecting = false;
@@ -51,8 +55,7 @@ class SyncService {
 
       if (!this.intentionalDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
-        // Use latest token (may have been refreshed since initial connect)
-        setTimeout(() => this.connect(this._token), 2000 * Math.pow(2, this.reconnectAttempts - 1));
+        setTimeout(() => this.connect(), 2000 * Math.pow(2, this.reconnectAttempts - 1));
       }
     };
 

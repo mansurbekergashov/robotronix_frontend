@@ -133,17 +133,22 @@ export default function Chat() {
         setConnected(false);
     };
 
-    const connectWebSocket = (roomId: string) => {
+    const connectWebSocket = async (roomId: string) => {
         cleanupWebSocket();
         shouldReconnectRef.current = true;
 
-        const token = localStorage.getItem('token');
-        if (!token) {
+        let ticket: string;
+        try {
+            const res = await api.post<{ ticket: string }>('/chat/ws-ticket');
+            ticket = res.data.ticket;
+        } catch {
             return;
         }
 
+        if (!shouldReconnectRef.current || selectedRoomRef.current !== roomId) return;
+
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=${encodeURIComponent(roomId)}&token=${encodeURIComponent(token)}`;
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=${encodeURIComponent(roomId)}&ticket=${encodeURIComponent(ticket)}`;
 
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;

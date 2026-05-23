@@ -41,7 +41,7 @@ function AdminLayout() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-        syncService.init(token);
+        syncService.init();
     }
     return () => {
         syncService.disconnect();

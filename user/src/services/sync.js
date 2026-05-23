@@ -1,5 +1,6 @@
 // Sync Service for real-time updates
 import { AuthService } from './auth.js';
+import api from './api.js';
 
 class SyncService {
     constructor() {
@@ -18,14 +19,17 @@ class SyncService {
         this.connect();
     }
 
-    connect() {
-        const token = this.auth.getToken();
-        if (!token) return;
+    async connect() {
+        let ticket;
+        try {
+            const res = await api.post('/chat/ws-ticket');
+            ticket = res.ticket;
+        } catch (e) {
+            return;
+        }
 
-        const roomId = 'user_sync';
-        
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=${encodeURIComponent(roomId)}&token=${encodeURIComponent(token)}`;
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat?roomId=user_sync&ticket=${encodeURIComponent(ticket)}`;
 
         if (this.ws) {
             try { this.ws.close(); } catch (e) {}
@@ -34,7 +38,6 @@ class SyncService {
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-            console.log('âœ… Sync Service connected');
             this.reconnectAttempts = 0;
         };
 
@@ -43,7 +46,6 @@ class SyncService {
                 const envelope = JSON.parse(event.data);
                 if (envelope?.type === 'system_update') {
                     const update = envelope?.payload;
-                    console.log('Received system update:', update);
                     this.notifyListeners(update);
                 }
             } catch (e) {
