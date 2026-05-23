@@ -9,7 +9,7 @@ import './Orders.css';
 interface OrderData {
   id: number;
   user?: { id: number; fullName: string; phone: string; email: string };
-  items?: { product?: { title: string }; quantity: number; price: number }[];
+  items?: { product?: { title: string; weightGrams?: number }; quantity: number; price: number }[];
   totalAmount: number;
   paymentConfirmed?: boolean;
   status: string;
@@ -39,6 +39,8 @@ export default function Orders() {
   const [jurLoading, setJurLoading] = useState(false);
   const [selectedJur, setSelectedJur] = useState<{ id: number; name: string } | null>(null);
   const [serviceTypeCode, setServiceTypeCode] = useState('PARCEL');
+  const [serviceTypes, setServiceTypes] = useState<{ id: number; code: string; name: string }[]>([]);
+  const [paymentType, setPaymentType] = useState('CREDIT_BALANCE');
   const [postalIndex, setPostalIndex] = useState('');
   const [postalIndexDetected, setPostalIndexDetected] = useState(false);
   const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,9 +123,22 @@ export default function Orders() {
     setJurSearch('');
     setJurisdictions([]);
     setServiceTypeCode('PARCEL');
+    setPaymentType('CREDIT_BALANCE');
     setPostalIndex(order?.postalIndex || '');
     setPostalIndexDetected(false);
     setShipModal({ open: true, orderId: id });
+
+    // Load service types from UzPost
+    api.get('/geography/service-types')
+      .then((r: any) => {
+        const list: any[] = r.data?.data?.list ?? [];
+        if (list.length > 0) {
+          setServiceTypes(list.map((t: any) => ({ id: t.id, code: t.code, name: t.name || t.nameRu || t.code })));
+        } else {
+          setServiceTypes([]);
+        }
+      })
+      .catch(() => setServiceTypes([]));
     // Pre-fill if order already has a jurisdiction from user checkout
     if (order?.receiverJurisdictionId) {
       const preId = order.receiverJurisdictionId;
@@ -185,6 +200,7 @@ export default function Orders() {
       const res = await api.post(`/admin/orders/${shipModal.orderId}/ship`, {
         receiverJurisdictionId: selectedJur.id,
         serviceTypeCode,
+        paymentType,
         postalIndex: postalIndex.trim() || undefined,
       });
       const updated = res.data;
@@ -487,6 +503,22 @@ export default function Orders() {
               <button className="modal-close" onClick={() => setShipModal({ open: false, orderId: null })}><FaTimes /></button>
             </div>
             <div className="modal-body">
+              {/* Order summary for admin review */}
+              {(() => {
+                const order = orders.find(o => o.id === shipModal.orderId);
+                if (!order) return null;
+                const weightG = order.items?.reduce((sum: number, it: any) =>
+                  sum + (it.product?.weightGrams ?? 500) * (it.quantity ?? 1), 0) ?? 0;
+                return (
+                  <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '12px', marginBottom: '1rem', fontSize: '13px' }}>
+                    <div><strong>Mijoz:</strong> {order.user?.fullName || '—'}</div>
+                    <div><strong>Telefon:</strong> {order.contactPhone || order.user?.phone || '—'}</div>
+                    <div><strong>Manzil:</strong> {order.shippingAddress || '—'}</div>
+                    <div><strong>Taxminiy og'irlik:</strong> {weightG >= 1000 ? `${(weightG/1000).toFixed(2)} kg` : `${weightG} g`}</div>
+                  </div>
+                );
+              })()}
+
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
                   Qabul qiluvchi tumani / shahri *
@@ -540,17 +572,39 @@ export default function Orders() {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Xizmat turi</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Jo'natma turi (UzPost)</label>
                 <select
                   className="filter-select"
                   style={{ width: '100%' }}
                   value={serviceTypeCode}
                   onChange={e => setServiceTypeCode(e.target.value)}
                 >
-                  <option value="PARCEL">PARCEL — Pochta jo'natmasi</option>
-                  <option value="LETTER">LETTER — Xat</option>
-                  <option value="BANDEROL">BANDEROL — Banderol</option>
-                  <option value="EMS">EMS — Tezkor pochta</option>
+                  {serviceTypes.length > 0
+                    ? serviceTypes.map(t => (
+                        <option key={t.code} value={t.code}>{t.code} — {t.name}</option>
+                      ))
+                    : (
+                        <>
+                          <option value="PARCEL">PARCEL — Pochta jo'natmasi</option>
+                          <option value="LETTER">LETTER — Xat</option>
+                          <option value="BANDEROL">BANDEROL — Banderol</option>
+                          <option value="EMS">EMS — Tezkor pochta</option>
+                        </>
+                      )
+                  }
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>To'lov turi (UzPost)</label>
+                <select
+                  className="filter-select"
+                  style={{ width: '100%' }}
+                  value={paymentType}
+                  onChange={e => setPaymentType(e.target.value)}
+                >
+                  <option value="CREDIT_BALANCE">CREDIT_BALANCE — Hisobdan to'lov</option>
+                  <option value="CASH_ON_DELIVERY">CASH_ON_DELIVERY — Yetkazilganda to'lov</option>
                 </select>
               </div>
 

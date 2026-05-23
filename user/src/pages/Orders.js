@@ -18,6 +18,83 @@ export default class Orders {
     };
   }
 
+  _uzpostStatusLabel(status) {
+    const map = {
+      ACCEPTED:     'Pochta qabul qildi',
+      TRANSIT:      'Tranzitda',
+      IN_TRANSIT:   'Tranzitda',
+      ARRIVED:      'Shaharga yetib keldi',
+      OUT_FOR_DELIVERY: 'Yetkazib berilmoqda',
+      DELIVERED:    'Yetkazib berildi',
+      RECEIVED:     'Qabul qilindi',
+      RETURNED:     'Qaytarildi',
+      CANCELLED:    'Bekor qilindi',
+    };
+    return map[status] || status;
+  }
+
+  async _loadTrackingDetail(orderId) {
+    const el = document.getElementById(`tracking-detail-${orderId}`);
+    const btn = document.getElementById(`tracking-btn-${orderId}`);
+    if (!el || !btn) return;
+
+    if (el.style.display === 'block') {
+      el.style.display = 'none';
+      btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Kuzatish';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+      const { default: api } = await import('../services/api.js');
+      const data = await api.get(`/orders/${orderId}/tracking`);
+      const tracking = data?.data ?? data;
+
+      if (!tracking) {
+        el.innerHTML = '<p style="color:#8b92a7;font-size:13px;">Kuzatuv ma\'lumoti topilmadi</p>';
+        el.style.display = 'block';
+        return;
+      }
+
+      const status = tracking.orderStatus ?? tracking.data?.status ?? '—';
+      const locations = tracking.data?.locations ?? tracking.locations ?? [];
+
+      let html = `
+        <div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748;">
+          <div style="margin-bottom:10px;">
+            <span style="font-weight:600; color:#e2e8f0;">UzPost holati: </span>
+            <span style="color:#4ade80; font-weight:600;">${esc(this._uzpostStatusLabel(status))}</span>
+          </div>`;
+
+      if (locations.length > 0) {
+        html += `<div style="font-size:12px; color:#8b92a7; margin-bottom:6px;">Harakatlar:</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">`;
+        locations.forEach(loc => {
+          const addr = loc.addressCity || loc.address || '—';
+          const icon = loc.pickup ? '📦' : '📍';
+          html += `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#e2e8f0;">
+            <span>${icon}</span>
+            <span>${esc(addr)}</span>
+            ${loc.postcode ? `<span style="color:#8b92a7; font-size:11px;">(${esc(loc.postcode)})</span>` : ''}
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      html += '</div>';
+      el.innerHTML = html;
+      el.style.display = 'block';
+    } catch (_) {
+      el.innerHTML = '<p style="color:#f87171;font-size:13px;">Kuzatuv ma\'lumotini yuklab bo\'lmadi</p>';
+      el.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Kuzatish';
+    }
+  }
+
   async render() {
     this.container.innerHTML = `
             <div class="page-header">
@@ -231,6 +308,7 @@ export default class Orders {
 
   openModal(order) {
     this.selectedOrder = order;
+    window._orderTrackFn = (id) => this._loadTrackingDetail(id);
     const modal = document.getElementById("orderModal");
     document.getElementById("modalTitle").innerHTML =
       `<i class="fas fa-receipt"></i> Buyurtma #${order.id}`;
@@ -299,9 +377,15 @@ export default class Orders {
                     ? `
                 <div class="detail-item full-width">
                     <label><i class="fas fa-truck"></i> Pochta kuzatuv raqami</label>
-                    <p style="font-family: monospace; font-size: 1rem; font-weight: 600;">${esc(order.trackingNumber)}
-                      ${order.shippingStatus ? `<span style="margin-left:8px; font-size:0.8rem; color:#8b92a7; font-family:sans-serif;">(${esc(order.shippingStatus)})</span>` : ""}
-                    </p>
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                      <p style="font-family: monospace; font-size: 1rem; font-weight: 600; margin:0;">${esc(order.trackingNumber)}</p>
+                      ${order.shippingStatus ? `<span style="font-size:0.8rem; color:#4ade80; font-family:sans-serif; background:rgba(74,222,128,0.1); padding:2px 8px; border-radius:20px;">${esc(this._uzpostStatusLabel(order.shippingStatus))}</span>` : ""}
+                      <button id="tracking-btn-${order.id}" onclick="window._orderTrackFn(${order.id})"
+                        style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:4px 12px; border-radius:20px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;">
+                        <i class="fas fa-map-marker-alt"></i> Kuzatish
+                      </button>
+                    </div>
+                    <div id="tracking-detail-${order.id}" style="display:none;"></div>
                 </div>`
                     : ""
                 }
