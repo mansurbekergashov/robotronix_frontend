@@ -100,8 +100,8 @@ export default function Chat() {
     }, [location.state, user]);
 
     useEffect(() => {
-        if (!user) return;
-        connectWebSocket(selectedRoom || 'all');
+        if (!user || !selectedRoom) return;
+        connectWebSocket(selectedRoom);
         return () => {
             cleanupWebSocket();
         };
