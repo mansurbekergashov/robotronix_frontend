@@ -79,7 +79,7 @@ export default function Products() {
     } finally {
       setLoading(false);
     }
-  };
+  };;
 
   const fetchPaymentCards = async () => {
     try {

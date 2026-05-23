@@ -27,7 +27,8 @@ const Team = lazy(() => import('./pages/Team'));
 const News = lazy(() => import('./pages/News'));
 
 function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitializing } = useAuth();
+  if (isInitializing) return null; // AppRoutes spinner ko'rsatadi
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 }
 
@@ -40,13 +41,13 @@ function AdminLayout() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token && user) {
+    if (token) {
         syncService.init(token);
     }
     return () => {
         syncService.disconnect();
     };
-  }, [user]);
+  }, []); // Mount/unmount only — user o'zgarganda qayta connect qilish shart emas
 
   const handleToggleCollapse = (collapsed: boolean) => {
     setIsCollapsed(collapsed);
