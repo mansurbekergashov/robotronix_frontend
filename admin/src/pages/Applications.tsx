@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { FaGraduationCap, FaSearch, FaTimes, FaComments, FaClock, FaTrash, FaCheck } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -34,32 +34,12 @@ export default function Applications() {
 
   const PAGE_SIZE = 50;
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
-    return () => clearTimeout(t);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    fetchApplications(0, false);
-    const interval = setInterval(() => fetchApplications(0, false, true), 60000); // light polling fallback (1 min)
-    
-    // Listen for global enrollments
-    const unsubEnroll = syncService.subscribe('ENROLLMENT', () => {
-      fetchApplications(0, false, true);
-    });
-    
-    return () => {
-      clearInterval(interval);
-      unsubEnroll();
-    };
-  }, [debouncedSearch, filterStatus]);
-
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const fetchApplications = async (pageToLoad = 0, append = false, merge = false) => {
+  const fetchApplications = useCallback(async (pageToLoad = 0, append = false, merge = false) => {
     try {
       if (append) {
         setLoadingMore(true);
@@ -90,7 +70,37 @@ export default function Applications() {
       setLoading(false);
       setLoadingMore(false);
     }
-  };
+  }, [filterStatus, debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    fetchApplications(0, false);
+  }, [fetchApplications]);
+
+  // Real-time sync — subscribe once on mount, use ref to always call latest fetchApplications
+  const fetchApplicationsRef = useRef(fetchApplications);
+  useEffect(() => {
+    fetchApplicationsRef.current = fetchApplications;
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => fetchApplicationsRef.current(0, false, true), 60000); // light polling fallback (1 min)
+
+    const unsubEnroll = syncService.subscribe('ENROLLMENT', () => {
+      fetchApplicationsRef.current(0, false, true);
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsubEnroll();
+    };
+  }, []); // Mount/unmount only — no duplicate subscriptions
 
   const handleStatusUpdate = async (id: number, status: string) => {
     try {
@@ -112,7 +122,7 @@ export default function Applications() {
 
   const handleDeleteApplication = async (id: number) => {
     if (!(await confirm({ message: "Ushbu arizani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!" }))) return;
-    
+
     try {
       await api.delete(`/admin/enrollments/${id}`);
       setApplications(applications.filter(a => a.id !== id));
@@ -120,10 +130,10 @@ export default function Applications() {
         setIsModalOpen(false);
         setSelectedApp(null);
       }
-      showNotification('Ariza muvaffaqiyatli o\'chirildi', 'success');
+      showNotification("Ariza muvaffaqiyatli o'chirildi", 'success');
     } catch (error) {
       console.error('Error deleting enrollment:', error);
-      showNotification('Arizani o\'chirishda xatolik yuz berdi', 'error');
+      showNotification("Arizani o'chirishda xatolik yuz berdi", 'error');
     }
   };
 
@@ -289,7 +299,6 @@ export default function Applications() {
         </div>
       )}
 
-
       {isModalOpen && selectedApp && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -311,7 +320,7 @@ export default function Applications() {
               <div className="detail-grid">
                 <div className="detail-section">
                   <h3><FaGraduationCap /> Ariza ma'lumotlari</h3>
-                  <p><strong>Holat:</strong> 
+                  <p><strong>Holat:</strong>
                     <span className={`badge ${selectedApp.status === 'CONFIRMED' ? 'badge-success' :
                       selectedApp.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'
                       }`}>
@@ -351,27 +360,21 @@ export default function Applications() {
                   <button
                     className="btn-status btn-success"
                     disabled={selectedApp.status === 'CONFIRMED'}
-                    onClick={() => {
-                      requestConfirm(selectedApp.id, 'CONFIRMED');
-                    }}
+                    onClick={() => requestConfirm(selectedApp.id, 'CONFIRMED')}
                   >
                     <FaGraduationCap /> Tasdiqlash
                   </button>
                   <button
                     className="btn-status btn-danger"
                     disabled={selectedApp.status === 'REJECTED'}
-                    onClick={() => {
-                      handleStatusUpdate(selectedApp.id, 'REJECTED');
-                    }}
+                    onClick={() => handleStatusUpdate(selectedApp.id, 'REJECTED')}
                   >
                     <FaTimes /> Rad etish
                   </button>
                   <button
                     className="btn-status btn-warning"
                     disabled={selectedApp.status === 'PENDING'}
-                    onClick={() => {
-                      handleStatusUpdate(selectedApp.id, 'PENDING');
-                    }}
+                    onClick={() => handleStatusUpdate(selectedApp.id, 'PENDING')}
                   >
                     <FaClock /> Kutilmoqda qilish
                   </button>
@@ -381,8 +384,6 @@ export default function Applications() {
           </div>
         </div>
       )}
-
-
     </div>
   );
 }

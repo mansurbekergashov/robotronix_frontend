@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
@@ -45,25 +45,12 @@ export default function Orders() {
   const [postalIndexDetected, setPostalIndexDetected] = useState(false);
   const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 10000); // Polling every 10s is enough
-    
-    // Listen for real-time updates
-    const unsub = syncService.subscribe('ORDER', fetchOrders);
-    
-    return () => {
-      clearInterval(interval);
-      unsub();
-    };
-  }, [filterStatus, searchTerm]); // Refetch when filters change
-
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const response = await api.get('/admin/orders', {
         params: { status: filterStatus, search: searchTerm }
@@ -74,7 +61,31 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus, searchTerm]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Real-time sync — subscribe once on mount, use ref to always call latest fetchOrders
+  const fetchOrdersRef = useRef(fetchOrders);
+  useEffect(() => {
+    fetchOrdersRef.current = fetchOrders;
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => fetchOrdersRef.current(), 30000); // Polling every 30s
+
+    const unsub = syncService.subscribe('ORDER', () => {
+      fetchOrdersRef.current();
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
+  }, []); // Mount/unmount only — no duplicate subscriptions
 
   const handleDeleteOrder = async (id: number) => {
     if (!(await confirm({ message: "Ushbu buyurtmani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!" }))) return;
