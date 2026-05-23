@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaBook, FaTimes, FaSave } from 'react-icons/fa';
-import api from '../services/api';
+import api, { generateIdempotencyKey } from '../services/api';
 import { useToast } from '../hooks/useToast';
 import { useConfirm } from '../hooks/useConfirm';
 import './Courses.css';
@@ -45,6 +45,7 @@ export default function Courses() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const formIdempotencyKey = useRef<string>('');
 
   useEffect(() => {
     fetchCourses();
@@ -83,6 +84,7 @@ export default function Courses() {
   };
 
   const handleOpenModal = (course?: CourseData) => {
+    formIdempotencyKey.current = generateIdempotencyKey();
     setImageFile(null);
     if (course) {
       setSelectedCourse(course);
@@ -126,9 +128,13 @@ export default function Courses() {
       }
 
       if (selectedCourse) {
-        await api.put(`/admin/courses/${selectedCourse.id}`, data);
+        await api.put(`/admin/courses/${selectedCourse.id}`, data, {
+          headers: { 'X-Idempotency-Key': formIdempotencyKey.current }
+        });
       } else {
-        await api.post('/admin/courses', data);
+        await api.post('/admin/courses', data, {
+          headers: { 'X-Idempotency-Key': formIdempotencyKey.current }
+        });
       }
       await fetchCourses();
       setIsModalOpen(false);

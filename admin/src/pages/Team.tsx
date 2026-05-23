@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaUsers, FaPlus, FaEdit, FaTrash, FaImage, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
-import api from '../services/api';
+import api, { generateIdempotencyKey } from '../services/api';
 import { useToast } from '../hooks/useToast';
 import { useConfirm } from '../hooks/useConfirm';
 import './Team.css';
@@ -46,6 +46,7 @@ export default function Team() {
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const formIdempotencyKey = useRef<string>('');
   const [posX, setPosX] = useState(50);
   const [posY, setPosY] = useState(20);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +65,7 @@ export default function Team() {
   useEffect(() => { fetchMembers(); }, []);
 
   const openCreate = () => {
+    formIdempotencyKey.current = generateIdempotencyKey();
     setEditMember({ ...emptyMember });
     setImageFile(null);
     setImagePreview('');
@@ -73,6 +75,7 @@ export default function Team() {
   };
 
   const openEdit = (m: TeamMember) => {
+    formIdempotencyKey.current = generateIdempotencyKey();
     setEditMember({ ...m });
     setImageFile(null);
     setImagePreview(m.imageUrl || '');
@@ -115,10 +118,10 @@ export default function Team() {
       if (imageFile) formData.append('image', imageFile);
 
       if (editMember.id) {
-        await api.put(`/admin/team/${editMember.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await api.put(`/admin/team/${editMember.id}`, formData, { headers: { 'X-Idempotency-Key': formIdempotencyKey.current } });
         toast.success('Hodim yangilandi');
       } else {
-        await api.post('/admin/team', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await api.post('/admin/team', formData, { headers: { 'X-Idempotency-Key': formIdempotencyKey.current } });
         toast.success('Hodim qo\'shildi');
       }
       closeModal();

@@ -36,7 +36,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 // Generate a unique idempotency key for mutation requests
-function generateIdempotencyKey(): string {
+export function generateIdempotencyKey(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
@@ -58,7 +58,12 @@ api.interceptors.request.use(
         if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
             const retryableConfig = config as RetryableRequestConfig;
             if (!retryableConfig._idempotencyKey) {
-                retryableConfig._idempotencyKey = generateIdempotencyKey();
+                // Preserve a caller-supplied key (per-form session key) so that
+                // duplicate requests from the same form open use the same key.
+                const callerKey = config.headers?.['X-Idempotency-Key'];
+                retryableConfig._idempotencyKey = typeof callerKey === 'string' && callerKey
+                    ? callerKey
+                    : generateIdempotencyKey();
             }
             config.headers['X-Idempotency-Key'] = retryableConfig._idempotencyKey;
         }

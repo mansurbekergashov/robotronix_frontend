@@ -4,7 +4,7 @@ import {
   FaFilter, FaThumbtack, FaEye, FaEyeSlash, FaTimes, FaImage,
   FaGlobe, FaUsers, FaCalendarAlt, FaChevronDown
 } from 'react-icons/fa';
-import api from '../services/api';
+import api, { generateIdempotencyKey } from '../services/api';
 import { useToast } from '../hooks/useToast';
 import './News.css';
 
@@ -46,6 +46,7 @@ export default function News() {
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const formIdempotencyKey = useRef<string>('');
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +78,7 @@ export default function News() {
   }, [items, typeFilter, searchTerm]);
 
   const openCreateModal = () => {
+    formIdempotencyKey.current = generateIdempotencyKey();
     setEditItem({ ...emptyItem });
     setImageFile(null);
     setImagePreview('');
@@ -84,6 +86,7 @@ export default function News() {
   };
 
   const openEditModal = (item: NewsItem) => {
+    formIdempotencyKey.current = generateIdempotencyKey();
     setEditItem({ ...item });
     setImageFile(null);
     setImagePreview(item.imageUrl || '');
@@ -134,11 +137,11 @@ export default function News() {
 
       if (editItem.id) {
         await api.put(`/admin/news/${editItem.id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 'X-Idempotency-Key': formIdempotencyKey.current },
         });
       } else {
         await api.post('/admin/news', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 'X-Idempotency-Key': formIdempotencyKey.current },
         });
       }
 

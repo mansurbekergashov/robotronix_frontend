@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaBox, FaTimes, FaSave } from 'react-icons/fa';
-import api from '../services/api';
+import api, { generateIdempotencyKey } from '../services/api';
 import { useToast } from '../hooks/useToast';
 import { useConfirm } from '../hooks/useConfirm';
 import './Products.css';
@@ -51,6 +51,7 @@ export default function Products() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const formIdempotencyKey = useRef<string>('');
 
   useEffect(() => {
     fetchProducts();
@@ -99,6 +100,7 @@ export default function Products() {
   };
 
   const handleOpenModal = (product?: ProductData) => {
+    formIdempotencyKey.current = generateIdempotencyKey();
     setImageFile(null);
     if (product) {
       setSelectedProduct(product);
@@ -139,11 +141,11 @@ export default function Products() {
 
       if (selectedProduct) {
         await api.put(`/admin/products/${selectedProduct.id}`, data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'X-Idempotency-Key': formIdempotencyKey.current }
         });
       } else {
         await api.post('/admin/products', data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'X-Idempotency-Key': formIdempotencyKey.current }
         });
       }
       await fetchProducts();

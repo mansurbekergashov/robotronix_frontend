@@ -9,8 +9,11 @@ class SyncService {
   private maxReconnectAttempts = 5;
   private isConnecting = false;
   private intentionalDisconnect = false;
+  private _token: string = '';
 
   init(token: string) {
+    // Always update the token so reconnects use the freshest one
+    this._token = token;
     if (this.socket || this.isConnecting) return;
     this.intentionalDisconnect = false;
     this.connect(token);
@@ -48,7 +51,8 @@ class SyncService {
 
       if (!this.intentionalDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
-        setTimeout(() => this.connect(token), 2000 * Math.pow(2, this.reconnectAttempts - 1));
+        // Use latest token (may have been refreshed since initial connect)
+        setTimeout(() => this.connect(this._token), 2000 * Math.pow(2, this.reconnectAttempts - 1));
       }
     };
 
