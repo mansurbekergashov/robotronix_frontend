@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaCreditCard, FaSearch, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 import api from '../services/api';
+import { syncService } from '../services/SyncService';
 import './Payments.css';
 
 interface PaymeTransaction {
@@ -30,8 +31,10 @@ export default function Payments() {
 
   useEffect(() => {
     fetchTransactions();
-    const interval = setInterval(fetchTransactions, 30000);
-    return () => clearInterval(interval);
+    // Refresh when a payment-linked order or enrollment changes (Payme callbacks broadcast these)
+    const unsubOrder = syncService.subscribe('ORDER', fetchTransactions);
+    const unsubEnrollment = syncService.subscribe('ENROLLMENT', fetchTransactions);
+    return () => { unsubOrder(); unsubEnrollment(); };
   }, []);
 
   const fetchTransactions = async () => {

@@ -18,6 +18,7 @@ const CartPage = () => {
     const [paymentState, setPaymentState]  = useState(null); // null | 'waiting' | 'confirmed' | 'timeout'
     const [pendingOrderId, setPendingOrderId] = useState(null);
     const pollingRef = useRef(null);
+    const pollTimeoutRef = useRef(null);
 
     // Jurisdiction (UzPost) state
     const [jurSearch, setJurSearch]                 = useState('');
@@ -27,12 +28,9 @@ const CartPage = () => {
     const [postalIndex, setPostalIndex]             = useState('');
     const jurTimer = useRef(null);
 
-    // Polling tozalash
     const stopPolling = () => {
-        if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-        }
+        if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
+        if (pollTimeoutRef.current) { clearTimeout(pollTimeoutRef.current); pollTimeoutRef.current = null; }
     };
 
     useEffect(() => () => stopPolling(), []);
@@ -52,7 +50,7 @@ const CartPage = () => {
             } catch (_) { /* tarmoq xatolarini e'tiborsiz qoldirish */ }
         }, POLL_INTERVAL_MS);
 
-        setTimeout(() => {
+        pollTimeoutRef.current = setTimeout(() => {
             stopPolling();
             setPaymentState(prev => prev === 'waiting' ? 'timeout' : prev);
         }, POLL_TIMEOUT_MS);

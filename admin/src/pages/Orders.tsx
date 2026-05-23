@@ -75,17 +75,11 @@ export default function Orders() {
   });
 
   useEffect(() => {
-    const interval = setInterval(() => fetchOrdersRef.current(), 30000); // Polling every 30s
-
     const unsub = syncService.subscribe('ORDER', () => {
       fetchOrdersRef.current();
     });
-
-    return () => {
-      clearInterval(interval);
-      unsub();
-    };
-  }, []); // Mount/unmount only — no duplicate subscriptions
+    return unsub;
+  }, []);
 
   const handleDeleteOrder = async (id: number) => {
     if (!(await confirm({ message: "Ushbu buyurtmani butunlay o'chirishni tasdiqlaysizmi? Bu amal qaytarilmaydi!" }))) return;

@@ -186,11 +186,6 @@ export default function Chat() {
                     }
                 }
 
-                // 3. Refresh rooms list — system_update (CHAT) already handles cross-room updates.
-                // Only refresh here for messages in the current room to keep unread counts in sync.
-                if (newMsg.roomId === selectedRoomRef.current) {
-                    fetchRooms();
-                }
             } catch (err) {
                 console.error('Error handling WebSocket message:', err);
             }
@@ -259,9 +254,8 @@ export default function Chat() {
             setMessages(res.data || []);
             try {
                 await api.put(`/chat/room/${roomId}/read`);
-            } catch (readErr) {
+            } catch {
                 // Ignore 404/error on marking as read for new/empty rooms
-                console.debug('Could not mark room as read (might be new):', roomId);
             }
             setRooms((prev) =>
                 prev.map((r) => (r.roomId === roomId ? { ...r, unreadCount: 0 } : r))

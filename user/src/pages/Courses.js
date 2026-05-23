@@ -154,12 +154,22 @@ export default class Courses {
     }
 
     attachEvents() {
-        document.querySelectorAll('.enroll-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.handleEnroll(e));
-        });
-        document.querySelectorAll('.retry-payment-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.handleRetryPayment(e));
-        });
+        const grid = document.getElementById('coursesGrid');
+        if (!grid) return;
+
+        // Remove old delegated listener before re-attaching
+        if (this._gridClickHandler) {
+            grid.removeEventListener('click', this._gridClickHandler);
+        }
+
+        this._gridClickHandler = (e) => {
+            const enroll = e.target.closest('.enroll-btn');
+            if (enroll) { this.handleEnroll({ currentTarget: enroll }); return; }
+            const retry = e.target.closest('.retry-payment-btn');
+            if (retry) { this.handleRetryPayment({ currentTarget: retry }); }
+        };
+
+        grid.addEventListener('click', this._gridClickHandler);
     }
 
     async handleRetryPayment(event) {
@@ -214,6 +224,10 @@ export default class Courses {
 
     destroy() {
         window.removeEventListener('robotronix-update', this.onUpdate);
+        const grid = document.getElementById('coursesGrid');
+        if (grid && this._gridClickHandler) {
+            grid.removeEventListener('click', this._gridClickHandler);
+        }
     }
 }
 

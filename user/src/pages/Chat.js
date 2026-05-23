@@ -181,12 +181,13 @@ export default class Chat {
             }
         });
 
-        // Close text tools if clicking outside
-        document.addEventListener('click', (e) => {
+        // Close emoji picker when clicking outside
+        this._emojiClickOutside = (e) => {
             if (emojiPickerEl && emojiPickerEl.style.display === 'block' && !emojiPickerEl.contains(e.target) && !emojiBtn.contains(e.target)) {
                 emojiPickerEl.style.display = 'none';
             }
-        });
+        };
+        document.addEventListener('click', this._emojiClickOutside);
 
         // File attachment
         attachBtn?.addEventListener('click', () => {
@@ -247,7 +248,15 @@ export default class Chat {
             this.renderMessages();
         } catch (error) {
             console.error('Error loading messages:', error);
-            this.renderMessages();
+            const messagesContainer = document.getElementById('chatMessages');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = `
+                    <div class="empty-chat">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Xabarlarni yuklashda xatolik yuz berdi</p>
+                    </div>
+                `;
+            }
         }
     }
 
@@ -458,6 +467,10 @@ export default class Chat {
         if (this.ws) {
             try { this.ws.close(); } catch (e) { }
             this.ws = null;
+        }
+        if (this._emojiClickOutside) {
+            document.removeEventListener('click', this._emojiClickOutside);
+            this._emojiClickOutside = null;
         }
     }
 }

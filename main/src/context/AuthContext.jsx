@@ -68,7 +68,6 @@ export const AuthProvider = ({ children }) => {
             // Update local time for tab-local timer
             clearTimeout(inactivityTimer)
             inactivityTimer = setTimeout(() => {
-                console.log('Auto logout due to inactivity')
                 logout()
             }, TIMEOUT_MS)
 

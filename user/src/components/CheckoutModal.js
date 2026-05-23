@@ -208,12 +208,13 @@ export default class CheckoutModal {
             this._jurTimer = setTimeout(() => this._searchJurisdictions(q), 350);
         });
 
-        document.addEventListener('click', (e) => {
+        this._jurClickOutside = (e) => {
             const dropdown = modal.querySelector('#jurDropdown');
             if (dropdown && !dropdown.contains(e.target) && e.target !== jurInput) {
                 dropdown.style.display = 'none';
             }
-        });
+        };
+        document.addEventListener('click', this._jurClickOutside);
 
         // Quantity controls
         modal.querySelectorAll('.qty-btn').forEach(btn => {
@@ -364,6 +365,10 @@ export default class CheckoutModal {
 
     close() {
         this._stopPolling();
+        if (this._jurClickOutside) {
+            document.removeEventListener('click', this._jurClickOutside);
+            this._jurClickOutside = null;
+        }
         const modal = document.getElementById('checkoutModal');
         if (modal) {
             modal.classList.remove('active');

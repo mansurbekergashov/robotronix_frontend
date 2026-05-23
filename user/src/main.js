@@ -131,23 +131,27 @@ class App {
     }
 
     setupAutoLogout() {
-        const resetTimer = () => {
+        this._resetInactivityTimer = () => {
             clearTimeout(this.inactivityTimer);
             this.inactivityTimer = setTimeout(() => {
-                console.log('Auto logout due to inactivity');
                 this.auth.logout();
             }, 5 * 60 * 1000); // 5 minutes
         };
 
-        // Events that reset the timer
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-
         events.forEach(event => {
-            document.addEventListener(event, resetTimer);
+            document.addEventListener(event, this._resetInactivityTimer);
         });
 
-        // Start the timer
-        resetTimer();
+        this._resetInactivityTimer();
+    }
+
+    teardownAutoLogout() {
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => {
+            document.removeEventListener(event, this._resetInactivityTimer);
+        });
+        clearTimeout(this.inactivityTimer);
     }
 
     redirectToMainSite() {

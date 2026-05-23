@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaUserGraduate, FaSearch, FaChevronLeft, FaTimes, FaDownload } from 'react-icons/fa';
 import api from '../services/api';
 import { downloadFromApi } from '../utils/download';
@@ -33,6 +33,7 @@ export default function Students() {
   const [enrollments, setEnrollments] = useState<EnrollmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'CONFIRMED' | 'COMPLETED'>('CONFIRMED');
+  const expectedTabRef = useRef<string>('CONFIRMED');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<EnrollmentResponse | null>(null);
 
@@ -68,14 +69,20 @@ export default function Students() {
   };
 
   const fetchStudents = async (courseId: number, statusTab: string) => {
+    expectedTabRef.current = statusTab;
+    const thisTab = statusTab;
     try {
       setLoading(true);
       const response = await api.get(`/admin/courses/${courseId}/students?status=${statusTab}`);
-      setEnrollments(response.data);
+      if (expectedTabRef.current === thisTab) {
+        setEnrollments(response.data);
+      }
     } catch (error) {
       console.error('Error fetching students:', error);
     } finally {
-      setLoading(false);
+      if (expectedTabRef.current === thisTab) {
+        setLoading(false);
+      }
     }
   };
 

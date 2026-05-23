@@ -31,8 +31,6 @@ export default function Dashboard() {
       }
     };
     fetchStats();
-    const interval = setInterval(fetchStats, 30000); // Poll every 30s
-    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div className="dashboard"><p>Yuklanmoqda...</p></div>;

@@ -101,28 +101,34 @@ export default class Products {
     }
 
     attachEvents() {
-        document.querySelectorAll('.add-to-cart').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const target = e.currentTarget;
+        const grid = document.getElementById('productsGrid');
+        if (!grid) return;
+
+        if (this._gridClickHandler) {
+            grid.removeEventListener('click', this._gridClickHandler);
+        }
+
+        this._gridClickHandler = (e) => {
+            const addBtn = e.target.closest('.add-to-cart');
+            if (addBtn) {
                 const product = {
-                    id: String(target.dataset.id),
-                    title: target.dataset.title,
-                    price: parseInt(target.dataset.price),
-                    image: target.dataset.image,
+                    id: String(addBtn.dataset.id),
+                    title: addBtn.dataset.title,
+                    price: parseInt(addBtn.dataset.price),
+                    image: addBtn.dataset.image,
                     quantity: 1
                 };
                 this.addToCart(product);
-            });
-        });
+                return;
+            }
 
-        document.querySelectorAll('.buy-now').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const target = e.currentTarget;
+            const buyBtn = e.target.closest('.buy-now');
+            if (buyBtn) {
                 const product = {
-                    id: target.dataset.id,
-                    title: target.dataset.title,
-                    price: parseInt(target.dataset.price),
-                    imageUrl: target.dataset.image,
+                    id: buyBtn.dataset.id,
+                    title: buyBtn.dataset.title,
+                    price: parseInt(buyBtn.dataset.price),
+                    imageUrl: buyBtn.dataset.image,
                     quantity: 1
                 };
 
@@ -134,8 +140,10 @@ export default class Products {
                     }
                 });
                 modal.render();
-            });
-        });
+            }
+        };
+
+        grid.addEventListener('click', this._gridClickHandler);
     }
 
     addToCart(product) {
@@ -175,5 +183,9 @@ export default class Products {
 
     destroy() {
         window.removeEventListener('robotronix-update', this.onProductUpdate);
+        const grid = document.getElementById('productsGrid');
+        if (grid && this._gridClickHandler) {
+            grid.removeEventListener('click', this._gridClickHandler);
+        }
     }
 }

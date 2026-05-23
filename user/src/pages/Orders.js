@@ -8,7 +8,6 @@ export default class Orders {
     this.container = document.getElementById("main-content");
     this.orders = [];
     this.initialLoad = true;
-    this.refreshInterval = null;
     this.selectedOrder = null;
     this.onOrderUpdate = (event) => {
       const update = event.detail;
@@ -145,16 +144,9 @@ export default class Orders {
     });
 
     await this.loadOrders();
-    this.startAutoRefresh();
 
-    // Listen for real-time updates
+    // Listen for real-time updates via WebSocket sync
     window.addEventListener('robotronix-update', this.onOrderUpdate);
-  }
-
-  startAutoRefresh() {
-    this.refreshInterval = setInterval(() => {
-      this.loadOrders(true);
-    }, 5000);
   }
 
   async loadOrders(silent = false) {
@@ -510,13 +502,10 @@ export default class Orders {
   }
 
   destroy() {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
-    }
     window.removeEventListener('robotronix-update', this.onOrderUpdate);
     if (window.confirmDelivery) delete window.confirmDelivery;
     if (window.retryOrderPayment) delete window.retryOrderPayment;
+    if (window._orderTrackFn) delete window._orderTrackFn;
     this.closeModal();
   }
 }

@@ -5,7 +5,7 @@ import {
   FaHistory, FaGlobe, FaSignOutAlt, FaChevronDown, FaUserCircle, FaUserCheck, FaNewspaper, FaCreditCard,
   FaMapMarkerAlt, FaIdBadge
 } from 'react-icons/fa';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { syncService } from '../services/SyncService';
 import api from '../services/api';
@@ -54,6 +54,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
     enrollments: 0,
     chatUnread: 0,
   });
+  const fetchTimerRef = useRef<number | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -62,11 +63,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
         api.get('/chat/unread-count'),
       ]);
 
-      const response = adminStatsRes;
       const chatUnread = Number(chatUnreadRes?.data?.count || 0);
       setStats({
-        orders: response.data.totalOrders || 0,
-        enrollments: response.data.totalEnrollments || 0,
+        orders: adminStatsRes.data.totalOrders || 0,
+        enrollments: adminStatsRes.data.totalEnrollments || 0,
         chatUnread: Number.isFinite(chatUnread) ? chatUnread : 0,
       });
     } catch (error) {
@@ -74,26 +74,30 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
     }
   };
 
+  // Debounced wrapper — collapses rapid bursts of sync events into one call
+  const scheduleFetchStats = () => {
+    if (fetchTimerRef.current) window.clearTimeout(fetchTimerRef.current);
+    fetchTimerRef.current = window.setTimeout(() => {
+      fetchTimerRef.current = null;
+      fetchStats();
+    }, 300);
+  };
+
   useEffect(() => {
     fetchStats();
-    // Refresh every minute to keep badges updated
     const interval = setInterval(fetchStats, 60000);
 
-    const onChatUnreadUpdate = () => fetchStats();
-    window.addEventListener('robotronix:chat-unread-update', onChatUnreadUpdate);
-    
-    // Subscribe to real-time events to instantly fetch stats
-    const unsubOrders = syncService.subscribe('ORDER', fetchStats);
-    const unsubEnrolls = syncService.subscribe('ENROLLMENT', fetchStats);
-    const unsubMessages = syncService.subscribe('MESSAGE', fetchStats);
-    const unsubChat = syncService.subscribe('CHAT', fetchStats);
+    window.addEventListener('robotronix:chat-unread-update', scheduleFetchStats);
+    const unsubOrders = syncService.subscribe('ORDER', scheduleFetchStats);
+    const unsubEnrolls = syncService.subscribe('ENROLLMENT', scheduleFetchStats);
+    const unsubChat = syncService.subscribe('CHAT', scheduleFetchStats);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('robotronix:chat-unread-update', onChatUnreadUpdate);
+      if (fetchTimerRef.current) window.clearTimeout(fetchTimerRef.current);
+      window.removeEventListener('robotronix:chat-unread-update', scheduleFetchStats);
       unsubOrders();
       unsubEnrolls();
-      unsubMessages();
       unsubChat();
     };
   }, []);

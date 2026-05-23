@@ -17,10 +17,12 @@ const CourseDetailPage = () => {
     const [paymentState, setPaymentState] = useState(null); // null | 'waiting' | 'confirmed' | 'timeout'
     const [paymentUrl, setPaymentUrl]     = useState(null);
     const [enrollId, setEnrollId]         = useState(null);
-    const pollingRef = useRef(null);
+    const pollingRef    = useRef(null);
+    const pollTimeoutRef = useRef(null);
 
     const stopPolling = () => {
-        if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
+        if (pollingRef.current)    { clearInterval(pollingRef.current);  pollingRef.current    = null; }
+        if (pollTimeoutRef.current){ clearTimeout(pollTimeoutRef.current); pollTimeoutRef.current = null; }
     };
 
     useEffect(() => {
@@ -51,7 +53,7 @@ const CourseDetailPage = () => {
             } catch (_) {}
         }, POLL_INTERVAL_MS);
 
-        setTimeout(() => {
+        pollTimeoutRef.current = setTimeout(() => {
             stopPolling();
             setPaymentState(prev => prev === 'waiting' ? 'timeout' : prev);
         }, POLL_TIMEOUT_MS);

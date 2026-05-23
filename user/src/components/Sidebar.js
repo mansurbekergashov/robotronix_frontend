@@ -11,9 +11,8 @@ export class Sidebar {
         this.fetchFreshUserData();
 
         // Listen for profile updates
-        window.addEventListener('userProfileUpdated', (e) => {
-            this.updateUserInfo(e.detail);
-        });
+        this._onProfileUpdated = (e) => this.updateUserInfo(e.detail);
+        window.addEventListener('userProfileUpdated', this._onProfileUpdated);
     }
 
 
@@ -228,9 +227,18 @@ export class Sidebar {
         this.updateCartBadge();
         this.updateChatBadge();
 
-        // Start polling for chat unread count
-        if (this.chatInterval) clearInterval(this.chatInterval);
-        this.chatInterval = setInterval(() => this.updateChatBadge(), 30000);
+        // Refresh badge on real-time CHAT events
+        this._onChatUpdate = (event) => {
+            const update = event.detail;
+            if (update?.entityType === 'CHAT') {
+                this.updateChatBadge();
+            }
+        };
+        window.addEventListener('robotronix-update', this._onChatUpdate);
+
+        // Also refresh on the unread-update event dispatched by the chat page itself
+        this._onUnreadUpdate = () => this.updateChatBadge();
+        window.addEventListener('robotronix:chat-unread-update', this._onUnreadUpdate);
     }
 
     async updateChatBadge() {
@@ -273,7 +281,9 @@ export class Sidebar {
     }
 
     destroy() {
-        if (this.chatInterval) clearInterval(this.chatInterval);
+        if (this._onProfileUpdated) window.removeEventListener('userProfileUpdated', this._onProfileUpdated);
+        if (this._onChatUpdate) window.removeEventListener('robotronix-update', this._onChatUpdate);
+        if (this._onUnreadUpdate) window.removeEventListener('robotronix:chat-unread-update', this._onUnreadUpdate);
     }
 }
 

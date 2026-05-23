@@ -55,7 +55,7 @@ class SyncService {
 
       if (!this.intentionalDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
-        setTimeout(() => this.connect(), 2000 * Math.pow(2, this.reconnectAttempts - 1));
+        setTimeout(() => this.connect(), Math.min(30000, 2000 * Math.pow(2, this.reconnectAttempts - 1)));
       }
     };
 

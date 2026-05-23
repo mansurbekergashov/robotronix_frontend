@@ -70,7 +70,6 @@ export class Router {
             });
         } catch (error) {
             console.error('Error loading page:', error);
-            console.error('Error stack:', error.stack);
 
             // Show error message to user
             const mainContent = document.getElementById('main-content');
