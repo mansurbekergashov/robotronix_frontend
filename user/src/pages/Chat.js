@@ -408,7 +408,7 @@ export default class Chat {
                 <div class="empty-chat">
                     <i class="fas fa-exclamation-circle" style="color: #ef5350;"></i>
                     <h3>Xatolik</h3>
-                    <p>${message}</p>
+                    <p>${this.escapeHtml(message)}</p>
                     <button class="btn-primary" onclick="location.reload()">Qayta yuklash</button>
                 </div>
             `;

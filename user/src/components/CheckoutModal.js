@@ -1,6 +1,8 @@
 import api from '../services/api.js';
 import toast from '../services/toast.js';
 
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS  = 900000; // 15 daqiqa
 
@@ -67,7 +69,7 @@ export default class CheckoutModal {
                                 ${this.items.map((item, idx) => `
                                     <div class="checkout-item-row">
                                         <div class="checkout-item-info">
-                                            <span class="checkout-item-name">${item.title}</span>
+                                            <span class="checkout-item-name">${esc(item.title)}</span>
                                             <span class="checkout-item-price">${item.price.toLocaleString()} so'm</span>
                                         </div>
                                         <div class="quantity-control" data-index="${idx}">
@@ -145,8 +147,8 @@ export default class CheckoutModal {
             <div class="district-option" data-id="${j.id}" data-name="${j.name}" data-path="${path}" style="
                 padding:10px 14px; cursor:pointer; border-bottom:1px solid #2d3748;
             " onmouseover="this.style.background='#2d3748'" onmouseout="this.style.background=''">
-                <div style="color:#e2e8f0; font-size:14px;">${j.name}</div>
-                ${path ? `<div style="color:#8b92a7; font-size:12px; margin-top:2px;">${path}</div>` : ''}
+                <div style="color:#e2e8f0; font-size:14px;">${esc(j.name)}</div>
+                ${path ? `<div style="color:#8b92a7; font-size:12px; margin-top:2px;">${esc(path)}</div>` : ''}
             </div>`;
         }).join('');
 

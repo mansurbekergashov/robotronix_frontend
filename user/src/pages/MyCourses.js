@@ -84,7 +84,6 @@ export default class MyCourses {
     const list = document.getElementById("enrollmentsList");
 
     if (!this.enrollments || this.enrollments.length === 0) {
-      console.warn("⚠️  MyCourses - No enrollments found");
       list.innerHTML = `
                 <div class="cart-empty-state">
                     <div class="empty-icon-wrapper">
@@ -106,15 +105,7 @@ export default class MyCourses {
                 ${this.enrollments
                   .map((enrollment, index) => {
                     const course = enrollment.course;
-                    if (!course) {
-                      console.warn(
-                        "⚠️  MyCourses - Enrollment",
-                        index,
-                        "has no course:",
-                        enrollment,
-                      );
-                      return "";
-                    }
+                    if (!course) return '';
                     const status = this.getStatusInfo(enrollment.status);
                     const date = new Date(
                       enrollment.createdAt ||

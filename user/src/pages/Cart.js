@@ -55,10 +55,10 @@ export default class Cart {
         return `
             <div class="cart-item" data-id="${item.id}">
                 <div class="item-img">
-                    <img src="${getFileUrl(item.image)}" alt="${item.title || 'Mahsulot'}">
+                    <img src="${getFileUrl(item.image)}" alt="${esc(item.title) || 'Mahsulot'}">
                 </div>
                 <div class="item-info">
-                    <h4>${item.title || 'Mahsulot'}</h4>
+                    <h4>${esc(item.title) || 'Mahsulot'}</h4>
                     <p class="item-category">Mahsulot to'plami</p>
                     <div class="item-quick-actions">
                         <button class="btn-checkout-single" data-id="${item.id}">

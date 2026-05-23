@@ -431,9 +431,10 @@ export default class Profile {
         if (!notification) return;
 
         notification.className = `notification notification-${type} show`;
+        const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
         notification.innerHTML = `
             <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-            <span>${message}</span>
+            <span>${esc(message)}</span>
         `;
 
         setTimeout(() => {
