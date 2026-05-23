@@ -246,7 +246,7 @@ export default class Chat {
 
             this.renderMessages();
         } catch (error) {
-            console.error('âŒ Error loading messages:', error);
+            console.error('Error loading messages:', error);
             this.renderMessages();
         }
     }

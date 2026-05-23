@@ -184,8 +184,10 @@ export default function Applications() {
             >
               <option value="">Barcha holatlar</option>
               <option value="PENDING">Kutilmoqda</option>
+              <option value="PAYMENT_WAITING">To'lov kutilmoqda</option>
               <option value="CONFIRMED">Tasdiqlangan</option>
               <option value="REJECTED">Rad etilgan</option>
+              <option value="CANCELLED">Bekor qilingan</option>
             </select>
           </div>
         </div>
@@ -217,10 +219,13 @@ export default function Applications() {
                 <td>{new Date(app.createdAt || app.enrolledAt).toLocaleString('uz-UZ')}</td>
                 <td>
                   <span className={`badge ${app.status === 'CONFIRMED' ? 'badge-success' :
-                    app.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'
+                    app.status === 'REJECTED' || app.status === 'CANCELLED' ? 'badge-danger' :
+                    app.status === 'PAYMENT_WAITING' ? 'badge-info' : 'badge-warning'
                     }`}>
                     {app.status === 'PENDING' ? 'Kutilmoqda' :
-                      app.status === 'CONFIRMED' ? 'Tasdiqlangan' : 'Rad etilgan'}
+                      app.status === 'CONFIRMED' ? 'Tasdiqlangan' :
+                      app.status === 'PAYMENT_WAITING' ? "To'lov kutilmoqda" :
+                      app.status === 'CANCELLED' ? 'Bekor qilingan' : 'Rad etilgan'}
                   </span>
                 </td>
                 <td>
@@ -322,10 +327,13 @@ export default function Applications() {
                   <h3><FaGraduationCap /> Ariza ma'lumotlari</h3>
                   <p><strong>Holat:</strong>
                     <span className={`badge ${selectedApp.status === 'CONFIRMED' ? 'badge-success' :
-                      selectedApp.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'
+                      selectedApp.status === 'REJECTED' || selectedApp.status === 'CANCELLED' ? 'badge-danger' :
+                      selectedApp.status === 'PAYMENT_WAITING' ? 'badge-info' : 'badge-warning'
                       }`}>
                       {selectedApp.status === 'PENDING' ? 'Kutilmoqda' :
-                        selectedApp.status === 'CONFIRMED' ? 'Tasdiqlangan' : 'Rad etilgan'}
+                        selectedApp.status === 'CONFIRMED' ? 'Tasdiqlangan' :
+                        selectedApp.status === 'PAYMENT_WAITING' ? "To'lov kutilmoqda" :
+                        selectedApp.status === 'CANCELLED' ? 'Bekor qilingan' : 'Rad etilgan'}
                     </span>
                   </p>
                   <p><strong>Kurs:</strong> {selectedApp.course?.title}</p>

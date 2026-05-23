@@ -239,6 +239,7 @@ export default function Orders() {
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { label: string; class: string; icon: React.ReactElement }> = {
       PENDING: { label: 'Kutilmoqda', class: 'badge-warning', icon: <FaBoxOpen /> },
+      PAYMENT_WAITING: { label: "To'lov kutilmoqda", class: 'badge-info', icon: <FaBoxOpen /> },
       CONFIRMED: { label: 'Tasdiqlandi', class: 'badge-info', icon: <FaCheck /> },
       PREPARING: { label: 'Tayyorlanmoqda', class: 'badge-primary', icon: <FaBoxOpen /> },
       SHIPPED: { label: 'Yuborildi', class: 'badge-secondary', icon: <FaTruck /> },
@@ -280,6 +281,7 @@ export default function Orders() {
               >
                 <option value="">Barcha holatlar</option>
                 <option value="PENDING">Kutilmoqda</option>
+                <option value="PAYMENT_WAITING">To'lov kutilmoqda</option>
                 <option value="CONFIRMED">Tasdiqlandi</option>
                 <option value="PREPARING">Tayyorlanmoqda</option>
                 <option value="SHIPPED">Yuborildi</option>
