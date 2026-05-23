@@ -37,7 +37,6 @@ function AdminLayout() {
     return localStorage.getItem('sidebarCollapsed') === 'true';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
