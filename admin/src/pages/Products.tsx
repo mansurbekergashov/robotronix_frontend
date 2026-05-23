@@ -121,6 +121,7 @@ export default function Products() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // prevent double-fire from Enter + button click
     if (submittingRef.current) return;
     submittingRef.current = true;
     setIsSubmitting(true);

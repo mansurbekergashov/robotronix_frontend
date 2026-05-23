@@ -103,6 +103,7 @@ export default function Courses() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (submittingRef.current) return;
     submittingRef.current = true;
     setIsSubmitting(true);
