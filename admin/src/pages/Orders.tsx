@@ -596,15 +596,16 @@ export default function Orders() {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>To'lov turi (UzPost)</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>To'lov turi</label>
                 <select
                   className="filter-select"
                   style={{ width: '100%' }}
                   value={paymentType}
                   onChange={e => setPaymentType(e.target.value)}
                 >
-                  <option value="CREDIT_BALANCE">CREDIT_BALANCE — Hisobdan to'lov</option>
-                  <option value="CASH_ON_DELIVERY">CASH_ON_DELIVERY — Yetkazilganda to'lov</option>
+                  <option value="CREDIT_BALANCE">Naqd pulsiz (hisobdan)</option>
+                  <option value="CASH">Naqd pul</option>
+                  <option value="CASH_ON_DELIVERY">Yetkazilganda to'lov</option>
                 </select>
               </div>
 
