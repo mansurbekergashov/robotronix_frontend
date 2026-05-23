@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaCertificate, FaSearch, FaChevronLeft, FaUpload, FaTimes, FaCheckCircle, FaFileDownload, FaEye } from 'react-icons/fa';
 import api from '../services/api';
 import { useToast } from '../hooks/useToast';
@@ -46,6 +46,7 @@ export default function Certifications() {
   const [uploadUser, setUploadUser] = useState<UserDetail | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const uploadingRef = useRef(false);
 
   useEffect(() => {
     fetchCourses();
@@ -115,6 +116,8 @@ export default function Certifications() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !uploadUser || !selectedCourse) return;
+    if (uploadingRef.current) return;
+    uploadingRef.current = true;
 
     try {
       setUploading(true);
@@ -139,6 +142,7 @@ export default function Certifications() {
       console.error('Upload error:', error);
       toast.error('Sertifikat yuklashda xatolik yuz berdi');
     } finally {
+      uploadingRef.current = false;
       setUploading(false);
     }
   };

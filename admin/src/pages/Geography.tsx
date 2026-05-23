@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaChevronRight, FaMapMarkerAlt, FaBuilding, FaCity } from 'react-icons/fa';
 import api from '../services/api';
 import { useToast } from '../hooks/useToast';
@@ -19,7 +19,9 @@ export default function Geography() {
     const confirm = useConfirm();
     const [locations, setLocations] = useState<PostLocation[]>([]);
     const [loading, setLoading] = useState(true);
-    
+    const [isSaving, setIsSaving] = useState(false);
+    const savingRef = useRef(false);
+
     // Selection state for the hierarchy
     const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
     const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function Geography() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<'region' | 'district' | 'location'>('region');
     const [editingLocation, setEditingLocation] = useState<PostLocation | null>(null);
-    
+
     const [formData, setFormData] = useState({
         region: '',
         district: '',
@@ -67,6 +69,9 @@ export default function Geography() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (savingRef.current) return;
+        savingRef.current = true;
+        setIsSaving(true);
         try {
             if (editingLocation) {
                 await api.put(`/admin/geography/${editingLocation.id}`, formData);
@@ -78,6 +83,9 @@ export default function Geography() {
         } catch (error) {
             console.error('Error saving location:', error);
             toast.error('Saqlashda xatolik yuz berdi');
+        } finally {
+            savingRef.current = false;
+            setIsSaving(false);
         }
     };
 
@@ -235,8 +243,8 @@ export default function Geography() {
 
             {/* MODAL */}
             {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content geography-modal">
+                <div className="modal-overlay" onClick={() => { if (!isSaving) setIsModalOpen(false); }}>
+                    <div className="modal-content geography-modal" onClick={e => e.stopPropagation()}>
                         <h3>
                             {modalType === 'region' ? 'Yangi Viloyat qo\'shish' : 
                              modalType === 'district' ? 'Yangi Tuman qo\'shish' : 
@@ -314,11 +322,11 @@ export default function Geography() {
                             )}
 
                             <div className="modal-actions">
-                                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>
+                                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
                                     Bekor qilish
                                 </button>
-                                <button type="submit" className="btn-primary">
-                                    Saqlash
+                                <button type="submit" className="btn-primary" disabled={isSaving}>
+                                    {isSaving ? 'Saqlanmoqda...' : 'Saqlash'}
                                 </button>
                             </div>
                         </form>
