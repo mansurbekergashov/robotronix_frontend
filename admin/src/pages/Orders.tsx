@@ -401,7 +401,7 @@ export default function Orders() {
                   </div>
                   <p><strong>Ism:</strong> {selectedOrder.user?.fullName}</p>
                   <p><strong>Telefon:</strong> {selectedOrder.contactPhone || selectedOrder.user?.phone}</p>
-                  <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}</p>
+                  <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}{selectedOrder.postalIndex ? <span style={{ marginLeft: 8, color: '#4ade80', fontSize: '12px' }}>📮 {selectedOrder.postalIndex}</span> : null}</p>
                   {selectedOrder.trackingNumber && (
                     <p><strong>Tracking:</strong> <code>{selectedOrder.trackingNumber}</code> <span style={{ color: '#8b92a7', fontSize: '12px' }}>({selectedOrder.shippingStatus})</span></p>
                   )}

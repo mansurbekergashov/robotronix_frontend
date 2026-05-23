@@ -53,11 +53,6 @@ export default class CheckoutModal {
                                 </div>
                             </div>
                             <div class="detail-item full-width">
-                                <label><i class="fas fa-road"></i> Ko'cha / Uy raqami <span style="color:#8b92a7;font-size:12px;">(ixtiyoriy)</span></label>
-                                <input type="text" id="streetInput" class="form-input"
-                                       placeholder="Masalan: Navoiy ko'chasi, 12-uy">
-                            </div>
-                            <div class="detail-item full-width">
                                 <label><i class="fas fa-phone"></i> Aloqa telefoni</label>
                                 <input type="tel" id="phoneInput" class="form-input"
                                        value="${this.phone}" placeholder="+998 90 123 45 67" required>
@@ -240,7 +235,6 @@ export default class CheckoutModal {
             if (this._submitting) return;
 
             const submitBtn = modal.querySelector('#submitOrderBtn');
-            const street = modal.querySelector('#streetInput').value.trim();
             const phone  = modal.querySelector('#phoneInput').value.trim();
 
             const reset = (msg) => {
@@ -262,9 +256,7 @@ export default class CheckoutModal {
             try {
                 const orderData = {
                     items: this.items.map(item => ({ productId: item.id, quantity: item.quantity })),
-                    shippingAddress: street
-                        ? `${this.selectedJurisdiction.name}, ${street}`
-                        : this.selectedJurisdiction.name,
+                    shippingAddress: this.selectedJurisdiction.name,
                     contactPhone: phone,
                     receiverJurisdictionId: this.selectedJurisdiction.id,
                     postalIndex: this._postalIndex || undefined,

@@ -14,6 +14,7 @@ interface ProductData {
   paymentCardId?: number | null;
   imageUrl: string;
   badge?: string;
+  weightGrams?: number;
 }
 
 interface PaymentCardOption {
@@ -33,7 +34,8 @@ const initialProduct: Omit<ProductData, 'id'> = {
   oldPrice: 0,
   paymentCardId: null,
   imageUrl: '',
-  badge: ''
+  badge: '',
+  weightGrams: 500
 };
 
 export default function Products() {
@@ -279,14 +281,26 @@ export default function Products() {
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label>Nishon (Badge)</label>
-                <input
-                  type="text"
-                  placeholder="Masalan: Yangi, Chegirma"
-                  value={formData.badge}
-                  onChange={e => setFormData({ ...formData, badge: e.target.value })}
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Og'irligi (gramm) <span style={{fontSize:'12px',color:'#8b92a7',fontWeight:'normal'}}>pochta uchun</span></label>
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="500"
+                    value={formData.weightGrams ?? 500}
+                    onChange={e => setFormData({ ...formData, weightGrams: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Nishon (Badge)</label>
+                  <input
+                    type="text"
+                    placeholder="Masalan: Yangi, Chegirma"
+                    value={formData.badge}
+                    onChange={e => setFormData({ ...formData, badge: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Naqd to'lov kartasi <span style={{fontSize:'12px',color:'#8b92a7',fontWeight:'normal'}}>(ixtiyoriy — Payme avtomatik)</span></label>
