@@ -181,8 +181,11 @@ export default function Chat() {
                     }
                 }
 
-                // 3. Always refresh rooms list on any message to keep last message/unread count in sync
-                fetchRooms();
+                // 3. Refresh rooms list — system_update (CHAT) already handles cross-room updates.
+                // Only refresh here for messages in the current room to keep unread counts in sync.
+                if (newMsg.roomId === selectedRoomRef.current) {
+                    fetchRooms();
+                }
             } catch (err) {
                 console.error('Error handling WebSocket message:', err);
             }
