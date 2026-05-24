@@ -142,8 +142,16 @@ export default function Courses() {
       setImageFile(null);
     } catch (error: any) {
       console.error('Error saving course:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
-      toast.error(errorMsg);
+      if (error.response?.status === 409) {
+        // Idempotency: backend already processed this exact request — treat as success
+        await fetchCourses();
+        setIsModalOpen(false);
+        setImageFile(null);
+        toast.success("Kurs muvaffaqiyatli saqlandi");
+      } else {
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
+        toast.error(errorMsg);
+      }
     } finally {
       submittingRef.current = false;
       setTimeout(() => setIsSubmitting(false), 500);

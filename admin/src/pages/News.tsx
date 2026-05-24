@@ -147,9 +147,15 @@ export default function News() {
 
       closeModal();
       fetchItems();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving news:', err);
-      toast.error('Saqlashda xatolik yuz berdi');
+      if (err?.response?.status === 409) {
+        closeModal();
+        fetchItems();
+        toast.success("Yangilik muvaffaqiyatli saqlandi");
+      } else {
+        toast.error('Saqlashda xatolik yuz berdi');
+      }
     } finally {
       savingRef.current = false;
       setSaving(false);

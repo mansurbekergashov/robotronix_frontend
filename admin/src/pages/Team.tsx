@@ -127,7 +127,13 @@ export default function Team() {
       closeModal();
       fetchMembers();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Xatolik yuz berdi');
+      if (err?.response?.status === 409) {
+        closeModal();
+        fetchMembers();
+        toast.success(editMember.id ? 'Hodim yangilandi' : "Hodim qo'shildi");
+      } else {
+        toast.error(err?.response?.data?.message || 'Xatolik yuz berdi');
+      }
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -156,7 +162,9 @@ export default function Team() {
         displayOrder: m.displayOrder,
         isActive: !m.isActive,
       })], { type: 'application/json' }));
-      await api.put(`/admin/team/${m.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.put(`/admin/team/${m.id}`, formData, {
+        headers: { 'X-Idempotency-Key': generateIdempotencyKey() },
+      });
       fetchMembers();
     } catch {
       toast.error('Xatolik yuz berdi');

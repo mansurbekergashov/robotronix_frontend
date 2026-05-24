@@ -156,8 +156,15 @@ export default function Products() {
       setImageFile(null);
     } catch (error: any) {
       console.error('Error saving product:', error);
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
-      toast.error(errorMsg);
+      if (error.response?.status === 409) {
+        await fetchProducts();
+        setIsModalOpen(false);
+        setImageFile(null);
+        toast.success("Mahsulot muvaffaqiyatli saqlandi");
+      } else {
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || "Xatolik yuz berdi";
+        toast.error(errorMsg);
+      }
     } finally {
       submittingRef.current = false;
       setTimeout(() => setIsSubmitting(false), 500);
