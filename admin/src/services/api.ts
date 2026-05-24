@@ -113,6 +113,18 @@ api.interceptors.response.use(
             }
         }
 
+        // 409 Conflict = duplicate request (idempotency key already used) — silently ignore
+        if (status === 409) {
+            console.warn('Duplicate request blocked by server (409 Conflict)');
+            return Promise.resolve({ data: null, status: 409, headers: {}, config: error.config!, statusText: 'Conflict' } as any);
+        }
+
+        // 429 Too Many Requests = rate limited — show user-friendly message
+        if (status === 429) {
+            console.warn('Rate limited by server (429 Too Many Requests)');
+            return Promise.reject(new Error('Iltimos, bir oz kuting va qayta urinib ko\'ring'));
+        }
+
         if (status && status >= 500) {
             console.error('Server xatosi:', status, error.response?.data)
         } else if (!error.response && error.message === 'Network Error') {
