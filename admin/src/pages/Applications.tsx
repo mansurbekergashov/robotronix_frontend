@@ -70,7 +70,7 @@ export default function Applications() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [filterStatus, debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterStatus, debouncedSearch]);
 
   // Debounce search input
   useEffect(() => {

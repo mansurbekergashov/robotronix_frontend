@@ -13,7 +13,10 @@ export default class Chat {
         this.ws = null;
         this.roomId = null;
         this.adminId = null;
-
+        this._messageQueue = [];
+        this._reconnectTimer = null;
+        this._reconnectDelay = 2000;
+        this._destroyed = false;
     }
 
     render() {
@@ -317,16 +320,25 @@ export default class Chat {
     }
 
     async connectWebSocket() {
-        if (!this.roomId) {
-            return;
+        if (!this.roomId || this._destroyed) return;
+
+        if (this._reconnectTimer) {
+            clearTimeout(this._reconnectTimer);
+            this._reconnectTimer = null;
         }
 
         let ticket;
         try {
             const res = await api.post('/chat/ws-ticket');
-            ticket = res.ticket;
+            ticket = res?.ticket;
         } catch (e) {
             console.error('Could not get WebSocket ticket', e);
+            this._scheduleReconnect();
+            return;
+        }
+
+        if (!ticket) {
+            this._scheduleReconnect();
             return;
         }
 
@@ -340,6 +352,16 @@ export default class Chat {
             }
 
             this.ws = new WebSocket(wsUrl);
+
+            this.ws.onopen = () => {
+                this._reconnectDelay = 2000;
+                this._updateConnectionStatus(true);
+                // Flush queued messages
+                while (this._messageQueue.length > 0) {
+                    const queued = this._messageQueue.shift();
+                    try { this.ws.send(queued); } catch (e) { /* drop */ }
+                }
+            };
 
             this.ws.onmessage = (event) => {
                 try {
@@ -366,10 +388,13 @@ export default class Chat {
             };
 
             this.ws.onclose = (event) => {
+                this._updateConnectionStatus(false);
                 if (event.code === 1008 || event.code === 3000) {
                     console.warn('WebSocket unauthorized');
                     this.showError('Sessiya muddati tugagan. Iltimos, qaytadan kiring.');
+                    return;
                 }
+                this._scheduleReconnect();
             };
 
             this.ws.onerror = () => {
@@ -377,6 +402,24 @@ export default class Chat {
             };
         } catch (error) {
             console.error('WebSocket connection error:', error);
+            this._scheduleReconnect();
+        }
+    }
+
+    _scheduleReconnect() {
+        if (this._destroyed) return;
+        this._reconnectTimer = setTimeout(() => {
+            this.connectWebSocket();
+        }, this._reconnectDelay);
+        this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30000);
+    }
+
+    _updateConnectionStatus(connected) {
+        const statusText = document.querySelector('.status-text');
+        const statusIndicator = document.querySelector('.status-indicator');
+        if (statusText) statusText.textContent = connected ? 'Onlayn' : 'Ulanmoqda...';
+        if (statusIndicator) {
+            statusIndicator.style.background = connected ? '' : '#f59e0b';
         }
     }
 
@@ -394,14 +437,26 @@ export default class Chat {
         const messageInput = document.getElementById('messageInput');
         const message = messageInput?.value?.trim();
 
-        if (!message || !this.roomId || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            return;
+        if (!message || !this.roomId) return;
+
+        const payload = JSON.stringify({ content: message });
+
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(payload);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+        } else if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+            this._messageQueue.push(payload);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            toast.info('Xabar navbatga qo\'shildi, ulanish amalga oshgach yuboriladi.');
+        } else {
+            this._messageQueue.push(payload);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            toast.warning('Qayta ulanmoqda, xabar yuboriladi...');
+            this.connectWebSocket();
         }
-
-        this.ws.send(JSON.stringify({ content: message }));
-
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
     }
 
     scrollToBottom() {
@@ -434,8 +489,10 @@ export default class Chat {
     }
 
     async handleFileUpload(files) {
-        if (!this.roomId || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            toast.warning('Chat ulanmagan. Iltimos sahifani yangilang.');
+        if (!this.roomId) return;
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            toast.warning('Ulanmoqda... Iltimos bir oz kuting.');
+            this.connectWebSocket();
             return;
         }
 
@@ -464,6 +521,11 @@ export default class Chat {
     }
 
     destroy() {
+        this._destroyed = true;
+        if (this._reconnectTimer) {
+            clearTimeout(this._reconnectTimer);
+            this._reconnectTimer = null;
+        }
         if (this.ws) {
             try { this.ws.close(); } catch (e) { }
             this.ws = null;

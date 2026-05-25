@@ -60,8 +60,7 @@ const Contact = () => {
                             <div className="contact-details">
                                 <h4>Manzil</h4>
                                 <p>
-                                    Farg'ona sh., Murabbiylar ko'chasi<br />
-                                    Mo'ljal: Fizika-matematika fakulteti
+                                    Farg'ona, Ma'rifat ko'chasi, 21B
                                 </p>
                             </div>
                         </div>

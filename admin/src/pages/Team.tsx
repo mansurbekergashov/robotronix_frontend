@@ -62,7 +62,7 @@ export default function Team() {
     }
   };
 
-  useEffect(() => { fetchMembers(); }, []);
+  useEffect(() => { fetchMembers(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openCreate = () => {
     formIdempotencyKey.current = generateIdempotencyKey();

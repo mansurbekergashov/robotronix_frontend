@@ -41,6 +41,7 @@ export default function Geography() {
 
     useEffect(() => {
         fetchLocations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchLocations = async () => {

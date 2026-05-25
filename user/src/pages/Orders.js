@@ -9,6 +9,8 @@ export default class Orders {
     this.orders = [];
     this.initialLoad = true;
     this.selectedOrder = null;
+    this._trackingCache = new Map(); // orderId → { statusCode, ts }
+    this._trackingInterval = null;
     this.onOrderUpdate = (event) => {
       const update = event.detail;
       if (update && update.entityType === 'ORDER') {
@@ -17,19 +19,24 @@ export default class Orders {
     };
   }
 
-  _uzpostStatusLabel(status) {
+  _uzpostStatusInfo(code) {
     const map = {
-      ACCEPTED:     'Pochta qabul qildi',
-      TRANSIT:      'Tranzitda',
-      IN_TRANSIT:   'Tranzitda',
-      ARRIVED:      'Shaharga yetib keldi',
-      OUT_FOR_DELIVERY: 'Yetkazib berilmoqda',
-      DELIVERED:    'Yetkazib berildi',
-      RECEIVED:     'Qabul qilindi',
-      RETURNED:     'Qaytarildi',
-      CANCELLED:    'Bekor qilindi',
+      unassigned:       { cls: 'info',      icon: 'fa-box',             text: 'Pochta qabul qildi' },
+      assigned:         { cls: 'primary',   icon: 'fa-user-check',      text: 'Kuryer biriktirildi' },
+      in_transit:       { cls: 'secondary', icon: 'fa-truck',           text: 'Tranzitda' },
+      out_for_delivery: { cls: 'warning',   icon: 'fa-shipping-fast',   text: 'Yetkazib berilmoqda' },
+      delivered:        { cls: 'success',   icon: 'fa-check-circle',    text: 'Yetkazib berildi' },
+      returned:         { cls: 'warning',   icon: 'fa-undo-alt',        text: 'Qaytarildi' },
+      cancelled:        { cls: 'danger',    icon: 'fa-times-circle',    text: 'Bekor qilindi' },
+      lost:             { cls: 'danger',    icon: 'fa-question-circle', text: "Yo'qolgan" },
+      ACCEPTED:         { cls: 'info',      icon: 'fa-box',             text: 'Pochta qabul qildi' },
+      IN_TRANSIT:       { cls: 'secondary', icon: 'fa-truck',           text: 'Tranzitda' },
+      OUT_FOR_DELIVERY: { cls: 'warning',   icon: 'fa-shipping-fast',   text: 'Yetkazib berilmoqda' },
+      DELIVERED:        { cls: 'success',   icon: 'fa-check-circle',    text: 'Yetkazib berildi' },
+      RETURNED:         { cls: 'warning',   icon: 'fa-undo-alt',        text: 'Qaytarildi' },
+      CANCELLED:        { cls: 'danger',    icon: 'fa-times-circle',    text: 'Bekor qilindi' },
     };
-    return map[status] || status;
+    return map[code] || { cls: 'secondary', icon: 'fa-info-circle', text: code };
   }
 
   async _loadTrackingDetail(orderId) {
@@ -49,34 +56,39 @@ export default class Orders {
     try {
       const { default: api } = await import('../services/api.js');
       const data = await api.get(`/orders/${orderId}/tracking`);
-      const tracking = data?.data ?? data;
+      const d = data?.data ?? data;
+      const statusCode = d?.status ?? '';
+      const locations = d?.locations ?? [];
 
-      if (!tracking) {
-        el.innerHTML = '<p style="color:#8b92a7;font-size:13px;">Kuzatuv ma\'lumoti topilmadi</p>';
+      if (!statusCode) {
+        el.innerHTML = '<p style="color:#8b92a7;font-size:13px;margin-top:8px;">Kuzatuv ma\'lumoti topilmadi</p>';
         el.style.display = 'block';
         return;
       }
 
-      const status = tracking.orderStatus ?? tracking.data?.status ?? '—';
-      const locations = tracking.data?.locations ?? tracking.locations ?? [];
+      // Cache yangilash
+      this._trackingCache.set(orderId, { statusCode, ts: Date.now() });
+      this._applyTrackingBadge(orderId, statusCode);
+      const info = this._uzpostStatusInfo(statusCode);
 
-      let html = `
-        <div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748;">
-          <div style="margin-bottom:10px;">
-            <span style="font-weight:600; color:#e2e8f0;">UzPost holati: </span>
-            <span style="color:#4ade80; font-weight:600;">${esc(this._uzpostStatusLabel(status))}</span>
-          </div>`;
+      let html = `<div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748;">
+        <div style="margin-bottom:8px;">
+          <span style="color:#8b92a7; font-size:12px;">Joriy holat: </span>
+          <span class="status-badge status-${info.cls}" style="font-size:0.8rem; padding:4px 10px;"><i class="fas ${info.icon}"></i> ${esc(info.text)}</span>
+        </div>`;
 
       if (locations.length > 0) {
-        html += `<div style="font-size:12px; color:#8b92a7; margin-bottom:6px;">Harakatlar:</div>
-          <div style="display:flex; flex-direction:column; gap:6px;">`;
+        html += `<div style="font-size:12px; color:#8b92a7; margin-bottom:6px;">Marshrut:</div>
+          <div style="position:relative; padding-left:16px;">
+          <div style="position:absolute; left:5px; top:4px; bottom:4px; width:2px; background:rgba(99,102,241,0.3);"></div>`;
         locations.forEach(loc => {
           const addr = loc.addressCity || loc.address || '—';
-          const icon = loc.pickup ? '📦' : '📍';
-          html += `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#e2e8f0;">
-            <span>${icon}</span>
-            <span>${esc(addr)}</span>
-            ${loc.postcode ? `<span style="color:#8b92a7; font-size:11px;">(${esc(loc.postcode)})</span>` : ''}
+          const dotColor = loc.pickup ? '#6366f1' : '#4ade80';
+          const label = loc.pickup ? "Jo'natuvchi" : 'Qabul qiluvchi';
+          html += `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#e2e8f0; margin-bottom:8px; position:relative;">
+            <div style="width:8px; height:8px; border-radius:50%; background:${dotColor}; border:2px solid #1e2640; flex-shrink:0; position:absolute; left:-5px;"></div>
+            <span style="padding-left:8px;">${esc(addr)}</span>
+            <span style="color:#8b92a7; font-size:11px;">(${label})</span>
           </div>`;
         });
         html += '</div>';
@@ -86,11 +98,11 @@ export default class Orders {
       el.innerHTML = html;
       el.style.display = 'block';
     } catch (_) {
-      el.innerHTML = '<p style="color:#f87171;font-size:13px;">Kuzatuv ma\'lumotini yuklab bo\'lmadi</p>';
+      el.innerHTML = '<p style="color:#f87171;font-size:13px;margin-top:8px;">Kuzatuv ma\'lumotini yuklab bo\'lmadi</p>';
       el.style.display = 'block';
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Kuzatish';
+      btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Batafsil tarix';
     }
   }
 
@@ -144,6 +156,11 @@ export default class Orders {
     });
 
     await this.loadOrders();
+
+    // Har 60 soniyada tracking ni yangilash
+    this._trackingInterval = setInterval(() => {
+      this._fetchAllTracking();
+    }, 60_000);
 
     // Listen for real-time updates via WebSocket sync
     window.addEventListener('robotronix-update', this.onOrderUpdate);
@@ -267,6 +284,33 @@ export default class Orders {
                           (items.length > 2 ? ` +${items.length - 2}` : "")
                         : "Mahsulot yo'q";
 
+                    const isTracked = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.trackingNumber;
+                    const cached = this._trackingCache.get(order.id);
+
+                    // Tracked buyurtmalar uchun status ustuni
+                    let statusCell;
+                    if (isTracked) {
+                        if (cached) {
+                            const ci = this._uzpostStatusInfo(cached.statusCode);
+                            statusCell = `<span class="ol-col ol-status" id="status-col-${order.id}">
+                                <span class="status-badge status-${ci.cls}"><i class="fas ${ci.icon}"></i> ${esc(ci.text)}</span>
+                            </span>`;
+                        } else {
+                            // Hali yuklanmagan — vaqtincha order statusini ko'rsat, keyin almashadi
+                            statusCell = `<span class="ol-col ol-status" id="status-col-${order.id}">
+                                <span class="status-badge status-${status.class}">
+                                    <i class="fas ${status.icon}"></i> ${status.text}
+                                </span>
+                            </span>`;
+                        }
+                    } else {
+                        statusCell = `<span class="ol-col ol-status">
+                            <span class="status-badge status-${status.class}">
+                                <i class="fas ${status.icon}"></i> ${status.text}
+                            </span>
+                        </span>`;
+                    }
+
                     return `
                         <div class="orders-list-row" data-order-id="${order.id}">
                             <span class="ol-col ol-id">#${order.id}</span>
@@ -276,11 +320,7 @@ export default class Orders {
                             </span>
                             <span class="ol-col ol-date">${date}</span>
                             <span class="ol-col ol-total">${(order.totalAmount || 0).toLocaleString()} so'm</span>
-                            <span class="ol-col ol-status">
-                                <span class="status-badge status-${status.class}">
-                                    <i class="fas ${status.icon}"></i> ${status.text}
-                                </span>
-                            </span>
+                            ${statusCell}
                         </div>
                     `;
                   })
@@ -296,6 +336,53 @@ export default class Orders {
         if (order) this.openModal(order);
       });
     });
+
+    // Tracking ni yuklash (fon rejimida)
+    this._fetchAllTracking();
+  }
+
+  async _fetchAllTracking() {
+    const tracked = this.orders.filter(
+      o => (o.status === 'SHIPPED' || o.status === 'DELIVERED') && o.trackingNumber
+    );
+    if (tracked.length === 0) return;
+
+    const { default: api } = await import('../services/api.js').catch(() => ({ default: null }));
+    if (!api) return;
+
+    const now = Date.now();
+    const CACHE_TTL = 60_000; // 60 soniya
+
+    for (const order of tracked) {
+      const cached = this._trackingCache.get(order.id);
+      if (cached && now - cached.ts < CACHE_TTL) {
+        // Cache dan yangilash
+        this._applyTrackingBadge(order.id, cached.statusCode);
+        continue;
+      }
+
+      try {
+        const data = await api.get(`/orders/${order.id}/tracking`);
+        const d = data?.data ?? data;
+        const statusCode = d?.status ?? '';
+        if (statusCode) {
+          this._trackingCache.set(order.id, { statusCode, ts: Date.now() });
+          this._applyTrackingBadge(order.id, statusCode);
+        }
+      } catch (_) { /* API xatosi — skip */ }
+
+      // UzPost API ni bosib ketmaslik uchun kichik kechikish
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+
+  _applyTrackingBadge(orderId, statusCode) {
+    if (!statusCode) return;
+    const info = this._uzpostStatusInfo(statusCode);
+    const col = document.getElementById(`status-col-${orderId}`);
+    if (col) col.innerHTML = `<span class="status-badge status-${info.cls}"><i class="fas ${info.icon}"></i> ${esc(info.text)}</span>`;
+    const statusDiv = document.getElementById(`modal-order-status-${orderId}`);
+    if (statusDiv) statusDiv.innerHTML = `<span class="status-badge status-${info.cls} status-lg"><i class="fas ${info.icon}"></i> ${esc(info.text)}</span>`;
   }
 
   openModal(order) {
@@ -322,6 +409,13 @@ export default class Orders {
       minute: "2-digit",
     });
 
+    const isTracked = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.trackingNumber;
+    const cached = this._trackingCache.get(order.id);
+    const uzInfo = isTracked && cached ? this._uzpostStatusInfo(cached.statusCode) : null;
+    const statusContent = uzInfo
+      ? `<span class="status-badge status-${uzInfo.cls} status-lg"><i class="fas ${uzInfo.icon}"></i> ${esc(uzInfo.text)}</span>`
+      : `<span class="status-badge status-${status.class} status-lg"><i class="fas ${status.icon}"></i> ${status.text}</span>`;
+
     document.getElementById("modalBody").innerHTML = `
             <div class="detail-grid">
                 <div class="detail-item">
@@ -330,10 +424,8 @@ export default class Orders {
                 </div>
                 <div class="detail-item">
                     <label><i class="fas fa-info-circle"></i> Holati</label>
-                    <div class="value">
-                        <span class="status-badge status-${status.class} status-lg">
-                            <i class="fas ${status.icon}"></i> ${status.text}
-                        </span>
+                    <div class="value" id="modal-order-status-${order.id}">
+                        ${statusContent}
                     </div>
                 </div>
                 <div class="detail-item">
@@ -366,19 +458,20 @@ export default class Orders {
                 }
                 ${
                   order.trackingNumber
-                    ? `
+                    ? (() => {
+                        return `
                 <div class="detail-item full-width">
                     <label><i class="fas fa-truck"></i> Pochta kuzatuv raqami</label>
-                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="margin-bottom:8px;">
                       <p style="font-family: monospace; font-size: 1rem; font-weight: 600; margin:0;">${esc(order.trackingNumber)}</p>
-                      ${order.shippingStatus ? `<span style="font-size:0.8rem; color:#4ade80; font-family:sans-serif; background:rgba(74,222,128,0.1); padding:2px 8px; border-radius:20px;">${esc(this._uzpostStatusLabel(order.shippingStatus))}</span>` : ""}
-                      <button id="tracking-btn-${order.id}" onclick="window._orderTrackFn(${order.id})"
-                        style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:4px 12px; border-radius:20px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;">
-                        <i class="fas fa-map-marker-alt"></i> Kuzatish
-                      </button>
                     </div>
+                    <button id="tracking-btn-${order.id}" onclick="window._orderTrackFn(${order.id})"
+                      style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:4px 12px; border-radius:20px; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:4px;">
+                      <i class="fas fa-map-marker-alt"></i> Batafsil tarix
+                    </button>
                     <div id="tracking-detail-${order.id}" style="display:none;"></div>
-                </div>`
+                </div>`;
+                      })()
                     : ""
                 }
             </div>
@@ -502,6 +595,10 @@ export default class Orders {
   }
 
   destroy() {
+    if (this._trackingInterval) {
+      clearInterval(this._trackingInterval);
+      this._trackingInterval = null;
+    }
     window.removeEventListener('robotronix-update', this.onOrderUpdate);
     if (window.confirmDelivery) delete window.confirmDelivery;
     if (window.retryOrderPayment) delete window.retryOrderPayment;

@@ -108,6 +108,7 @@ export default function Audit() {
 
       return matchesSearch && matchesAction && matchesEntity && matchesDate;
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logs, searchTerm, actionFilter, entityFilter, datePreset, dateFrom, dateTo]);
 
   const groupedLogs = useMemo(() => {
@@ -137,7 +138,7 @@ export default function Audit() {
           </pre>
         );
       }
-    } catch (e) {
+    } catch {
       // Not JSON, render as text
     }
     return <p className="audit-text-details">{details}</p>;
