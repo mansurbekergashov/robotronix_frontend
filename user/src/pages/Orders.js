@@ -9,7 +9,7 @@ export default class Orders {
     this.orders = [];
     this.initialLoad = true;
     this.selectedOrder = null;
-    this._trackingCache = new Map(); // orderId → { statusName, officeName, ts }
+    this._trackingCache = new Map(); // orderId → { statusCode, ts }
     this._trackingInterval = null;
     this.onOrderUpdate = (event) => {
       const update = event.detail;
@@ -19,25 +19,24 @@ export default class Orders {
     };
   }
 
-  _uzpostStatusLabel(status) {
+  _uzpostStatusInfo(code) {
     const map = {
-      unassigned:         'Pochta qabul qildi',
-      assigned:           'Kuryer biriktirildi',
-      in_transit:         'Tranzitda',
-      out_for_delivery:   'Yetkazib berilmoqda',
-      delivered:          'Yetkazib berildi',
-      returned:           'Qaytarildi',
-      cancelled:          'Bekor qilindi',
-      lost:               "Yo'qolgan",
-      // eski qiymatlar (DB da saqlangan bo'lishi mumkin)
-      ACCEPTED:           'Pochta qabul qildi',
-      IN_TRANSIT:         'Tranzitda',
-      OUT_FOR_DELIVERY:   'Yetkazib berilmoqda',
-      DELIVERED:          'Yetkazib berildi',
-      RETURNED:           'Qaytarildi',
-      CANCELLED:          'Bekor qilindi',
+      unassigned:       { cls: 'info',      icon: 'fa-box',             text: 'Pochta qabul qildi' },
+      assigned:         { cls: 'primary',   icon: 'fa-user-check',      text: 'Kuryer biriktirildi' },
+      in_transit:       { cls: 'secondary', icon: 'fa-truck',           text: 'Tranzitda' },
+      out_for_delivery: { cls: 'warning',   icon: 'fa-shipping-fast',   text: 'Yetkazib berilmoqda' },
+      delivered:        { cls: 'success',   icon: 'fa-check-circle',    text: 'Yetkazib berildi' },
+      returned:         { cls: 'warning',   icon: 'fa-undo-alt',        text: 'Qaytarildi' },
+      cancelled:        { cls: 'danger',    icon: 'fa-times-circle',    text: 'Bekor qilindi' },
+      lost:             { cls: 'danger',    icon: 'fa-question-circle', text: "Yo'qolgan" },
+      ACCEPTED:         { cls: 'info',      icon: 'fa-box',             text: 'Pochta qabul qildi' },
+      IN_TRANSIT:       { cls: 'secondary', icon: 'fa-truck',           text: 'Tranzitda' },
+      OUT_FOR_DELIVERY: { cls: 'warning',   icon: 'fa-shipping-fast',   text: 'Yetkazib berilmoqda' },
+      DELIVERED:        { cls: 'success',   icon: 'fa-check-circle',    text: 'Yetkazib berildi' },
+      RETURNED:         { cls: 'warning',   icon: 'fa-undo-alt',        text: 'Qaytarildi' },
+      CANCELLED:        { cls: 'danger',    icon: 'fa-times-circle',    text: 'Bekor qilindi' },
     };
-    return map[status] || status;
+    return map[code] || { cls: 'secondary', icon: 'fa-info-circle', text: code };
   }
 
   async _loadTrackingDetail(orderId) {
@@ -68,14 +67,14 @@ export default class Orders {
       }
 
       // Cache yangilash
-      const statusLabel = this._uzpostStatusLabel(statusCode);
-      this._trackingCache.set(orderId, { statusName: statusLabel, ts: Date.now() });
-      this._applyTrackingBadge(orderId, statusLabel);
+      this._trackingCache.set(orderId, { statusCode, ts: Date.now() });
+      this._applyTrackingBadge(orderId, statusCode);
+      const info = this._uzpostStatusInfo(statusCode);
 
       let html = `<div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748;">
         <div style="margin-bottom:8px;">
           <span style="color:#8b92a7; font-size:12px;">Joriy holat: </span>
-          <span style="color:#4ade80; font-weight:600;">${esc(statusLabel)}</span>
+          <span class="status-badge status-${info.cls}" style="font-size:0.8rem; padding:4px 10px;"><i class="fas ${info.icon}"></i> ${esc(info.text)}</span>
         </div>`;
 
       if (locations.length > 0) {
@@ -292,9 +291,9 @@ export default class Orders {
                     let statusCell;
                     if (isTracked) {
                         if (cached) {
-                            // Cache bor — darhol UzPost holatini ko'rsat
+                            const ci = this._uzpostStatusInfo(cached.statusCode);
                             statusCell = `<span class="ol-col ol-status" id="status-col-${order.id}">
-                                <span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(cached.statusName)}</span>
+                                <span class="status-badge status-${ci.cls}"><i class="fas ${ci.icon}"></i> ${esc(ci.text)}</span>
                             </span>`;
                         } else {
                             // Hali yuklanmagan — vaqtincha order statusini ko'rsat, keyin almashadi
@@ -358,7 +357,7 @@ export default class Orders {
       const cached = this._trackingCache.get(order.id);
       if (cached && now - cached.ts < CACHE_TTL) {
         // Cache dan yangilash
-        this._applyTrackingBadge(order.id, cached.statusName, cached.officeName);
+        this._applyTrackingBadge(order.id, cached.statusCode);
         continue;
       }
 
@@ -367,9 +366,8 @@ export default class Orders {
         const d = data?.data ?? data;
         const statusCode = d?.status ?? '';
         if (statusCode) {
-          const entry = { statusName: this._uzpostStatusLabel(statusCode), ts: Date.now() };
-          this._trackingCache.set(order.id, entry);
-          this._applyTrackingBadge(order.id, entry.statusName);
+          this._trackingCache.set(order.id, { statusCode, ts: Date.now() });
+          this._applyTrackingBadge(order.id, statusCode);
         }
       } catch (_) { /* API xatosi — skip */ }
 
@@ -378,12 +376,13 @@ export default class Orders {
     }
   }
 
-  _applyTrackingBadge(orderId, statusName) {
-    if (!statusName) return;
+  _applyTrackingBadge(orderId, statusCode) {
+    if (!statusCode) return;
+    const info = this._uzpostStatusInfo(statusCode);
     const col = document.getElementById(`status-col-${orderId}`);
-    if (col) col.innerHTML = `<span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(statusName)}</span>`;
+    if (col) col.innerHTML = `<span class="status-badge status-${info.cls}"><i class="fas ${info.icon}"></i> ${esc(info.text)}</span>`;
     const statusDiv = document.getElementById(`modal-order-status-${orderId}`);
-    if (statusDiv) statusDiv.innerHTML = `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(statusName)}</span>`;
+    if (statusDiv) statusDiv.innerHTML = `<span class="status-badge status-${info.cls} status-lg"><i class="fas ${info.icon}"></i> ${esc(info.text)}</span>`;
   }
 
   openModal(order) {
@@ -412,8 +411,9 @@ export default class Orders {
 
     const isTracked = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.trackingNumber;
     const cached = this._trackingCache.get(order.id);
-    const statusContent = isTracked && cached
-      ? `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(cached.statusName)}</span>`
+    const uzInfo = isTracked && cached ? this._uzpostStatusInfo(cached.statusCode) : null;
+    const statusContent = uzInfo
+      ? `<span class="status-badge status-${uzInfo.cls} status-lg"><i class="fas ${uzInfo.icon}"></i> ${esc(uzInfo.text)}</span>`
       : `<span class="status-badge status-${status.class} status-lg"><i class="fas ${status.icon}"></i> ${status.text}</span>`;
 
     document.getElementById("modalBody").innerHTML = `
