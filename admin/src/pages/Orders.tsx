@@ -208,21 +208,15 @@ export default function Orders() {
         }
       })
       .catch(() => setServiceTypes([]));
-    // Pre-fill if order already has a jurisdiction from user checkout
+    // Pre-fill jurisdiction from order — use stored ID directly, no API search needed
     if (order?.receiverJurisdictionId) {
-      const preId = order.receiverJurisdictionId;
-      api.get('/geography/jurisdictions', { params: { levelId: 3, size: 1, search: String(preId) } })
-        .then(r => {
-          const found = (r.data?.data ?? []).find((j: any) => j.id === preId);
-          if (found) {
-            setSelectedJur({ id: found.id, name: found.name });
-            setJurSearch(found.name);
-            // Only auto-lookup postal index if not already stored on order
-            if (!order?.postalIndex) {
-              fetchPostalIndex(found.name, '');
-            }
-          }
-        }).catch(() => {});
+      // shippingAddress = "TumanNomi, Ko'cha ..." — vergulgacha tuman nomi
+      const jName = order.shippingAddress?.split(',')[0]?.trim() || `ID: ${order.receiverJurisdictionId}`;
+      setSelectedJur({ id: order.receiverJurisdictionId, name: jName });
+      setJurSearch(jName);
+      if (!order?.postalIndex) {
+        fetchPostalIndex(jName, '');
+      }
     }
   };
 
