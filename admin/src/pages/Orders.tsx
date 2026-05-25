@@ -46,7 +46,6 @@ export default function Orders() {
   const [paymentType, setPaymentType] = useState('CREDIT_BALANCE');
   const [postalIndex, setPostalIndex] = useState('');
   const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const printIframeRef = useRef<{ iframe: HTMLIFrameElement; cleanup: () => void } | null>(null);
   // Edit mode for order delivery details inside ship modal
   const [shipEditMode, setShipEditMode] = useState(false);
   const [editAddress, setEditAddress] = useState('');
@@ -272,57 +271,17 @@ export default function Orders() {
   };
 
   const openLabelData = (labelData: string) => {
-    // Oldingi iframe va blob ni darhol tozalash
-    if (printIframeRef.current) {
-      printIframeRef.current.cleanup();
-      printIframeRef.current = null;
-    }
-
-    let url: string;
-    let isBlob = false;
-
     if (labelData.startsWith('http')) {
-      url = labelData;
+      window.open(labelData, '_blank');
     } else {
       const binary = atob(labelData);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const blob = new Blob([bytes], { type: 'application/pdf' });
-      url = URL.createObjectURL(blob);
-      isBlob = true;
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
-
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:none;visibility:hidden;';
-
-    let fallbackTimer: ReturnType<typeof setTimeout>;
-
-    const cleanup = () => {
-      clearTimeout(fallbackTimer);
-      try { iframe.contentWindow?.removeEventListener('afterprint', cleanup); } catch { /* cross-origin */ }
-      if (document.body.contains(iframe)) document.body.removeChild(iframe);
-      if (isBlob) URL.revokeObjectURL(url);
-      if (printIframeRef.current?.iframe === iframe) printIframeRef.current = null;
-    };
-
-    printIframeRef.current = { iframe, cleanup };
-
-    iframe.onload = () => {
-      try {
-        iframe.contentWindow?.addEventListener('afterprint', cleanup);
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } catch {
-        window.open(url, '_blank');
-        cleanup();
-        return;
-      }
-      // 30 soniya fallback — afterprint ishlamagan holatda
-      fallbackTimer = setTimeout(cleanup, 30000);
-    };
-
-    iframe.src = url;
-    document.body.appendChild(iframe);
   };
 
   const printBatchLabels = async () => {
