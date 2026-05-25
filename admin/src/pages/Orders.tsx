@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash, FaTag } from 'react-icons/fa';
+import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash, FaTag, FaPrint } from 'react-icons/fa';
 import api from '../services/api';
 import { syncService } from '../services/SyncService';
 import { useConfirm } from '../hooks/useConfirm';
@@ -31,6 +31,9 @@ export default function Orders() {
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Checkbox selection for batch label printing
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   // UzPost ship modal state
   const [shipModal, setShipModal] = useState<{ open: boolean; orderId: number | null }>({ open: false, orderId: null });
@@ -260,24 +263,68 @@ export default function Orders() {
       showNotification('Yorliq yuklanmoqda...', 'info');
       const res = await api.get(`/admin/orders/${id}/label`);
       const labelData: string | undefined = res.data?.data;
-      if (!labelData) {
-        showNotification('Yorliq topilmadi. UzPost ID mavjud emas.', 'error');
-        return;
-      }
-      if (labelData.startsWith('http')) {
-        window.open(labelData, '_blank');
-      } else {
-        // base64 PDF
-        const binary = atob(labelData);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      }
+      if (!labelData) { showNotification('Yorliq topilmadi. UzPost ID mavjud emas.', 'error'); return; }
+      openLabelData(labelData);
     } catch {
       showNotification('Yorliqni yuklashda xatolik yuz berdi', 'error');
+    }
+  };
+
+  const openLabelData = (labelData: string) => {
+    if (labelData.startsWith('http')) {
+      window.open(labelData, '_blank');
+    } else {
+      const binary = atob(labelData);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+  };
+
+  const printBatchLabels = async () => {
+    const shippedIds = orders
+      .filter(o => selectedIds.has(o.id) && o.trackingNumber)
+      .map(o => o.id);
+    if (shippedIds.length === 0) {
+      showNotification("Tanlangan buyurtmalarda jo'natilgan buyurtma yo'q", 'error');
+      return;
+    }
+    try {
+      showNotification(`${shippedIds.length} ta buyurtma yorlig'i yuklanmoqda...`, 'info');
+      const res = await api.post('/admin/orders/labels', shippedIds);
+      const labelData: string | undefined = res.data?.data;
+      if (!labelData) {
+        showNotification('Yorliq topilmadi', 'error');
+        return;
+      }
+      openLabelData(labelData);
+    } catch {
+      showNotification('Yorliqlarni yuklashda xatolik yuz berdi', 'error');
+    }
+  };
+
+  const toggleSelect = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const shippedOrders = orders.filter(o => o.trackingNumber);
+  const allShippedSelected = shippedOrders.length > 0 && shippedOrders.every(o => selectedIds.has(o.id));
+  const someSelected = selectedIds.size > 0;
+  const selectedShippedCount = orders.filter(o => selectedIds.has(o.id) && o.trackingNumber).length;
+
+  const toggleSelectAll = () => {
+    if (allShippedSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(shippedOrders.map(o => o.id)));
     }
   };
 
@@ -306,6 +353,30 @@ export default function Orders() {
           <p>Barcha buyurtmalarni ko'ring ({orders.length} ta)</p>
         </div>
         <div className="page-toolbar">
+          <button
+            className="btn-status"
+            style={{
+              background: someSelected && selectedShippedCount > 0
+                ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${someSelected && selectedShippedCount > 0 ? 'rgba(139,92,246,0.6)' : 'rgba(255,255,255,0.1)'}`,
+              color: someSelected && selectedShippedCount > 0 ? '#c4b5fd' : '#8b92a7',
+              cursor: selectedShippedCount > 0 ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+              transition: 'all 0.2s',
+            }}
+            disabled={selectedShippedCount === 0}
+            onClick={printBatchLabels}
+            title={selectedShippedCount === 0 ? "Jo'natilgan buyurtmalarni tanlang" : `${selectedShippedCount} ta yorliq chop etish`}
+          >
+            <FaPrint />
+            Manzil yorlig'i
+            {selectedShippedCount > 0 && (
+              <span style={{ background: '#7c3aed', color: 'white', borderRadius: '12px', padding: '1px 8px', fontSize: '12px' }}>
+                {selectedShippedCount}
+              </span>
+            )}
+          </button>
           <div className="toolbar-filters">
             <div className="search-wrapper">
               <FaSearch className="search-icon" />
@@ -349,6 +420,16 @@ export default function Orders() {
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: '40px', padding: '12px 8px' }}>
+                <input
+                  type="checkbox"
+                  checked={allShippedSelected}
+                  ref={el => { if (el) el.indeterminate = !allShippedSelected && shippedOrders.some(o => selectedIds.has(o.id)); }}
+                  onChange={toggleSelectAll}
+                  title="Barcha jo'natilganlarni tanlash"
+                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                />
+              </th>
               <th>ID</th>
               <th>Foydalanuvchi</th>
               <th>Jami summa</th>
@@ -359,9 +440,27 @@ export default function Orders() {
           </thead>
           <tbody>
             {orders.map((order) => {
+              const isSelected = selectedIds.has(order.id);
+              const canSelect = !!order.trackingNumber;
 
               return (
-                <tr key={order.id} onClick={() => setSelectedOrder(order)} className="clickable-row">
+                <tr
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className="clickable-row"
+                  style={isSelected ? { background: 'rgba(139,92,246,0.08)' } : undefined}
+                >
+                  <td style={{ padding: '12px 8px' }} onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={!canSelect}
+                      onChange={e => { e.stopPropagation(); toggleSelect(order.id, e as any); }}
+                      onClick={e => e.stopPropagation()}
+                      title={canSelect ? 'Yorliq uchun tanlash' : "Bu buyurtma hali jo'natilmagan"}
+                      style={{ cursor: canSelect ? 'pointer' : 'not-allowed', width: '16px', height: '16px', opacity: canSelect ? 1 : 0.35 }}
+                    />
+                  </td>
                   <td>#{order.id}</td>
                   <td>
                     <div className="user-info">
@@ -415,7 +514,7 @@ export default function Orders() {
               );
             })}
             {orders.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Buyurtmalar hali yo'q</td></tr>
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Buyurtmalar hali yo'q</td></tr>
             )}
           </tbody>
         </table>
