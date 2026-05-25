@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash } from 'react-icons/fa';
+import { FaShoppingCart, FaEye, FaTimes, FaCheck, FaBoxOpen, FaTruck, FaBan, FaSearch, FaComments, FaTrash, FaTag } from 'react-icons/fa';
 import api from '../services/api';
 import { syncService } from '../services/SyncService';
 import { useConfirm } from '../hooks/useConfirm';
@@ -255,6 +255,32 @@ export default function Orders() {
     }
   };
 
+  const printLabel = async (id: number) => {
+    try {
+      showNotification('Yorliq yuklanmoqda...', 'info');
+      const res = await api.get(`/admin/orders/${id}/label`);
+      const labelData: string | undefined = res.data?.data;
+      if (!labelData) {
+        showNotification('Yorliq topilmadi. UzPost ID mavjud emas.', 'error');
+        return;
+      }
+      if (labelData.startsWith('http')) {
+        window.open(labelData, '_blank');
+      } else {
+        // base64 PDF
+        const binary = atob(labelData);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
+    } catch {
+      showNotification('Yorliqni yuklashda xatolik yuz berdi', 'error');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { label: string; class: string; icon: React.ReactElement }> = {
       PENDING: { label: 'Kutilmoqda', class: 'badge-warning', icon: <FaBoxOpen /> },
@@ -354,30 +380,31 @@ export default function Orders() {
                     <div className="action-buttons">
                       <button
                         className="btn-icon btn-message"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartChat(order);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); handleStartChat(order); }}
                         title="Habar yuborish"
                       >
                         <FaComments />
                       </button>
                       <button
                         className="btn-icon btn-view"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOrder(order);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
                         title="Batafsil"
                       >
                         <FaEye />
                       </button>
+                      {order.trackingNumber && (
+                        <button
+                          className="btn-icon"
+                          style={{ color: '#c4b5fd' }}
+                          onClick={(e) => { e.stopPropagation(); printLabel(order.id); }}
+                          title="Manzil yorlig'ini chop etish"
+                        >
+                          <FaTag />
+                        </button>
+                      )}
                       <button
                         className="btn-icon btn-delete"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteOrder(order.id);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.id); }}
                         title="O'chirish"
                       >
                         <FaTrash />
@@ -508,6 +535,15 @@ export default function Orders() {
                     title={selectedOrder.trackingNumber ? 'Allaqachon yuborilgan' : ''}
                   >
                     <FaTruck /> UzPostga yuborish
+                  </button>
+                  <button
+                    className="btn-status"
+                    style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd' }}
+                    disabled={!selectedOrder.trackingNumber}
+                    onClick={() => printLabel(selectedOrder.id)}
+                    title={!selectedOrder.trackingNumber ? 'Buyurtma hali yuborilmagan' : 'Manzil yorlig\'ini chop etish'}
+                  >
+                    <FaTag /> Manzil yorlig'i
                   </button>
                   <button
                     className="btn-status btn-danger"
