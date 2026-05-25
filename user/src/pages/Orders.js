@@ -392,9 +392,9 @@ export default class Orders {
     // Ro'yxatdagi status ustunini almashtirish
     const col = document.getElementById(`status-col-${orderId}`);
     if (col) col.innerHTML = `<span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(text)}</span>`;
-    // Modal ichidagi badge
-    const modalEl = document.getElementById(`modal-live-status-${orderId}`);
-    if (modalEl) { modalEl.textContent = text; modalEl.style.display = 'inline'; }
+    // Modal HOLATI bo'limi
+    const statusDiv = document.getElementById(`modal-order-status-${orderId}`);
+    if (statusDiv) statusDiv.innerHTML = `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(text)}</span>`;
   }
 
   openModal(order) {
@@ -421,6 +421,15 @@ export default class Orders {
       minute: "2-digit",
     });
 
+    const isTracked = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.trackingNumber;
+    const cached = this._trackingCache.get(order.id);
+    const statusContent = isTracked && cached
+      ? (() => {
+          const liveText = cached.officeName ? `${cached.statusName} — ${cached.officeName}` : cached.statusName;
+          return `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(liveText)}</span>`;
+        })()
+      : `<span class="status-badge status-${status.class} status-lg"><i class="fas ${status.icon}"></i> ${status.text}</span>`;
+
     document.getElementById("modalBody").innerHTML = `
             <div class="detail-grid">
                 <div class="detail-item">
@@ -429,10 +438,8 @@ export default class Orders {
                 </div>
                 <div class="detail-item">
                     <label><i class="fas fa-info-circle"></i> Holati</label>
-                    <div class="value">
-                        <span class="status-badge status-${status.class} status-lg">
-                            <i class="fas ${status.icon}"></i> ${status.text}
-                        </span>
+                    <div class="value" id="modal-order-status-${order.id}">
+                        ${statusContent}
                     </div>
                 </div>
                 <div class="detail-item">
@@ -466,16 +473,11 @@ export default class Orders {
                 ${
                   order.trackingNumber
                     ? (() => {
-                        const cached = this._trackingCache.get(order.id);
-                        const liveStatus = cached
-                          ? (cached.officeName ? `${cached.statusName} — ${cached.officeName}` : cached.statusName)
-                          : (order.shippingStatus ? this._uzpostStatusLabel(order.shippingStatus) : '');
                         return `
                 <div class="detail-item full-width">
                     <label><i class="fas fa-truck"></i> Pochta kuzatuv raqami</label>
-                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
+                    <div style="margin-bottom:8px;">
                       <p style="font-family: monospace; font-size: 1rem; font-weight: 600; margin:0;">${esc(order.trackingNumber)}</p>
-                      ${liveStatus ? `<span id="modal-live-status-${order.id}" style="font-size:0.8rem; color:#4ade80; font-family:sans-serif; background:rgba(74,222,128,0.1); padding:2px 8px; border-radius:20px;">${esc(liveStatus)}</span>` : `<span id="modal-live-status-${order.id}" style="font-size:0.8rem; color:#4ade80; font-family:sans-serif; background:rgba(74,222,128,0.1); padding:2px 8px; border-radius:20px; display:none;"></span>`}
                     </div>
                     <button id="tracking-btn-${order.id}" onclick="window._orderTrackFn(${order.id})"
                       style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; padding:4px 12px; border-radius:20px; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:4px;">
