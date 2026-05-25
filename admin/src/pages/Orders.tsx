@@ -22,10 +22,11 @@ interface OrderData {
   postalIndex?: string;
 }
 
-interface TrackingHistoryItem {
-  createdAt: string;
-  statusName: string;
-  officeName?: string;
+interface TrackingInfo {
+  status: string;
+  lastStatusDate?: string;
+  deliveryCity?: string;
+  locations?: { addressCity?: string; address?: string; pickup?: boolean }[];
 }
 
 export default function Orders() {
@@ -58,8 +59,8 @@ export default function Orders() {
   const [editPhone, setEditPhone] = useState('');
   const [shipEditSaving, setShipEditSaving] = useState(false);
 
-  // UzPost tracking history
-  const [trackingHistory, setTrackingHistory] = useState<TrackingHistoryItem[] | null>(null);
+  // UzPost tracking info
+  const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
@@ -85,15 +86,37 @@ export default function Orders() {
     fetchOrders();
   }, [fetchOrders]);
 
+  const uzpostStatusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      unassigned:       'Qabul qilindi',
+      assigned:         'Kuryer biriktirildi',
+      in_transit:       'Tranzitda',
+      out_for_delivery: 'Yetkazib berilmoqda',
+      delivered:        'Yetkazib berildi',
+      returned:         'Qaytarildi',
+      cancelled:        'Bekor qilindi',
+      lost:             'Yo\'qolgan',
+    };
+    return map[status?.toLowerCase()] ?? status;
+  };
+
   const fetchTracking = useCallback(async (orderId: number) => {
     setTrackingLoading(true);
-    setTrackingHistory(null);
+    setTrackingInfo(null);
     try {
       const res = await api.get(`/admin/orders/${orderId}/tracking`);
-      const histories: TrackingHistoryItem[] = res.data?.data?.histories ?? [];
-      setTrackingHistory(histories);
+      const d = res.data?.data;
+      if (d) {
+        const deliveryLoc = (d.locations ?? []).find((l: any) => l.pickup === false);
+        setTrackingInfo({
+          status: d.status ?? '',
+          lastStatusDate: d.lastStatusDate ?? undefined,
+          deliveryCity: deliveryLoc?.addressCity ?? deliveryLoc?.address ?? undefined,
+          locations: d.locations ?? [],
+        });
+      }
     } catch {
-      setTrackingHistory([]);
+      setTrackingInfo(null);
     } finally {
       setTrackingLoading(false);
     }
@@ -103,7 +126,7 @@ export default function Orders() {
     if (selectedOrder?.trackingNumber) {
       fetchTracking(selectedOrder.id);
     } else {
-      setTrackingHistory(null);
+      setTrackingInfo(null);
     }
   }, [selectedOrder?.id, selectedOrder?.trackingNumber, fetchTracking]);
 
@@ -690,11 +713,11 @@ export default function Orders() {
                 </p>
               </div>
 
-              {/* UzPost tracking history timeline */}
+              {/* UzPost live tracking */}
               {selectedOrder.trackingNumber && (
                 <div className="status-management" style={{ marginTop: '1rem', borderTop: '1px solid #2d3250', paddingTop: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h3 style={{ margin: 0 }}>Kuzatuv tarixi (UzPost)</h3>
+                    <h3 style={{ margin: 0 }}>UzPost kuzatuv</h3>
                     <button
                       className="btn-icon"
                       onClick={() => fetchTracking(selectedOrder.id)}
@@ -706,28 +729,51 @@ export default function Orders() {
                   </div>
                   {trackingLoading ? (
                     <p style={{ color: '#8b92a7', fontSize: '13px' }}>Yuklanmoqda...</p>
-                  ) : !trackingHistory || trackingHistory.length === 0 ? (
-                    <p style={{ color: '#8b92a7', fontSize: '13px' }}>Tarix mavjud emas</p>
+                  ) : !trackingInfo ? (
+                    <p style={{ color: '#8b92a7', fontSize: '13px' }}>Ma'lumot topilmadi</p>
                   ) : (
-                    <div style={{ position: 'relative', paddingLeft: '20px' }}>
-                      <div style={{ position: 'absolute', left: '7px', top: '6px', bottom: '6px', width: '2px', background: 'rgba(99,102,241,0.3)' }} />
-                      {trackingHistory.map((item, idx) => (
-                        <div key={idx} style={{ position: 'relative', marginBottom: '14px', paddingLeft: '16px' }}>
-                          <div style={{
-                            position: 'absolute', left: '-6px', top: '5px',
-                            width: '10px', height: '10px', borderRadius: '50%',
-                            background: idx === 0 ? '#4ade80' : '#6366f1',
-                            border: '2px solid #1e2640',
-                          }} />
-                          <div style={{ fontSize: '11px', color: '#8b92a7', marginBottom: '2px' }}>
-                            {item.createdAt ? new Date(item.createdAt).toLocaleString('uz-UZ') : '—'}
-                          </div>
-                          <div style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: idx === 0 ? 600 : 400 }}>
-                            {item.statusName || '—'}
-                            {item.officeName && <span style={{ color: '#8b92a7', fontWeight: 400 }}> — {item.officeName}</span>}
+                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '12px', fontSize: '13px' }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <span style={{ color: '#8b92a7' }}>Joriy holat: </span>
+                        <span style={{ color: '#4ade80', fontWeight: 600 }}>{uzpostStatusLabel(trackingInfo.status)}</span>
+                        <span style={{ color: '#8b92a7', fontSize: '11px', marginLeft: '6px' }}>({trackingInfo.status})</span>
+                      </div>
+                      {trackingInfo.lastStatusDate && (
+                        <div style={{ marginBottom: '8px' }}>
+                          <span style={{ color: '#8b92a7' }}>Oxirgi yangilanish: </span>
+                          <span style={{ color: '#e2e8f0', fontSize: '12px' }}>
+                            {new Date(trackingInfo.lastStatusDate).toLocaleString('uz-UZ')}
+                          </span>
+                        </div>
+                      )}
+                      {trackingInfo.deliveryCity && (
+                        <div>
+                          <span style={{ color: '#8b92a7' }}>Yetkazish manzili: </span>
+                          <span style={{ color: '#e2e8f0' }}>{trackingInfo.deliveryCity}</span>
+                        </div>
+                      )}
+                      {(trackingInfo.locations ?? []).length > 0 && (
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ color: '#8b92a7', marginBottom: '6px', fontSize: '12px' }}>Marshrut:</div>
+                          <div style={{ position: 'relative', paddingLeft: '16px' }}>
+                            <div style={{ position: 'absolute', left: '5px', top: '6px', bottom: '6px', width: '2px', background: 'rgba(99,102,241,0.3)' }} />
+                            {(trackingInfo.locations ?? []).map((loc, idx) => (
+                              <div key={idx} style={{ position: 'relative', marginBottom: '8px', paddingLeft: '12px' }}>
+                                <div style={{
+                                  position: 'absolute', left: '-5px', top: '4px',
+                                  width: '8px', height: '8px', borderRadius: '50%',
+                                  background: loc.pickup ? '#6366f1' : '#4ade80',
+                                  border: '2px solid #1e2640',
+                                }} />
+                                <span style={{ color: '#e2e8f0' }}>{loc.addressCity || loc.address || '—'}</span>
+                                <span style={{ color: '#8b92a7', fontSize: '11px', marginLeft: '6px' }}>
+                                  {loc.pickup ? '(Jo\'natuvchi)' : '(Qabul qiluvchi)'}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </div>

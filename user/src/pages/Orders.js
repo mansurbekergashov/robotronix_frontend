@@ -21,15 +21,21 @@ export default class Orders {
 
   _uzpostStatusLabel(status) {
     const map = {
-      ACCEPTED:     'Pochta qabul qildi',
-      TRANSIT:      'Tranzitda',
-      IN_TRANSIT:   'Tranzitda',
-      ARRIVED:      'Shaharga yetib keldi',
-      OUT_FOR_DELIVERY: 'Yetkazib berilmoqda',
-      DELIVERED:    'Yetkazib berildi',
-      RECEIVED:     'Qabul qilindi',
-      RETURNED:     'Qaytarildi',
-      CANCELLED:    'Bekor qilindi',
+      unassigned:         'Pochta qabul qildi',
+      assigned:           'Kuryer biriktirildi',
+      in_transit:         'Tranzitda',
+      out_for_delivery:   'Yetkazib berilmoqda',
+      delivered:          'Yetkazib berildi',
+      returned:           'Qaytarildi',
+      cancelled:          'Bekor qilindi',
+      lost:               "Yo'qolgan",
+      // eski qiymatlar (DB da saqlangan bo'lishi mumkin)
+      ACCEPTED:           'Pochta qabul qildi',
+      IN_TRANSIT:         'Tranzitda',
+      OUT_FOR_DELIVERY:   'Yetkazib berilmoqda',
+      DELIVERED:          'Yetkazib berildi',
+      RETURNED:           'Qaytarildi',
+      CANCELLED:          'Bekor qilindi',
     };
     return map[status] || status;
   }
@@ -51,38 +57,45 @@ export default class Orders {
     try {
       const { default: api } = await import('../services/api.js');
       const data = await api.get(`/orders/${orderId}/tracking`);
-      const histories = data?.data?.histories ?? data?.histories ?? [];
+      const d = data?.data ?? data;
+      const statusCode = d?.status ?? '';
+      const locations = d?.locations ?? [];
 
-      if (histories.length === 0) {
-        el.innerHTML = '<p style="color:#8b92a7;font-size:13px;margin-top:8px;">Tarix ma\'lumoti hali mavjud emas</p>';
+      if (!statusCode) {
+        el.innerHTML = '<p style="color:#8b92a7;font-size:13px;margin-top:8px;">Kuzatuv ma\'lumoti topilmadi</p>';
         el.style.display = 'block';
         return;
       }
 
-      // Cache ni yangilash
-      const latest = histories[0];
-      if (latest?.statusName) {
-        const entry = { statusName: latest.statusName, officeName: latest.officeName || '', ts: Date.now() };
-        this._trackingCache.set(orderId, entry);
-        this._applyTrackingBadge(orderId, entry.statusName, entry.officeName);
-      }
+      // Cache yangilash
+      const deliveryLoc = locations.find(l => l.pickup === false);
+      const city = deliveryLoc?.addressCity || deliveryLoc?.address || '';
+      const statusLabel = this._uzpostStatusLabel(statusCode);
+      this._trackingCache.set(orderId, { statusName: statusLabel, officeName: city, ts: Date.now() });
+      this._applyTrackingBadge(orderId, statusLabel, city);
 
-      let html = `<div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748; position:relative;">
-        <div style="position:absolute; left:22px; top:20px; bottom:16px; width:2px; background:rgba(99,102,241,0.3);"></div>`;
-
-      histories.forEach((item, idx) => {
-        const time = item.createdAt ? new Date(item.createdAt).toLocaleString('uz-UZ') : '—';
-        const dotColor = idx === 0 ? '#4ade80' : '#6366f1';
-        html += `<div style="display:flex; gap:12px; margin-bottom:12px; position:relative;">
-          <div style="width:10px; height:10px; border-radius:50%; background:${dotColor}; border:2px solid #1e2640; flex-shrink:0; margin-top:4px; z-index:1;"></div>
-          <div>
-            <div style="font-size:11px; color:#8b92a7; margin-bottom:2px;">${esc(time)}</div>
-            <div style="font-size:13px; color:#e2e8f0; font-weight:${idx === 0 ? 600 : 400};">
-              ${esc(item.statusName || '—')}${item.officeName ? `<span style="color:#8b92a7; font-weight:400;"> — ${esc(item.officeName)}</span>` : ''}
-            </div>
-          </div>
+      let html = `<div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748;">
+        <div style="margin-bottom:8px;">
+          <span style="color:#8b92a7; font-size:12px;">Joriy holat: </span>
+          <span style="color:#4ade80; font-weight:600;">${esc(statusLabel)}</span>
         </div>`;
-      });
+
+      if (locations.length > 0) {
+        html += `<div style="font-size:12px; color:#8b92a7; margin-bottom:6px;">Marshrut:</div>
+          <div style="position:relative; padding-left:16px;">
+          <div style="position:absolute; left:5px; top:4px; bottom:4px; width:2px; background:rgba(99,102,241,0.3);"></div>`;
+        locations.forEach(loc => {
+          const addr = loc.addressCity || loc.address || '—';
+          const dotColor = loc.pickup ? '#6366f1' : '#4ade80';
+          const label = loc.pickup ? "Jo'natuvchi" : 'Qabul qiluvchi';
+          html += `<div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#e2e8f0; margin-bottom:8px; position:relative;">
+            <div style="width:8px; height:8px; border-radius:50%; background:${dotColor}; border:2px solid #1e2640; flex-shrink:0; position:absolute; left:-5px;"></div>
+            <span style="padding-left:8px;">${esc(addr)}</span>
+            <span style="color:#8b92a7; font-size:11px;">(${label})</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
 
       html += '</div>';
       el.innerHTML = html;
@@ -356,10 +369,13 @@ export default class Orders {
 
       try {
         const data = await api.get(`/orders/${order.id}/tracking`);
-        const histories = data?.data?.histories ?? data?.histories ?? [];
-        if (histories.length > 0) {
-          const latest = histories[0]; // eng yangi — birinchi element
-          const entry = { statusName: latest.statusName || '', officeName: latest.officeName || '', ts: Date.now() };
+        const d = data?.data ?? data;
+        const statusCode = d?.status ?? '';
+        if (statusCode) {
+          const locations = d?.locations ?? [];
+          const deliveryLoc = locations.find(l => l.pickup === false);
+          const city = deliveryLoc?.addressCity || deliveryLoc?.address || '';
+          const entry = { statusName: this._uzpostStatusLabel(statusCode), officeName: city, ts: Date.now() };
           this._trackingCache.set(order.id, entry);
           this._applyTrackingBadge(order.id, entry.statusName, entry.officeName);
         }
