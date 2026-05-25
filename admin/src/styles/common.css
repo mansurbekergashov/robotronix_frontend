@@ -135,6 +135,7 @@
 .btn-secondary {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
   background: var(--btn-bg);
@@ -505,7 +506,7 @@
 .dark .modal-actions .btn-secondary,
 .dark .news-modal-footer .btn-secondary,
 .dark .team-modal-footer .btn-secondary {
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: var(--border-color) !important;
 }
 
 .modal-content .btn-primary:hover,

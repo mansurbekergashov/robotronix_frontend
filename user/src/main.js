@@ -110,13 +110,13 @@ class App {
             left: '0',
             width: '100%',
             height: '100%',
-            backgroundColor: '#0f172a',
+            backgroundColor: 'var(--dark-bg)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: '99999',
-            color: 'white',
+            color: 'var(--text-primary)',
             fontFamily: 'system-ui, -apple-system, sans-serif'
         });
 

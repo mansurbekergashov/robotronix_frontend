@@ -203,6 +203,15 @@
   font-weight: normal;
 }
 
+.modal-body {
+  padding: 2rem;
+}
+
+.detail-grid {
+  padding: 1rem;
+  border: var(--border-color);
+  border-radius: 12px;
+}
 /* Notification Toast */
 .notification-toast {
   position: fixed;
@@ -555,7 +564,7 @@
   min-width: 220px;
 }
 
-/* â”€â”€ Confirm Dialog â”€â”€ */
+/*  Confirm Dialog  */
 .confirm-overlay {
   z-index: 2000 !important;
   backdrop-filter: blur(6px);
