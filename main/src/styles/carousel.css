@@ -68,7 +68,6 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   background: var(--card-bg);
 }
 
@@ -76,7 +75,7 @@
   transform: translateX(0) scale(1);
   opacity: 1;
   z-index: 5;
-  box-shadow: 0 24px 70px rgba(33, 66, 145, 0.28);
+  box-shadow: var(--shadow-md);
   cursor: default;
 }
 
