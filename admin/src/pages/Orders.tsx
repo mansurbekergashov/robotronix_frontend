@@ -44,6 +44,11 @@ export default function Orders() {
   const [postalIndex, setPostalIndex] = useState('');
   const [postalIndexDetected, setPostalIndexDetected] = useState(false);
   const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Edit mode for order delivery details inside ship modal
+  const [shipEditMode, setShipEditMode] = useState(false);
+  const [editAddress, setEditAddress] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [shipEditSaving, setShipEditSaving] = useState(false);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
     setNotification({ message, type });
@@ -131,6 +136,9 @@ export default function Orders() {
     setPaymentType('CREDIT_BALANCE');
     setPostalIndex(order?.postalIndex || '');
     setPostalIndexDetected(false);
+    setShipEditMode(false);
+    setEditAddress(order?.shippingAddress || '');
+    setEditPhone(order?.contactPhone || '');
     setShipModal({ open: true, orderId: id });
 
     // Load service types from UzPost
@@ -197,6 +205,26 @@ export default function Orders() {
     setSelectedJur(null);
     if (jurSearchTimer.current) clearTimeout(jurSearchTimer.current);
     jurSearchTimer.current = setTimeout(() => searchJurisdictions(val), 400);
+  };
+
+  const saveOrderDetails = async () => {
+    if (!shipModal.orderId) return;
+    setShipEditSaving(true);
+    try {
+      const res = await api.patch(`/admin/orders/${shipModal.orderId}`, {
+        shippingAddress: editAddress.trim(),
+        contactPhone: editPhone.trim(),
+      });
+      const updated = res.data;
+      setOrders(orders.map(o => o.id === shipModal.orderId ? { ...o, ...updated } : o));
+      if (selectedOrder?.id === shipModal.orderId) setSelectedOrder({ ...selectedOrder, ...updated });
+      setShipEditMode(false);
+      showNotification("Ma'lumotlar saqlandi", 'success');
+    } catch {
+      showNotification("Saqlashda xatolik yuz berdi", 'error');
+    } finally {
+      setShipEditSaving(false);
+    }
   };
 
   const confirmShip = async () => {
@@ -517,11 +545,108 @@ export default function Orders() {
                 const weightG = order.items?.reduce((sum: number, it: any) =>
                   sum + (it.product?.weightGrams ?? 500) * (it.quantity ?? 1), 0) ?? 0;
                 return (
-                  <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '12px', marginBottom: '1rem', fontSize: '13px' }}>
-                    <div><strong>Mijoz:</strong> {order.user?.fullName || '—'}</div>
-                    <div><strong>Telefon:</strong> {order.contactPhone || order.user?.phone || '—'}</div>
-                    <div><strong>Manzil:</strong> {order.shippingAddress || '—'}</div>
-                    <div><strong>Taxminiy og'irlik:</strong> {weightG >= 1000 ? `${(weightG/1000).toFixed(2)} kg` : `${weightG} g`}</div>
+                  <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '14px', marginBottom: '1rem', fontSize: '13px', lineHeight: '1.7' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <strong style={{ fontSize: '14px' }}>Buyurtma ma'lumotlari</strong>
+                      {!shipEditMode ? (
+                        <button
+                          onClick={() => setShipEditMode(true)}
+                          style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)', color: '#93c5fd', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                        >
+                          ✏️ Tahrirlash
+                        </button>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={saveOrderDetails}
+                            disabled={shipEditSaving}
+                            style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', color: '#4ade80', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            {shipEditSaving ? '...' : '✓ Saqlash'}
+                          </button>
+                          <button
+                            onClick={() => { setShipEditMode(false); setEditAddress(order.shippingAddress || ''); setEditPhone(order.contactPhone || ''); }}
+                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            Bekor
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <tbody>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', whiteSpace: 'nowrap' }}>Mijoz ismi:</td>
+                          <td><strong>{order.user?.fullName || '—'}</strong></td>
+                        </tr>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px' }}>Email:</td>
+                          <td>{order.user?.email || '—'}</td>
+                        </tr>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Telefon:</td>
+                          <td style={{ paddingTop: '4px' }}>
+                            {shipEditMode ? (
+                              <input
+                                value={editPhone}
+                                onChange={e => setEditPhone(e.target.value)}
+                                style={{ background: '#1e2640', border: '1px solid #4ade80', color: 'white', borderRadius: '4px', padding: '3px 8px', fontSize: '13px', width: '180px' }}
+                                placeholder="+998xxxxxxxxx"
+                              />
+                            ) : (order.contactPhone || order.user?.phone || '—')}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px', verticalAlign: 'top' }}>Manzil:</td>
+                          <td style={{ paddingTop: '4px' }}>
+                            {shipEditMode ? (
+                              <textarea
+                                value={editAddress}
+                                onChange={e => setEditAddress(e.target.value)}
+                                rows={2}
+                                style={{ background: '#1e2640', border: '1px solid #4ade80', color: 'white', borderRadius: '4px', padding: '3px 8px', fontSize: '13px', width: '100%', resize: 'vertical' }}
+                                placeholder="To'liq manzil..."
+                              />
+                            ) : (order.shippingAddress || '—')}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>To'lov holati:</td>
+                          <td style={{ paddingTop: '4px' }}>
+                            {order.paymentConfirmed
+                              ? <span style={{ color: '#4ade80' }}>✓ Payme orqali to'langan</span>
+                              : <span style={{ color: '#f59e0b' }}>⏳ To'lov kutilmoqda</span>}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Jami summa:</td>
+                          <td style={{ paddingTop: '4px' }}><strong>{(order.totalAmount || 0).toLocaleString()} so'm</strong></td>
+                        </tr>
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Og'irlik (taxm.):</td>
+                          <td style={{ paddingTop: '4px' }}>{weightG >= 1000 ? `${(weightG/1000).toFixed(2)} kg` : `${weightG} g`}</td>
+                        </tr>
+                        {order.postalIndex && (
+                          <tr>
+                            <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Pochta indeksi:</td>
+                            <td style={{ paddingTop: '4px' }}><code style={{ color: '#4ade80' }}>{order.postalIndex}</code></td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+
+                    {order.items && order.items.length > 0 && (
+                      <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
+                        <div style={{ color: '#8b92a7', marginBottom: '6px' }}>Mahsulotlar:</div>
+                        {order.items.map((it: any, i: number) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e2e8f0', marginBottom: '3px' }}>
+                            <span>{it.product?.title || 'Mahsulot'}</span>
+                            <span style={{ color: '#8b92a7' }}>{it.quantity} x {(it.price || 0).toLocaleString()} so'm</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -616,28 +741,6 @@ export default function Orders() {
                 </select>
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
-                  Pochta indeksi
-                  {postalIndexDetected && (
-                    <span style={{ marginLeft: '8px', fontWeight: 400, color: '#4ade80', fontSize: '12px' }}>
-                      ✓ avtomatik aniqlandi
-                    </span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  className="search-input"
-                  style={{ width: '100%', maxWidth: '160px' }}
-                  placeholder="Masalan: 150100"
-                  value={postalIndex}
-                  onChange={e => { setPostalIndex(e.target.value); setPostalIndexDetected(false); }}
-                  maxLength={10}
-                />
-                <p style={{ fontSize: '12px', color: '#8b92a7', marginTop: '4px' }}>
-                  Tuman tanlanganda avtomatik to'ldiriladi. Xato bo'lsa tahrirlang.
-                </p>
-              </div>
             </div>
             <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', padding: '1rem' }}>
               <button className="btn-status btn-danger" onClick={() => setShipModal({ open: false, orderId: null })}>
