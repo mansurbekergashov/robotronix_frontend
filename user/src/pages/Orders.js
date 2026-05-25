@@ -68,11 +68,9 @@ export default class Orders {
       }
 
       // Cache yangilash
-      const deliveryLoc = locations.find(l => l.pickup === false);
-      const city = deliveryLoc?.addressCity || deliveryLoc?.address || '';
       const statusLabel = this._uzpostStatusLabel(statusCode);
-      this._trackingCache.set(orderId, { statusName: statusLabel, officeName: city, ts: Date.now() });
-      this._applyTrackingBadge(orderId, statusLabel, city);
+      this._trackingCache.set(orderId, { statusName: statusLabel, ts: Date.now() });
+      this._applyTrackingBadge(orderId, statusLabel);
 
       let html = `<div style="margin-top:10px; padding:12px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid #2d3748;">
         <div style="margin-bottom:8px;">
@@ -289,17 +287,14 @@ export default class Orders {
 
                     const isTracked = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.trackingNumber;
                     const cached = this._trackingCache.get(order.id);
-                    const liveText = cached
-                        ? (cached.officeName ? `${cached.statusName} — ${cached.officeName}` : cached.statusName)
-                        : null;
 
                     // Tracked buyurtmalar uchun status ustuni
                     let statusCell;
                     if (isTracked) {
-                        if (liveText) {
+                        if (cached) {
                             // Cache bor — darhol UzPost holatini ko'rsat
                             statusCell = `<span class="ol-col ol-status" id="status-col-${order.id}">
-                                <span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(liveText)}</span>
+                                <span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(cached.statusName)}</span>
                             </span>`;
                         } else {
                             // Hali yuklanmagan — vaqtincha order statusini ko'rsat, keyin almashadi
@@ -372,12 +367,9 @@ export default class Orders {
         const d = data?.data ?? data;
         const statusCode = d?.status ?? '';
         if (statusCode) {
-          const locations = d?.locations ?? [];
-          const deliveryLoc = locations.find(l => l.pickup === false);
-          const city = deliveryLoc?.addressCity || deliveryLoc?.address || '';
-          const entry = { statusName: this._uzpostStatusLabel(statusCode), officeName: city, ts: Date.now() };
+          const entry = { statusName: this._uzpostStatusLabel(statusCode), ts: Date.now() };
           this._trackingCache.set(order.id, entry);
-          this._applyTrackingBadge(order.id, entry.statusName, entry.officeName);
+          this._applyTrackingBadge(order.id, entry.statusName);
         }
       } catch (_) { /* API xatosi — skip */ }
 
@@ -386,15 +378,12 @@ export default class Orders {
     }
   }
 
-  _applyTrackingBadge(orderId, statusName, officeName) {
+  _applyTrackingBadge(orderId, statusName) {
     if (!statusName) return;
-    const text = officeName ? `${statusName} — ${officeName}` : statusName;
-    // Ro'yxatdagi status ustunini almashtirish
     const col = document.getElementById(`status-col-${orderId}`);
-    if (col) col.innerHTML = `<span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(text)}</span>`;
-    // Modal HOLATI bo'limi
+    if (col) col.innerHTML = `<span style="color:#4ade80; font-size:13px; font-weight:500;">${esc(statusName)}</span>`;
     const statusDiv = document.getElementById(`modal-order-status-${orderId}`);
-    if (statusDiv) statusDiv.innerHTML = `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(text)}</span>`;
+    if (statusDiv) statusDiv.innerHTML = `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(statusName)}</span>`;
   }
 
   openModal(order) {
@@ -424,10 +413,7 @@ export default class Orders {
     const isTracked = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.trackingNumber;
     const cached = this._trackingCache.get(order.id);
     const statusContent = isTracked && cached
-      ? (() => {
-          const liveText = cached.officeName ? `${cached.statusName} — ${cached.officeName}` : cached.statusName;
-          return `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(liveText)}</span>`;
-        })()
+      ? `<span style="color:#4ade80; font-weight:600; font-size:15px; display:block; padding:4px 0;">${esc(cached.statusName)}</span>`
       : `<span class="status-badge status-${status.class} status-lg"><i class="fas ${status.icon}"></i> ${status.text}</span>`;
 
     document.getElementById("modalBody").innerHTML = `
