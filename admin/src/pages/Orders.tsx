@@ -42,7 +42,6 @@ export default function Orders() {
   const [serviceTypes, setServiceTypes] = useState<{ id: number; code: string; name: string }[]>([]);
   const [paymentType, setPaymentType] = useState('CREDIT_BALANCE');
   const [postalIndex, setPostalIndex] = useState('');
-  const [postalIndexDetected, setPostalIndexDetected] = useState(false);
   const jurSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Edit mode for order delivery details inside ship modal
   const [shipEditMode, setShipEditMode] = useState(false);
@@ -135,7 +134,6 @@ export default function Orders() {
     setServiceTypeCode('PARCEL');
     setPaymentType('CREDIT_BALANCE');
     setPostalIndex(order?.postalIndex || '');
-    setPostalIndexDetected(false);
     setShipEditMode(false);
     setEditAddress(order?.shippingAddress || '');
     setEditPhone(order?.contactPhone || '');
@@ -177,12 +175,9 @@ export default function Orders() {
       });
       if (res.data?.found) {
         setPostalIndex(res.data.postalIndex);
-        setPostalIndexDetected(true);
-      } else {
-        setPostalIndexDetected(false);
       }
     } catch {
-      setPostalIndexDetected(false);
+      // silent — postal index is optional
     }
   };
 
