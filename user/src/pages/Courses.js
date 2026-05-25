@@ -192,7 +192,7 @@ export default class Courses {
     }
 
     async handleEnroll(event) {
-        const btn = event.target;
+        const btn = event.currentTarget;
         const courseId = btn.dataset.id;
         const course = this.courses.find(c => String(c.id) === String(courseId));
         if (!course) return;

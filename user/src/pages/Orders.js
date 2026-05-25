@@ -267,6 +267,10 @@ export default class Orders {
                           (items.length > 2 ? ` +${items.length - 2}` : "")
                         : "Mahsulot yo'q";
 
+                    const shippingBadge = (order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.shippingStatus
+                        ? `<br><span style="font-size:11px; color:#4ade80; background:rgba(74,222,128,0.1); padding:2px 6px; border-radius:10px; margin-top:4px; display:inline-block;">${esc(this._uzpostStatusLabel(order.shippingStatus))}</span>`
+                        : '';
+
                     return `
                         <div class="orders-list-row" data-order-id="${order.id}">
                             <span class="ol-col ol-id">#${order.id}</span>
@@ -280,6 +284,7 @@ export default class Orders {
                                 <span class="status-badge status-${status.class}">
                                     <i class="fas ${status.icon}"></i> ${status.text}
                                 </span>
+                                ${shippingBadge}
                             </span>
                         </div>
                     `;
