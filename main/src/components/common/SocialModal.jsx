@@ -1,15 +1,23 @@
 import { useState, useEffect } from "react";
 
+const STORAGE_KEY = "socialModalDismissedAt";
+const HIDE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
 export default function SocialModal() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(true);
-    }, 3000);
+    const dismissedAt = Number(localStorage.getItem(STORAGE_KEY));
+    if (dismissedAt && Date.now() - dismissedAt < HIDE_DURATION_MS) return;
 
+    const timer = setTimeout(() => setShow(true), 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleClose = () => {
+    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+    setShow(false);
+  };
 
   if (!show) return null;
 
@@ -18,7 +26,7 @@ export default function SocialModal() {
     <div style={styles.overlay}>
       <div style={styles.modal}>
         <div style={{display: "flex", justifyContent: "end"}}>
-          <button onClick={() => setShow(false)} style={styles.closeBtn}>
+          <button onClick={handleClose} style={styles.closeBtn}>
             <p>✖</p>
           </button>
         </div>
@@ -31,6 +39,8 @@ export default function SocialModal() {
             <a
               href="https://t.me/Robotronix_LLC"
               target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleClose}
               style={styles.telegram}
             >
             <i class="fa-brands fa-telegram" style={{display: "inline-block"}}></i> <br />
@@ -40,6 +50,8 @@ export default function SocialModal() {
             <a
               href="https://instagram.com/robotronixuz"
               target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleClose}
               style={styles.instagram}
             >
             <i class="fa-brands fa-instagram" style={{display: "inline-block"}}></i> <br />
