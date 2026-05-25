@@ -100,6 +100,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
       unsubEnrolls();
       unsubChat();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = () => {

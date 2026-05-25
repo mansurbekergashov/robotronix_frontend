@@ -10,7 +10,6 @@ export default defineConfig(({ mode }) => {
   // Strip Origin/Referer so Spring's CORS filter doesn't activate.
   // The browser treats all Vite-proxied requests as same-origin, so it
   // never checks the response for CORS headers — removing Origin is safe.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stripCorsHeaders = (proxy: any) => {
     proxy.on('proxyReq', (proxyReq: any) => {
       proxyReq.removeHeader('origin');

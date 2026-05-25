@@ -135,7 +135,7 @@ export default function Products() {
     }
     try {
       const data = new FormData();
-      const { id, ...productPayload } = formData as ProductData;
+      const { id: _id, ...productPayload } = formData as ProductData;
       const productBlob = new Blob([JSON.stringify(productPayload)], { type: 'application/json' });
       data.append('product', productBlob);
       if (imageFile) {

@@ -120,7 +120,7 @@ export default function Courses() {
       const data = new FormData();
 
       // Strip 'id' from formData before sending — backend gets id from the URL
-      const { id, ...coursePayload } = formData as CourseData;
+      const { id: _id, ...coursePayload } = formData as CourseData;
       const courseBlob = new Blob([JSON.stringify(coursePayload)], { type: 'application/json' });
       data.append('course', courseBlob);
 
