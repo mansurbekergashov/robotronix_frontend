@@ -1,6 +1,8 @@
 import { getFileUrl } from '../config.js';
 import CheckoutModal from '../components/CheckoutModal.js';
 
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
 export default class Cart {
     constructor() {
         this.container = document.getElementById('main-content');
@@ -55,7 +57,7 @@ export default class Cart {
         return `
             <div class="cart-item" data-id="${item.id}">
                 <div class="item-img">
-                    <img src="${getFileUrl(item.image)}" alt="${esc(item.title) || 'Mahsulot'}">
+                    <img src="${getFileUrl(item.image)}" alt="${esc(item.title) || 'Mahsulot'}" onerror="this.onerror=null;this.src='/default-image.svg'">
                 </div>
                 <div class="item-info">
                     <h4>${esc(item.title) || 'Mahsulot'}</h4>

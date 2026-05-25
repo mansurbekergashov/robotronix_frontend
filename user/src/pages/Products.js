@@ -68,7 +68,7 @@ export default class Products {
         grid.innerHTML = this.products.map(product => `
             <div class="product-card">
                 <div class="product-image">
-                    <img src="${getFileUrl(product.imageUrl)}" alt="${esc(product.title)}">
+                    <img src="${getFileUrl(product.imageUrl)}" alt="${esc(product.title)}" onerror="this.onerror=null;this.src='/default-image.svg'">
                 </div>
                 <div class="product-content">
                     <h3>${esc(product.title)}</h3>

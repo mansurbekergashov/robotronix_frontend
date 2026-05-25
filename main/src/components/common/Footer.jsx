@@ -21,7 +21,7 @@ const Footer = () => {
                         </p>
                         <div className="footer-social">
                             <a
-                                href="https://t.me/robotronixuz"
+                                href="https://t.me/Robotronix_LLC"
                                 className="social-link"
                                 target="_blank"
                                 rel="noopener noreferrer"

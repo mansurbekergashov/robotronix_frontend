@@ -118,7 +118,7 @@ export default class Courses {
             return `
                 <div class="course-card" data-id="${course.id}">
                     <div class="course-image">
-                        <img src="${imageUrl}" alt="${course.title}">
+                        <img src="${imageUrl}" alt="${course.title}" onerror="this.onerror=null;this.src='/default-image.svg'">
                         <div style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 2;">
                             <div class="course-category-badge" style="position: static;">${course.category || 'Robototexnika'}</div>
                             <div class="course-category-badge" style="position: static; background: ${course.isOnline ? 'var(--success, #22c55e)' : 'var(--warning, #f59e0b)'} !important; border-color: ${course.isOnline ? 'var(--success, #22c55e)' : 'var(--warning, #f59e0b)'} !important; color: white;">
@@ -192,7 +192,7 @@ export default class Courses {
     }
 
     async handleEnroll(event) {
-        const btn = event.target;
+        const btn = event.currentTarget;
         const courseId = btn.dataset.id;
         const course = this.courses.find(c => String(c.id) === String(courseId));
         if (!course) return;

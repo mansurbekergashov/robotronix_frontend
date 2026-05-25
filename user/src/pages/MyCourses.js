@@ -126,7 +126,7 @@ export default class MyCourses {
                             </div>
 
                             <div class="enrollment-image" style="position: relative;">
-                                <img src="${imageUrl}" alt="${esc(course.title)}">
+                                <img src="${imageUrl}" alt="${esc(course.title)}" onerror="this.onerror=null;this.src='/default-image.svg'">
                                 <div style="position: absolute; bottom: 0.5rem; left: 0.5rem; background: ${course.isOnline ? "var(--success, #22c55e)" : "var(--warning, #f59e0b)"}; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 4px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                                     <i class="fas ${course.isOnline ? "fa-globe" : "fa-building"}"></i> ${course.isOnline ? "Online" : "Oflayn"}
                                 </div>

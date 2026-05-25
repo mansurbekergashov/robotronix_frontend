@@ -116,7 +116,7 @@ export default class News {
       }) : '';
 
       const imageHtml = item.imageUrl
-        ? `<div class="news-card-img"><img src="${esc(item.imageUrl)}" alt="${esc(item.title)}" loading="lazy" /></div>`
+        ? `<div class="news-card-img"><img src="${esc(item.imageUrl)}" alt="${esc(item.title)}" loading="lazy" onerror="this.onerror=null;this.src='/default-image.svg'" /></div>`
         : '';
 
       const pinHtml = item.isPinned
@@ -181,7 +181,7 @@ export default class News {
     }) : '';
 
     const imageHtml = item.imageUrl
-      ? `<div class="detail-image"><img src="${esc(item.imageUrl)}" alt="${esc(item.title)}" /></div>`
+      ? `<div class="detail-image"><img src="${esc(item.imageUrl)}" alt="${esc(item.title)}" onerror="this.onerror=null;this.src='/default-image.svg'" /></div>`
       : '';
 
     const overlay = document.createElement('div');

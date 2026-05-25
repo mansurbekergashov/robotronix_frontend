@@ -16,7 +16,7 @@ export const WS_BASE_URL = _origin.replace(/^http/, 'ws');
 export const getFileUrl = (path) => {
     const defaultImage = '/default-image.svg';
     
-    if (!path || path.includes('placeholder.svg')) return defaultImage;
+    if (!path || path.includes('placeholder.svg') || path.includes('/defaults/')) return defaultImage;
     if (path.startsWith('http')) return path;
     if (path.startsWith('public/')) return `/${path.slice('public/'.length)}`;
     
