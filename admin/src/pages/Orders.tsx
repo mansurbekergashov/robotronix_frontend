@@ -608,7 +608,11 @@ export default function Orders() {
                   </div>
                   <p><strong>Ism:</strong> {selectedOrder.user?.fullName}</p>
                   <p><strong>Telefon:</strong> {selectedOrder.contactPhone || selectedOrder.user?.phone}</p>
-                  <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}{selectedOrder.postalIndex ? <span style={{ marginLeft: 8, color: '#4ade80', fontSize: '12px' }}>📮 {selectedOrder.postalIndex}</span> : null}</p>
+                  <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}</p>
+                  <p><strong>Pochta indeksi:</strong> {selectedOrder.postalIndex
+                    ? <code style={{ color: '#4ade80' }}>📮 {selectedOrder.postalIndex}</code>
+                    : <span style={{ color: '#8b92a7' }}>—</span>}
+                  </p>
                   {selectedOrder.trackingNumber && (
                     <p><strong>Tracking:</strong> <code>{selectedOrder.trackingNumber}</code> <span style={{ color: '#8b92a7', fontSize: '12px' }}>({selectedOrder.shippingStatus})</span></p>
                   )}
@@ -896,7 +900,7 @@ export default function Orders() {
                                       const path = Array.isArray(j.hierarchy) && j.hierarchy.length
                                         ? j.hierarchy.map((h: any) => h.name).join(' > ') : '';
                                       return (
-                                        <div key={j.id} onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurisdictions([]); fetchPostalIndex(j.name, path); }}
+                                        <div key={j.id} onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurisdictions([]); if (j.code && /^\d{6}$/.test(j.code)) { setPostalIndex(j.code); } else { fetchPostalIndex(j.name, path); } }}
                                           style={{ padding: '6px 10px', cursor: 'pointer', background: selectedJur?.id === j.id ? '#2d3250' : 'transparent' }}>
                                           <div style={{ fontSize: '13px' }}>{j.name}</div>
                                           {path && <div style={{ fontSize: '11px', color: '#8b92a7' }}>{path}</div>}

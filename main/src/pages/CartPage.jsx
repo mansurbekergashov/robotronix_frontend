@@ -78,13 +78,18 @@ const CartPage = () => {
         setSelectedJur({ id: jur.id, name: jur.name });
         setJurSearch(jur.name);
         setJurResults([]);
-        // Auto-detect postal index
-        try {
-            const res = await api.get('/geography/postal-index', {
-                params: { jurisdictionName: jur.name, hierarchyPath }
-            });
-            if (res.data?.found) setPostalIndex(res.data.postalIndex);
-        } catch { /* silent */ }
+        // UzPost API dan to'g'ridan-to'g'ri code (postal index) olish
+        if (jur.code && /^\d{6}$/.test(jur.code)) {
+            setPostalIndex(jur.code);
+        } else {
+            // Fallback: lokal map dan qidirish
+            try {
+                const res = await api.get('/geography/postal-index', {
+                    params: { jurisdictionName: jur.name, hierarchyPath }
+                });
+                if (res.data?.found) setPostalIndex(res.data.postalIndex);
+            } catch { /* silent */ }
+        }
     };
 
     const handlePlaceOrder = async (e) => {
