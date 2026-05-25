@@ -209,6 +209,8 @@ export default function Orders() {
       const res = await api.patch(`/admin/orders/${shipModal.orderId}`, {
         shippingAddress: editAddress.trim(),
         contactPhone: editPhone.trim(),
+        receiverJurisdictionId: selectedJur?.id ?? null,
+        postalIndex: postalIndex.trim() || null,
       });
       const updated = res.data;
       setOrders(orders.map(o => o.id === shipModal.orderId ? { ...o, ...updated } : o));
@@ -622,10 +624,51 @@ export default function Orders() {
                           <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Og'irlik (taxm.):</td>
                           <td style={{ paddingTop: '4px' }}>{weightG >= 1000 ? `${(weightG/1000).toFixed(2)} kg` : `${weightG} g`}</td>
                         </tr>
-                        {order.postalIndex && (
+                        <tr>
+                          <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Tuman/Shahar:</td>
+                          <td style={{ paddingTop: '4px' }}>
+                            {shipEditMode ? (
+                              <div>
+                                <div className="search-wrapper" style={{ marginBottom: '4px' }}>
+                                  <FaSearch className="search-icon" />
+                                  <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Tuman yoki shahar..."
+                                    value={jurSearch}
+                                    onChange={e => handleJurSearchChange(e.target.value)}
+                                  />
+                                </div>
+                                {jurLoading && <span style={{ color: '#8b92a7', fontSize: '12px' }}>Qidirilmoqda...</span>}
+                                {!jurLoading && jurisdictions.length > 0 && (
+                                  <div style={{ border: '1px solid #2d3250', borderRadius: '6px', maxHeight: '140px', overflowY: 'auto', marginBottom: '4px' }}>
+                                    {jurisdictions.map((j: any) => {
+                                      const path = Array.isArray(j.hierarchy) && j.hierarchy.length
+                                        ? j.hierarchy.map((h: any) => h.name).join(' > ') : '';
+                                      return (
+                                        <div key={j.id} onClick={() => { setSelectedJur({ id: j.id, name: j.name }); setJurSearch(j.name); setJurisdictions([]); fetchPostalIndex(j.name, path); }}
+                                          style={{ padding: '6px 10px', cursor: 'pointer', background: selectedJur?.id === j.id ? '#2d3250' : 'transparent' }}>
+                                          <div style={{ fontSize: '13px' }}>{j.name}</div>
+                                          {path && <div style={{ fontSize: '11px', color: '#8b92a7' }}>{path}</div>}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                {!jurLoading && jurSearch.length > 1 && jurisdictions.length === 0 && !selectedJur && (
+                                  <span style={{ color: '#8b92a7', fontSize: '12px' }}>Natija topilmadi</span>
+                                )}
+                                {selectedJur && <span style={{ color: '#4ade80', fontSize: '12px' }}>✓ {selectedJur.name}</span>}
+                              </div>
+                            ) : (
+                              selectedJur ? <span style={{ color: '#4ade80' }}>✓ {selectedJur.name}</span> : <span style={{ color: '#8b92a7' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                        {(postalIndex || order.postalIndex) && (
                           <tr>
                             <td style={{ color: '#8b92a7', paddingRight: '12px', paddingTop: '4px' }}>Pochta indeksi:</td>
-                            <td style={{ paddingTop: '4px' }}><code style={{ color: '#4ade80' }}>{order.postalIndex}</code></td>
+                            <td style={{ paddingTop: '4px' }}><code style={{ color: '#4ade80' }}>{postalIndex || order.postalIndex}</code></td>
                           </tr>
                         )}
                       </tbody>
@@ -636,7 +679,7 @@ export default function Orders() {
                         <div style={{ color: '#8b92a7', marginBottom: '6px' }}>Mahsulotlar:</div>
                         {order.items.map((it: any, i: number) => (
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e2e8f0', marginBottom: '3px' }}>
-                            <span>{it.product?.title || 'Mahsulot'}</span>
+                            <span>{it.productName || it.product?.title || 'Mahsulot'}</span>
                             <span style={{ color: '#8b92a7' }}>{it.quantity} x {(it.price || 0).toLocaleString()} so'm</span>
                           </div>
                         ))}
@@ -645,58 +688,6 @@ export default function Orders() {
                   </div>
                 );
               })()}
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
-                  Qabul qiluvchi tumani / shahri *
-                </label>
-                <div className="search-wrapper" style={{ marginBottom: '6px' }}>
-                  <FaSearch className="search-icon" />
-                  <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Tuman yoki shahar nomini kiriting..."
-                    value={jurSearch}
-                    onChange={e => handleJurSearchChange(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                {jurLoading && <p style={{ color: '#8b92a7', fontSize: '13px' }}>Qidirilmoqda...</p>}
-                {!jurLoading && jurisdictions.length > 0 && (
-                  <div style={{ border: '1px solid #2d3250', borderRadius: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                    {jurisdictions.map((j: any) => {
-                      const path = Array.isArray(j.hierarchy) && j.hierarchy.length
-                        ? j.hierarchy.map((h: any) => h.name).join(' > ') : '';
-                      return (
-                        <div
-                          key={j.id}
-                          onClick={() => {
-                            setSelectedJur({ id: j.id, name: j.name });
-                            setJurSearch(j.name);
-                            setJurisdictions([]);
-                            fetchPostalIndex(j.name, path);
-                          }}
-                          style={{
-                            padding: '8px 12px', cursor: 'pointer',
-                            background: selectedJur?.id === j.id ? '#2d3250' : 'transparent',
-                          }}
-                        >
-                          <div style={{ fontSize: '14px' }}>{j.name}</div>
-                          {path && <div style={{ fontSize: '11px', color: '#8b92a7', marginTop: '2px' }}>{path}</div>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {!jurLoading && jurSearch.length > 1 && jurisdictions.length === 0 && !selectedJur && (
-                  <p style={{ color: '#8b92a7', fontSize: '13px' }}>Natija topilmadi</p>
-                )}
-                {selectedJur && (
-                  <p style={{ color: '#4ade80', fontSize: '13px', marginTop: '4px' }}>
-                    ✓ Tanlandi: {selectedJur.name} (ID: {selectedJur.id})
-                  </p>
-                )}
-              </div>
 
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Jo'natma turi (UzPost)</label>
