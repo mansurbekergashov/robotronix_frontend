@@ -1,29 +1,145 @@
+import { useState } from "react";
+
 function Map() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div
-      className="container"
-      style={{ width: "100%", height: "450px", marginBottom: "60px", position: "relative" }}
-    >
+    <div className="container" style={{ marginBottom: "60px", position: "relative" }}>
       <iframe
-        src="https://www.openstreetmap.org/export/embed.html?bbox=71.7768%2C40.3757%2C71.7969%2C40.3958&layer=mapnik&marker=40.385765%2C71.786899"
+        src="https://yandex.uz/map-widget/v1/?ll=71.786826%2C40.385732&z=17&oid=84108716451&ol=biz"
         width="100%"
-        height="100%"
-        style={{ border: 0, borderRadius: "20px" }}
+        height="450px"
+        style={{ border: 0, borderRadius: "20px", display: "block" }}
         loading="lazy"
         title="Robotronix manzili"
+        allowFullScreen
       />
-      <a
-        href="https://maps.app.goo.gl/zSd9F9inhyMk3KFfA"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Google Maps da yo'l ko'rsatish"
+
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Manzil ma'lumotlarini ko'rsatish"
         style={{
           position: "absolute",
-          inset: 0,
-          borderRadius: "20px",
+          top: "16px",
+          right: "16px",
+          width: "44px",
+          height: "44px",
+          borderRadius: "50%",
+          border: "none",
+          background: open ? "#33cccc" : "#fff",
+          color: open ? "#fff" : "#33cccc",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
           cursor: "pointer",
+          fontSize: "18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2,
+          transition: "background 0.2s, color 0.2s",
         }}
-      />
+      >
+        <i className="fas fa-info" />
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "72px",
+            right: "16px",
+            width: "300px",
+            maxWidth: "calc(100% - 32px)",
+            background: "#1e2235",
+            border: "1px solid #374151",
+            borderRadius: "12px",
+            padding: "16px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            zIndex: 2,
+            color: "#e5e7eb",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+            <h4 style={{ margin: 0, fontSize: "15px", color: "#fff" }}>Robotronix</h4>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Yopish"
+              style={{
+                background: "none",
+                border: "none",
+                color: "#9ca3af",
+                cursor: "pointer",
+                fontSize: "16px",
+                padding: 0,
+                lineHeight: 1,
+              }}
+            >
+              <i className="fas fa-times" />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "13px", marginBottom: "10px" }}>
+            <i className="fas fa-map-marker-alt" style={{ color: "#33cccc", marginTop: "3px" }} />
+            <span>Farg'ona, Ma'rifat ko'chasi, 21B</span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", marginBottom: "14px" }}>
+            <i className="fas fa-phone" style={{ color: "#33cccc" }} />
+            <a href="tel:+998338033353" style={{ color: "#e5e7eb", textDecoration: "none" }}>
+              +998 33 803 33 53
+            </a>
+          </div>
+
+          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "8px" }}>
+            Yo'l ko'rsatish:
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <a
+              href="https://yandex.uz/maps/?rtext=~40.385765%2C71.786899&rtt=auto"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                background: "#ffcc00",
+                color: "#000",
+                padding: "8px 10px",
+                borderRadius: "8px",
+                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 600,
+              }}
+            >
+              <i className="fas fa-map" />
+              Yandex
+            </a>
+            <a
+              href="https://www.google.com/maps/dir/?api=1&destination=40.385765,71.786899"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                background: "#4285f4",
+                color: "#fff",
+                padding: "8px 10px",
+                borderRadius: "8px",
+                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 600,
+              }}
+            >
+              <i className="fab fa-google" />
+              Google
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

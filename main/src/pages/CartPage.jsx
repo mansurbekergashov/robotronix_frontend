@@ -5,8 +5,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { getFileUrl } from '../utils';
 
-const POLL_INTERVAL_MS  = 3000;
-const POLL_TIMEOUT_MS   = 900000; // 15 daqiqa
+const POLL_INTERVAL_MS       = 3000;
+const POLL_TIMEOUT_MS        = 900000; // 15 daqiqa
+const UZPOST_DISTRICT_LEVEL  = 3;     // UzPost: 1=viloyat, 2=shahar, 3=tuman
 
 const CartPage = () => {
     const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
@@ -15,6 +16,7 @@ const CartPage = () => {
 
     const [isOrdering, setIsOrdering]     = useState(false);
     const [orderData, setOrderData]        = useState({ detailAddress: '', contactPhone: '' });
+    const [formErrors, setFormErrors]      = useState({});
     const [paymentState, setPaymentState]  = useState(null); // null | 'waiting' | 'confirmed' | 'timeout'
     const [pendingOrderId, setPendingOrderId] = useState(null);
     const pollingRef = useRef(null);
@@ -33,7 +35,10 @@ const CartPage = () => {
         if (pollTimeoutRef.current) { clearTimeout(pollTimeoutRef.current); pollTimeoutRef.current = null; }
     };
 
-    useEffect(() => () => stopPolling(), []);
+    useEffect(() => () => {
+        stopPolling();
+        if (jurTimer.current) clearTimeout(jurTimer.current);
+    }, []);
 
     const startPolling = (orderId) => {
         stopPolling();
@@ -60,7 +65,7 @@ const CartPage = () => {
         if (!q || q.length < 2) { setJurResults([]); return; }
         setJurLoading(true);
         try {
-            const res = await api.get('/geography/jurisdictions', { params: { levelId: 3, search: q, size: 20 } });
+            const res = await api.get('/geography/jurisdictions', { params: { levelId: UZPOST_DISTRICT_LEVEL, search: q, size: 20 } });
             setJurResults(res.data?.data ?? []);
         } catch { setJurResults([]); }
         finally { setJurLoading(false); }
@@ -99,14 +104,16 @@ const CartPage = () => {
             return;
         }
 
-        if (!selectedJur) { alert("Shahar yoki tumaningizni tanlang"); return; }
+        const errors = {};
+        if (!selectedJur)                      errors.jur     = "Shahar yoki tumaningizni tanlang";
+        if (!orderData.detailAddress.trim())   errors.detail  = "Ko'cha va uy raqamini kiriting";
+        if (!orderData.contactPhone.trim())    errors.phone   = "Telefon raqamini kiriting";
+        if (Object.keys(errors).length) { setFormErrors(errors); return; }
+        setFormErrors({});
 
         const detailAddress   = orderData.detailAddress.trim();
         const contactPhone    = orderData.contactPhone.trim();
         const shippingAddress = `${selectedJur.name}, ${detailAddress}`;
-
-        if (!detailAddress)   { alert("Ko'cha va uy raqamini kiriting"); return; }
-        if (!contactPhone)    { alert("Telefon raqamini kiriting");      return; }
 
         setIsOrdering(true);
         try {
@@ -261,31 +268,46 @@ const CartPage = () => {
                     <form onSubmit={handlePlaceOrder} className="checkout-form">
                         {/* Jurisdiction search */}
                         <div className="form-group" style={{ position: 'relative' }}>
-                            <label>Shahar / tuman (UzPost):</label>
+                            <label htmlFor="jur-input">Shahar / tuman (UzPost):</label>
                             <input
+                                id="jur-input"
                                 type="text"
                                 value={jurSearch}
                                 onChange={(e) => handleJurInput(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Escape') setJurResults([]); }}
+                                onBlur={() => setTimeout(() => setJurResults([]), 150)}
                                 placeholder="Tuman yoki shaharni qidiring..."
                                 autoComplete="off"
+                                aria-autocomplete="list"
+                                aria-expanded={jurResults.length > 0 && !selectedJur}
+                                aria-controls="jur-listbox"
                                 style={{ width: '100%' }}
                             />
                             {jurLoading && (
                                 <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>Qidirilmoqda...</div>
                             )}
                             {jurResults.length > 0 && !selectedJur && (
-                                <div style={{
-                                    position: 'absolute', zIndex: 999, background: '#1e2235',
-                                    border: '1px solid #374151', borderRadius: '8px',
-                                    width: '100%', maxHeight: '180px', overflowY: 'auto', top: '100%', left: 0,
-                                }}>
+                                <div
+                                    id="jur-listbox"
+                                    role="listbox"
+                                    aria-label="Jurisdiksiyalar ro'yxati"
+                                    style={{
+                                        position: 'absolute', zIndex: 999, background: '#1e2235',
+                                        border: '1px solid #374151', borderRadius: '8px',
+                                        width: '100%', maxHeight: '180px', overflowY: 'auto', top: '100%', left: 0,
+                                    }}
+                                >
                                     {jurResults.map(j => {
                                         const path = Array.isArray(j.hierarchy) && j.hierarchy.length
                                             ? j.hierarchy.map(h => h.name).join(' > ') : '';
                                         return (
                                             <div
                                                 key={j.id}
+                                                role="option"
+                                                aria-selected={false}
                                                 onClick={() => selectJurisdiction(j, path)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') selectJurisdiction(j, path); }}
+                                                tabIndex={0}
                                                 style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #2d3250' }}
                                             >
                                                 <div style={{ fontSize: '14px' }}>{j.name}</div>
@@ -305,34 +327,43 @@ const CartPage = () => {
                                     )}
                                 </div>
                             )}
+                            {formErrors.jur && (
+                                <div style={{ fontSize: '12px', color: '#f87171', marginTop: '4px' }}>{formErrors.jur}</div>
+                            )}
                         </div>
 
                         {/* Detail address */}
                         <div className="form-group">
-                            <label>Ko'cha va uy raqami:</label>
+                            <label htmlFor="detail-address">Ko'cha va uy raqami:</label>
                             <input
+                                id="detail-address"
                                 type="text"
-                                required
                                 value={orderData.detailAddress}
                                 onChange={(e) => setOrderData({ ...orderData, detailAddress: e.target.value })}
                                 placeholder="Ko'cha nomi, uy/kvartira raqami"
                             />
+                            {formErrors.detail && (
+                                <div style={{ fontSize: '12px', color: '#f87171', marginTop: '4px' }}>{formErrors.detail}</div>
+                            )}
                         </div>
 
                         <div className="form-group">
-                            <label>Telefon raqami:</label>
+                            <label htmlFor="contact-phone">Telefon raqami:</label>
                             <input
+                                id="contact-phone"
                                 type="tel"
-                                required
                                 value={orderData.contactPhone}
                                 onChange={(e) => setOrderData({ ...orderData, contactPhone: e.target.value })}
                                 placeholder="+998 90 123 45 67"
                             />
+                            {formErrors.phone && (
+                                <div style={{ fontSize: '12px', color: '#f87171', marginTop: '4px' }}>{formErrors.phone}</div>
+                            )}
                         </div>
 
                         <div className="payment-info-box" style={{
-                            background: '#f0fdf4',
-                            border: '1px solid #bbf7d0',
+                            background: '#0d1f14',
+                            border: '1px solid #166534',
                             borderRadius: '8px',
                             padding: '12px',
                             marginBottom: '16px',
@@ -342,8 +373,8 @@ const CartPage = () => {
                         }}>
                             <span style={{ fontSize: '1.5rem' }}>💳</span>
                             <div>
-                                <div style={{ fontWeight: 600, color: '#166534' }}>Payme orqali to'lov</div>
-                                <div style={{ fontSize: '13px', color: '#15803d' }}>
+                                <div style={{ fontWeight: 600, color: '#4ade80' }}>Payme orqali to'lov</div>
+                                <div style={{ fontSize: '13px', color: '#86efac' }}>
                                     Buyurtma bergandan so'ng Payme to'lov sahifasi avtomatik ochiladi
                                 </div>
                             </div>
