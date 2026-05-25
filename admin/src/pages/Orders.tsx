@@ -22,6 +22,12 @@ interface OrderData {
   postalIndex?: string;
 }
 
+interface TrackingHistoryItem {
+  createdAt: string;
+  statusName: string;
+  officeName?: string;
+}
+
 export default function Orders() {
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -52,6 +58,10 @@ export default function Orders() {
   const [editPhone, setEditPhone] = useState('');
   const [shipEditSaving, setShipEditSaving] = useState(false);
 
+  // UzPost tracking history
+  const [trackingHistory, setTrackingHistory] = useState<TrackingHistoryItem[] | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 4000);
@@ -74,6 +84,28 @@ export default function Orders() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  const fetchTracking = useCallback(async (orderId: number) => {
+    setTrackingLoading(true);
+    setTrackingHistory(null);
+    try {
+      const res = await api.get(`/admin/orders/${orderId}/tracking`);
+      const histories: TrackingHistoryItem[] = res.data?.data?.histories ?? [];
+      setTrackingHistory(histories);
+    } catch {
+      setTrackingHistory([]);
+    } finally {
+      setTrackingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedOrder?.trackingNumber) {
+      fetchTracking(selectedOrder.id);
+    } else {
+      setTrackingHistory(null);
+    }
+  }, [selectedOrder?.id, selectedOrder?.trackingNumber, fetchTracking]);
 
   // Real-time sync — subscribe once on mount, use ref to always call latest fetchOrders
   const fetchOrdersRef = useRef(fetchOrders);
@@ -657,6 +689,49 @@ export default function Orders() {
                   Holat (SHIPPED → DELIVERED) UzPost dan avtomatik yangilanadi (har 30 daqiqada)
                 </p>
               </div>
+
+              {/* UzPost tracking history timeline */}
+              {selectedOrder.trackingNumber && (
+                <div className="status-management" style={{ marginTop: '1rem', borderTop: '1px solid #2d3250', paddingTop: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h3 style={{ margin: 0 }}>Kuzatuv tarixi (UzPost)</h3>
+                    <button
+                      className="btn-icon"
+                      onClick={() => fetchTracking(selectedOrder.id)}
+                      title="Yangilash"
+                      style={{ color: '#8b92a7', fontSize: '13px', padding: '4px 10px' }}
+                    >
+                      ↻ Yangilash
+                    </button>
+                  </div>
+                  {trackingLoading ? (
+                    <p style={{ color: '#8b92a7', fontSize: '13px' }}>Yuklanmoqda...</p>
+                  ) : !trackingHistory || trackingHistory.length === 0 ? (
+                    <p style={{ color: '#8b92a7', fontSize: '13px' }}>Tarix mavjud emas</p>
+                  ) : (
+                    <div style={{ position: 'relative', paddingLeft: '20px' }}>
+                      <div style={{ position: 'absolute', left: '7px', top: '6px', bottom: '6px', width: '2px', background: 'rgba(99,102,241,0.3)' }} />
+                      {trackingHistory.map((item, idx) => (
+                        <div key={idx} style={{ position: 'relative', marginBottom: '14px', paddingLeft: '16px' }}>
+                          <div style={{
+                            position: 'absolute', left: '-6px', top: '5px',
+                            width: '10px', height: '10px', borderRadius: '50%',
+                            background: idx === 0 ? '#4ade80' : '#6366f1',
+                            border: '2px solid #1e2640',
+                          }} />
+                          <div style={{ fontSize: '11px', color: '#8b92a7', marginBottom: '2px' }}>
+                            {item.createdAt ? new Date(item.createdAt).toLocaleString('uz-UZ') : '—'}
+                          </div>
+                          <div style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: idx === 0 ? 600 : 400 }}>
+                            {item.statusName || '—'}
+                            {item.officeName && <span style={{ color: '#8b92a7', fontWeight: 400 }}> — {item.officeName}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
