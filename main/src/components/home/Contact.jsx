@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Map from './Map'
 
 const Contact = () => {
     const [formData, setFormData] = useState({
@@ -111,6 +112,7 @@ const Contact = () => {
                                 <i className="fab fa-youtube"></i>
                             </a>
                         </div>
+                        <Map/>
                     </div>
 
                     <div className="contact-form" data-aos="fade-left">

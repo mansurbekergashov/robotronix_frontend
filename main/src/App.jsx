@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/common/Navbar'
@@ -27,7 +27,12 @@ function OrdersRedirect() {
   return <div style={{ textAlign: 'center', padding: '3rem', color: '#8b92a7' }}>Buyurtmalar sahifasiga o'tilmoqda...</div>;
 }
 
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
+
 function App() {
+  const location = useLocation();
+  const isAuthPage = AUTH_ROUTES.includes(location.pathname);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
 
@@ -42,7 +47,7 @@ function App() {
         <DroneBackground />
         <Preloader />
         <ScrollToHash />
-        <Navbar />
+        {!isAuthPage && <Navbar />}
         <main>
           <Suspense fallback={<div className="loading-fallback">Yuklanmoqda...</div>}>
             <Routes>
@@ -61,8 +66,8 @@ function App() {
             </Routes>
           </Suspense>
         </main>
-        <BackToTop />
-        <Footer />
+        {!isAuthPage && <BackToTop />}
+        {!isAuthPage && <Footer />}
       </CartProvider>
     </AuthProvider>
   )

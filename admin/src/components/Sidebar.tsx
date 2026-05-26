@@ -169,7 +169,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
           );
         })}
       </nav>
-      <button className='nav-item' onClick={toggleTheme} title={isCollapsed ? 'Rejim' : ''}>
+      <div style={{borderTop: "var(--border-color)"}}>
+        <button className='nav-item' onClick={toggleTheme} title={isCollapsed ? 'Rejim' : ''}>
         {theme === "light" ? <span className='nav-icon'><i className="fas fa-moon"></i></span> :<span className='nav-icon'><i className="fas fa-sun"></i></span>}
         {!isCollapsed && <span className="nav-label">Rejim</span>}
 
@@ -186,6 +187,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, set
           <span className="nav-icon"><FaSignOutAlt /></span>
           {!isCollapsed && <span className="nav-label">Chiqish</span>}
         </button>
+      </div>
 
       <button className="sidebar-toggle" onClick={() => setIsCollapsed(!isCollapsed)}>
         <FaChevronDown className={isCollapsed ? 'rotated' : ''} />

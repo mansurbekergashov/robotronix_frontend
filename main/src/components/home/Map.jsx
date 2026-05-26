@@ -4,11 +4,11 @@ function Map() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="container" style={{ marginBottom: "60px", position: "relative" }}>
+    <div style={{ marginBottom: "20px", position: "relative"}}>
       <iframe
         src="https://yandex.uz/map-widget/v1/?ll=71.786826%2C40.385732&z=17&oid=84108716451&ol=biz"
         width="100%"
-        height="450px"
+        height="280px"
         style={{ border: 0, borderRadius: "20px", display: "block" }}
         loading="lazy"
         title="Robotronix manzili"

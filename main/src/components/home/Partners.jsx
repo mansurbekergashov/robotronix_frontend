@@ -1,9 +1,6 @@
 const Partners = () => {
     const partners = [
-        { name: 'IT Park', image: '/assets/images/placeholder.svg' },
-        { name: 'Cyberpark', image: '/assets/images/placeholder.svg' },
-        { name: "Ta'lim vazirligi", image: '/assets/images/placeholder.svg' },
-        { name: 'RTM', image: '/assets/images/placeholder.svg' }
+        // { name: 'IT Park', image: '/assets/images/placeholder.svg' },
     ]
 
 
@@ -17,12 +14,15 @@ const Partners = () => {
                     </p>
                 </div>
 
-                <div className="partners-grid">
-                    {partners.map((partner, index) => (
-                        <div key={index} className="partner-logo">
-                            <img src={partner.image} alt={partner.name} loading="lazy" decoding="async" />
-                        </div>
-                    ))}
+                <div className="partners-marquee">
+                    <div className="partners-track">
+                        {[...partners, ...partners].map((partner, index) => (
+                            <div key={index} className="partner-logo">
+                                <img src={partner.image} alt={partner.name} loading="lazy" decoding="async" />
+                                <span>{partner.name}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             
             
