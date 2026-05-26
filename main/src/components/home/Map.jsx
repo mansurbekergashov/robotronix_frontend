@@ -49,17 +49,17 @@ function Map() {
             right: "16px",
             width: "300px",
             maxWidth: "calc(100% - 32px)",
-            background: "#1e2235",
-            border: "1px solid #374151",
+            background: "var(--card-bg)",
+            border: "1px solid var(--border-color)",
             borderRadius: "12px",
             padding: "16px",
             boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
             zIndex: 2,
-            color: "#e5e7eb",
+            color: "var(--primary-color)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-            <h4 style={{ margin: 0, fontSize: "15px", color: "#fff" }}>Robotronix</h4>
+            <h4 style={{ margin: 0, fontSize: "15px", color: "var(--primary-color)" }}>Robotronix</h4>
             <button
               onClick={() => setOpen(false)}
               aria-label="Yopish"
@@ -84,7 +84,7 @@ function Map() {
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", marginBottom: "14px" }}>
             <i className="fas fa-phone" style={{ color: "#33cccc" }} />
-            <a href="tel:+998338033353" style={{ color: "#e5e7eb", textDecoration: "none" }}>
+            <a href="tel:+998338033353" style={{ color: "var(--primary-color)", textDecoration: "none" }}>
               +998 33 803 33 53
             </a>
           </div>

@@ -354,7 +354,7 @@ export default function Products() {
                 />
               </div>
               <div className="form-actions">
-                <button type="button" className="close-btn btn-secondary" onClick={handleCloseModal}><FaTrash />Bekor qilish</button>
+                <button type="button" className="btn-secondary" onClick={handleCloseModal}>Bekor qilish</button>
                 <button type="submit" className="btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? <><FaSave /> Saqlanmoqda...</> : <><FaSave /> Saqlash</>}
                 </button>

@@ -17,10 +17,6 @@
   font-weight: 600;
 }
 
-.page-header h1 svg {
-  color: #0066ff;
-}
-
 .page-header p {
   color: #8b92a7;
   margin: 0;
@@ -260,25 +256,6 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.btn-primary {
-  padding: 0.8rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #0066ff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #0052cc;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 102, 255, 0.3);
-}
 
 /* Responsive: table -> cards on mobile */
 .users-table {

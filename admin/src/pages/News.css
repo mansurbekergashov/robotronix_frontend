@@ -549,38 +549,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.btn-primary {
-  background: #214291;
-  color: #fff;
-  border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.25s ease;
-}
-.btn-primary svg {
-  color: #fff;
-}
-.btn-primary:hover { transform: translateY(-1px); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-.btn-secondary {
-  background: var(--btn-bg);
-  color: #8b92a7;
-  border: var(--border-color);
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-secondary:hover { color: #b8b8b8; background: rgba(255, 255, 255, 0.1); }
 
 .btn-danger {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
