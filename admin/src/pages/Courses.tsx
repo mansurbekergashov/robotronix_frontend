@@ -315,6 +315,7 @@ export default function Courses() {
                     onChange={e => setFormData({ ...formData, category: e.target.value })}
                   >
                     <option value="">Tanlang...</option>
+                    <option value="all">Hamma uchun</option>
                     <option value="kids">Bolalar (Kids)</option>
                     <option value="teachers">O'qituvchilar (Teachers)</option>
                   </select>

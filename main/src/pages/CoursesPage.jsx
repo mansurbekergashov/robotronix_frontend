@@ -3,10 +3,12 @@ import useFetch from '../hooks/useFetch';
 import CourseCard from '../components/courses/CourseCard';
 
 const CoursesPage = () => {
-    const [activeTab, setActiveTab] = useState('kids');
+    const [activeTab, setActiveTab] = useState('all');
     const { data: courses, loading } = useFetch('/courses');
 
-    const filteredCourses = (courses || []).filter(c => c.category === activeTab);
+    const filteredCourses = activeTab === 'all'
+        ? (courses || [])
+        : (courses || []).filter(c => c.category === activeTab);
 
     return (
         <section className="courses-page courses">
@@ -17,6 +19,12 @@ const CoursesPage = () => {
                 </div>
 
                 <div className="course-tabs" data-aos="fade-up" data-aos-delay="100">
+                    <button
+                        className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('all')}
+                    >
+                        <i className="fas fa-book"></i> Hamma kurslar
+                    </button>
                     <button
                         className={`tab-btn ${activeTab === 'kids' ? 'active' : ''}`}
                         onClick={() => setActiveTab('kids')}

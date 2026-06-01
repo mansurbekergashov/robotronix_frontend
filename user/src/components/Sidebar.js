@@ -63,10 +63,19 @@ export class Sidebar {
             const toggleSidebar = () => {
                 sidebar.classList.toggle('open');
                 overlay.classList.toggle('show');
-                toggleBtn.innerHTML = sidebar.classList.contains('open') 
-                    ? '<i class="fas fa-times"></i>' 
+                toggleBtn.innerHTML = sidebar.classList.contains('open')
+                    ? '<i class="fas fa-times"></i>'
                     : '<i class="fas fa-bars"></i>';
+                localStorage.setItem('sidebarOpen', sidebar.classList.contains('open'));
             };
+
+            // Restore sidebar state from localStorage
+            const isSidebarOpen = localStorage.getItem('sidebarOpen') === 'true';
+            if (isSidebarOpen) {
+                sidebar.classList.add('open');
+                overlay.classList.add('show');
+                toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+            }
 
             toggleBtn.addEventListener('click', toggleSidebar);
             overlay.addEventListener('click', toggleSidebar);
