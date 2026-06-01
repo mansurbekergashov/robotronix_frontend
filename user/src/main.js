@@ -18,21 +18,29 @@ class App {
     }
 
     initTheme() {
-    const savedTheme = localStorage.getItem("theme");
+        const savedTheme = localStorage.getItem("theme");
+        const isDark = savedTheme === "dark";
 
-        if (savedTheme === "dark") {
+        if (isDark) {
             document.documentElement.classList.add("dark");
-            this.dark = true;
         } else {
-            this.dark = false;
+            document.documentElement.classList.remove("dark");
         }
+        this.dark = isDark;
     }
 
     toggleTheme() {
-        const isDark = document.documentElement.classList.toggle("dark");
+        const currentlyDark = document.documentElement.classList.contains("dark");
+        const willBeDark = !currentlyDark;
 
-        this.dark = isDark;
-        localStorage.setItem("theme", isDark ? "dark" : "light");
+        if (willBeDark) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+
+        this.dark = willBeDark;
+        localStorage.setItem("theme", willBeDark ? "dark" : "light");
     }
 
     
