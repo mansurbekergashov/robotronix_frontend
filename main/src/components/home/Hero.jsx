@@ -20,7 +20,7 @@ const Hero = () => {
                         </h1>
 
                         <p className="hero-description">
-                            Robotronix — Farg'ona va Namangan viloyatlaridagi yetakchi
+                            Robotronix — Farg'ona viloyatidagi yetakchi
                             robototexnika markazi...
                         </p>
 

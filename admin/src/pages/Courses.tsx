@@ -9,7 +9,7 @@ interface CourseData {
   id: number;
   title: string;
   description: string;
-  price: number;
+  price: number | "";
   duration: string;
   ageGroup: string;
   category: string;
@@ -21,7 +21,7 @@ interface CourseData {
 const initialCourse: Omit<CourseData, 'id'> = {
   title: '',
   description: '',
-  price: 0,
+  price: '',
   duration: '',
   ageGroup: '',
   category: '',
@@ -109,10 +109,24 @@ export default function Courses() {
     setIsSubmitting(true);
 
     // Basic validation
-    if (!formData.title.trim()) {
+    if (!formData.title?.trim()) {
       submittingRef.current = false;
       setIsSubmitting(false);
       toast.warning("Kurs nomi kiritilishi shart");
+      return;
+    }
+
+    if (formData.price === "") {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+      toast.warning("Narx kiritilishi shart");
+      return;
+    }
+
+    if (Number(formData.price) < 0) {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+      toast.warning("Narx manfiy bo'lishi mumkin emas");
       return;
     }
 
@@ -197,6 +211,7 @@ export default function Courses() {
               <th>Davomiyligi</th>
               <th>Yosh guruhi</th>
               <th>Kategoriya</th>
+              <th>Holati</th>
               <th>Amallar</th>
             </tr>
           </thead>
@@ -232,7 +247,12 @@ export default function Courses() {
               </tr>
             ))}
             {filteredCourses.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Kurslar topilmadi</td></tr>
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '4rem' }}>
+                  <FaBook style={{ fontSize: '3rem', color: '#8b92a7', marginBottom: '1rem', opacity: 0.3 }} />
+                  <p style={{ color: '#8b92a7', fontSize: '1.1rem' }}>Kurslar topilmadi</p>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -274,6 +294,7 @@ export default function Courses() {
                 <input
                   type="text"
                   required
+                  placeholder="Kurs nomini kiriting"
                   value={formData.title}
                   onChange={e => setFormData({ ...formData, title: e.target.value })}
                 />
@@ -283,9 +304,30 @@ export default function Courses() {
                   <label>Narxi (so'm)</label>
                   <input
                     type="number"
+                    min={0}
+                    placeholder="0"
                     required
                     value={formData.price}
-                    onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
+                    onChange={e => {
+                      const value = e.target.value;
+
+                      if (value === '') {
+                        setFormData({
+                          ...formData,
+                          price: ''
+                        });
+                        return;
+                      }
+
+                        const num = Number(value);
+
+                        if (num < 0) return;
+
+                        setFormData({
+                          ...formData,
+                          price: num
+                        });
+                      }}
                   />
                 </div>
                 <div className="form-group">
@@ -337,6 +379,7 @@ export default function Courses() {
                   <input
                     type="file"
                     accept="image/*"
+                  className="form-control"
                     onChange={e => setImageFile(e.target.files?.[0] || null)}
                   />
                 </div>
@@ -365,6 +408,7 @@ export default function Courses() {
                 <label>Tavsif</label>
                 <textarea
                   rows={4}
+                  placeholder="Kurs haqida batafsil ma'lumot..."
                   value={formData.description}
                   onChange={e => setFormData({ ...formData, description: e.target.value })}
                 />

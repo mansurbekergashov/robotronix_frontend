@@ -47,7 +47,7 @@ export default class CheckoutModal {
                                        autocomplete="off">
                                 <div id="jurDropdown" style="
                                     display:none; position:absolute; top:100%; left:0; right:0;
-                                    background:#1e2535; border:1px solid #2d3748; border-radius:8px;
+                                    background: var(--card-bg); border:1px solid var(--border-color); border-radius:8px;
                                     max-height:180px; overflow-y:auto; z-index:9999; margin-top:2px;
                                 "></div>
                                 <div id="jurSelected" style="display:none; font-size:12px; color:#10b981; margin-top:4px;">

@@ -9,8 +9,8 @@ interface ProductData {
   id: number;
   title: string;
   description: string;
-  price: number;
-  oldPrice?: number;
+  price: number | "";
+  oldPrice?: number | "";
   paymentCardId?: number | null;
   imageUrl: string;
   badge?: string;
@@ -30,8 +30,8 @@ interface PaymentCardOption {
 const initialProduct: Omit<ProductData, 'id'> = {
   title: '',
   description: '',
-  price: 0,
-  oldPrice: 0,
+  price: '',
+  oldPrice: '',
   paymentCardId: null,
   imageUrl: '',
   badge: '',
@@ -79,7 +79,7 @@ export default function Products() {
     } finally {
       setLoading(false);
     }
-  };;
+  };
 
   const fetchPaymentCards = async () => {
     try {
@@ -266,6 +266,7 @@ export default function Products() {
                 <input
                   type="text"
                   required
+                  placeholder="Mahsulot nomini kiriting"
                   value={formData.title}
                   onChange={e => setFormData({ ...formData, title: e.target.value })}
                 />
@@ -277,7 +278,16 @@ export default function Products() {
                     type="number"
                     required
                     value={formData.price}
-                    onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
+                    placeholder='100000'
+                    min={0}
+                     onChange={e =>
+                    setFormData({
+                      ...formData,
+                      price: e.target.value === ''
+                        ? ''
+                        : Number(e.target.value)
+                    })
+                  }
                   />
                 </div>
                 <div className="form-group">
@@ -285,7 +295,16 @@ export default function Products() {
                   <input
                     type="number"
                     value={formData.oldPrice}
-                    onChange={e => setFormData({ ...formData, oldPrice: Number(e.target.value) })}
+                    placeholder='200000'
+                    min={0}
+                     onChange={e =>
+                    setFormData({
+                      ...formData,
+                      oldPrice: e.target.value === ''
+                        ? ''
+                        : Number(e.target.value)
+                    })
+                  }
                   />
                 </div>
               </div>
@@ -296,8 +315,17 @@ export default function Products() {
                     type="number"
                     min={1}
                     placeholder="500"
-                    value={formData.weightGrams ?? 500}
-                    onChange={e => setFormData({ ...formData, weightGrams: Number(e.target.value) || 0 })}
+                    value={formData.weightGrams ?? ''}
+                    minLength={0}
+                    // onChange={e => setFormData({ ...formData, weightGrams: Number(e.target.value) || 0 })}
+                    onChange={e =>
+                    setFormData({
+                      ...formData,
+                      weightGrams: e.target.value === ''
+                        ? undefined
+                        : Number(e.target.value)
+                    })
+                  }
                   />
                 </div>
                 <div className="form-group">

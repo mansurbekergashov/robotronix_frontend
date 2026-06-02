@@ -184,6 +184,12 @@ export default function Certifications() {
               </div>
             </div>
           ))}
+          {courses.length === 0 && (
+            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px 0', background: 'rgba(255,255,255,0.02)', borderRadius: '20px' }}>
+               <FaCertificate style={{ fontSize: '4rem', color: '#3f445e', marginBottom: '1rem', opacity: 0.5 }} />
+               <p style={{ fontSize: '1.2rem', color: '#8b92a7' }}>Sertfikatlash uchun kurs mavjud emas</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="students-view">

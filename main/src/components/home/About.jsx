@@ -1,6 +1,6 @@
 const About = () => {
     const achievements = [
-        "Farg'ona va Namangan viloyatlarida 10 dan ortiq hamkor maktablar",
+        "Farg'ona viloyatida 10 dan ortiq hamkor maktablar",
         "Xalqaro tanlovlarda sovrinli o'rinlar (WRO, Technovation, FGC)",
         "Respublika Ta'lim Markazi bilan hamkorlik"
     ]
@@ -43,8 +43,6 @@ const About = () => {
                                 texnologiya ixtirochisiga aylantirish.
                             </p>
                         </div>
-
-                        <button className="btn-primary">Biz bilan tanishing</button>
                     </div>
 
                     <div className="about-visual" data-aos="fade-left">
