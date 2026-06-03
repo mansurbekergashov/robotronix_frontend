@@ -3,7 +3,7 @@ const Features = () => {
         {
             icon: 'fas fa-chalkboard-teacher',
             title: 'Tajribali ustozlar',
-            description: "500 dan ortiq texnologiya fani o'qituvchilarini malakasini oshirgan professional jamoa"
+            description: "900 dan ortiq texnologiya fani o'qituvchilarini malakasini oshirgan professional jamoa"
         },
         {
             icon: 'fas fa-tools',
@@ -13,7 +13,7 @@ const Features = () => {
         {
             icon: 'fas fa-certificate',
             title: 'Rasmiy maqom',
-            description: "IT Park va Cyberpark rezidenti, litsenziyalangan sertifikat beruvchi"
+            description: "IT Park rezidenti, litsenziyalangan sertifikat beruvchi"
         },
         {
             icon: 'fas fa-microchip',

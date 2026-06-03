@@ -6,7 +6,7 @@ const About = () => {
     ]
 
     const stats = [
-        { number: '500+', label: "Tayyorlangan o'qituvchi" },
+        { number: '900+', label: "Tayyorlangan o'qituvchi" },
         { number: '2000+', label: "Muvaffaqiyatli o'quvchi" },
         { number: '15+', label: 'Xalqaro yutuq' }
     ]

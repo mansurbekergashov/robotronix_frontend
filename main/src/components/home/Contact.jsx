@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import Map from './Map'
+import api from '../../services/api'
+import useFetch from '../../hooks/useFetch'
 
 const Contact = () => {
+    const { data: courses, loading: coursesLoading } = useFetch('/courses')
+
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -24,8 +28,12 @@ const Contact = () => {
         setIsSubmitting(true)
 
         try {
-            // TODO: Replace with actual API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await api.post('/contact', {
+                name: formData.name,
+                phone: formData.phone,
+                course: formData.course,
+                message: formData.message
+            })
             alert('Xabar muvaffaqiyatli yuborildi!')
             setFormData({
                 name: '',
@@ -36,7 +44,8 @@ const Contact = () => {
             })
         } catch (error) {
             console.error('Contact form error:', error)
-            alert('Xatolik yuz berdi. Qaytadan urinib ko\'ring.')
+            const msg = error?.response?.data?.message || 'Xatolik yuz berdi. Qaytadan urinib ko\'ring.'
+            alert(msg)
         } finally {
             setIsSubmitting(false)
         }
@@ -157,13 +166,16 @@ const Contact = () => {
                                     className="form-select"
                                     value={formData.course}
                                     onChange={handleChange}
+                                    disabled={coursesLoading}
                                 >
-                                    <option value="">Kursni tanlang</option>
-                                    <option value="mitti-muhandis">Mitti Muhandis (4-6 yosh)</option>
-                                    <option value="kichik-muhandis">Kichik Muhandis (7-9 yosh)</option>
-                                    <option value="yosh-muhandis">Yosh Muhandis (10-14 yosh)</option>
-                                    <option value="dasturlash-ai">Dasturlash va AI (14+ yosh)</option>
-                                    <option value="oquvchilar-kursi">O'qituvchilar kursi</option>
+                                    <option value="">
+                                        {coursesLoading ? 'Kurslar yuklanmoqda...' : 'Kursni tanlang'}
+                                    </option>
+                                    {(courses || []).map(course => (
+                                        <option key={course.id} value={course.title}>
+                                            {course.title}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 

@@ -10,7 +10,7 @@ const FAQ = () => {
         },
         {
             question: 'Online kursda o\'rganish qiyin emasmi?',
-            answer: 'Yo\'q, bizning online darslarimiz maxsus metodika asosida, sodda tilda va to\'liq videoqo\'llanmalar bilan tashkil etilgan. 500 dan ortiq ustozlar muvaffaqiyatli bitirgan.'
+            answer: 'Yo\'q, bizning online darslarimiz maxsus metodika asosida, sodda tilda va to\'liq videoqo\'llanmalar bilan tashkil etilgan. 900 dan ortiq ustozlar muvaffaqiyatli bitirgan.'
         },
         {
             question: 'Farzandim 5 yoshda, unga qanday kurs mos keladi?',
