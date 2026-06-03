@@ -86,6 +86,11 @@ export default function Orders() {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Mark all orders as read when opening the page
+  useEffect(() => {
+    api.put('/admin/orders/mark-read').catch(console.error);
+  }, []);
+
   const uzpostStatusLabel = (status: string) => {
     const map: Record<string, string> = {
       unassigned:       'Qabul qilindi',

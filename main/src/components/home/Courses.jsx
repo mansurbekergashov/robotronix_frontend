@@ -8,6 +8,7 @@ const Courses = () => {
 
     const kidsCourses = (courses || []).filter(c => c.category === 'kids' || !c.category)
     const teacherCourses = (courses || []).filter(c => c.category === 'teachers')
+    const allCourses = (courses || []).filter(c => c.category === 'all')
 
     return (
         <section id="courses" className="courses">
@@ -20,6 +21,12 @@ const Courses = () => {
                 </div>
 
                 <div className="course-tabs" data-aos="fade-up">
+                    <button
+                        className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('all')}
+                    >
+                        Barcha uchun
+                    </button>
                     <button
                         className={`tab-btn ${activeTab === 'kids' ? 'active' : ''}`}
                         onClick={() => setActiveTab('kids')}
@@ -75,6 +82,26 @@ const Courses = () => {
                                     ) : (
                                         <div className="empty-state" data-aos="fade-up">
                                             <i className="fas fa-chalkboard-teacher"></i>
+                                            <p>Bu bo'limda hozircha kurslar mavjud emas.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className={`tab-content ${activeTab === 'all' ? 'active' : ''}`} id="all">
+                                <div className="courses-grid">
+                                    {allCourses.length > 0 ? (
+                                        allCourses.map((course, index) => (
+                                            <CourseCard
+                                                key={course.id}
+                                                course={course}
+                                                data-aos="fade-up"
+                                                data-aos-delay={(index + 1) * 100}
+                                            />
+                                        ))
+                                    ) : (
+                                        <div className="empty-state" data-aos="fade-up">
+                                            <i className="fas fa-users"></i>
                                             <p>Bu bo'limda hozircha kurslar mavjud emas.</p>
                                         </div>
                                     )}

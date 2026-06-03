@@ -83,6 +83,11 @@ export default function Applications() {
     fetchApplications(0, false);
   }, [fetchApplications]);
 
+  // Mark all applications as read when opening the page
+  useEffect(() => {
+    api.put('/admin/enrollments/mark-read').catch(console.error);
+  }, []);
+
   // Real-time sync — subscribe once on mount, use ref to always call latest fetchApplications
   const fetchApplicationsRef = useRef(fetchApplications);
   useEffect(() => {

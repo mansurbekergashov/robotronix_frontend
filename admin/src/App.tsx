@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './hooks/useToast';
 import { ConfirmProvider } from './hooks/useConfirm';
 import Sidebar from './components/Sidebar';
+import ErrorBoundary from './components/ErrorBoundary';
 import { syncService } from './services/SyncService';
 import './App.css';
 
@@ -69,9 +70,11 @@ function AdminLayout() {
         setIsMobileOpen={setIsMobileMenuOpen}
       />
       <main className={`main-content ${isCollapsed ? 'sidebar-collapsed' : ''} ${isMobileMenuOpen ? 'mobile-shifted' : ''}`}>
-        <Suspense fallback={<div className="loading-fallback">Yuklanmoqda...</div>}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="loading-fallback">Yuklanmoqda...</div>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       {isMobileMenuOpen && <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
     </div>
