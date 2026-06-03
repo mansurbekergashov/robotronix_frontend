@@ -1,6 +1,11 @@
 const Partners = () => {
     const partners = [
-        // { name: 'IT Park', image: '/assets/images/placeholder.svg' },
+        { name: 'Ideal School', image: '/assets/images/partners/ideal-school.png' },
+        { name: 'Edu Nova', image: '/assets/images/partners/edunova.png' },
+        { name: 'Ideal Orzular', image: '/assets/images/partners/ideal-orzular.png' },
+        { name: 'Ziyrak', image: '/assets/images/partners/ziyrak.png' },
+        { name: 'Beruniy', image: '/assets/images/partners/beruniy.png' },
+        { name: 'Al Kamal', image: '/assets/images/partners/al-kamal.png' },
     ]
 
 
