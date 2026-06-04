@@ -15,9 +15,40 @@ export default class EnrollmentModal {
     }
 
     render() {
+        const isFree = !this.course?.price || this.course.price === 0;
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
         modal.id = 'enrollmentModal';
+
+        const paymentBlock = isFree ? `
+            <div class="checkout-summary" style="margin-top:20px; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25); border-radius:10px; padding:14px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.6rem">🎓</span>
+                    <div>
+                        <div style="font-weight:600; color:#10b981">Bepul kurs</div>
+                        <div style="font-size:13px; color:#6ee7b7">
+                            Bu kurs to'lovsiz taqdim etiladi
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ` : `
+            <div class="checkout-summary" style="margin-top:20px; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25); border-radius:10px; padding:14px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.6rem">💳</span>
+                    <div>
+                        <div style="font-weight:600; color:#10b981">Payme orqali to'lov</div>
+                        <div style="font-size:13px; color:#6ee7b7">
+                            Yozilgandan so'ng Payme to'lov sahifasi avtomatik ochiladi
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const submitLabel = isFree
+            ? `<i class="fas fa-user-plus"></i> Kursga bepul yozilish`
+            : `<i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to'lash`;
 
         modal.innerHTML = `
             <div class="modal-content checkout-modal-content detail-modal">
@@ -35,27 +66,17 @@ export default class EnrollmentModal {
                             <div class="payment-card-line">
                                 <strong>${this.course?.title || 'Kurs'}</strong>
                             </div>
-                            <div class="payment-card-line" style="font-size:18px; color:#33cccc; font-weight:600; margin-top:6px;">
-                                ${(this.course?.price || 0).toLocaleString()} so'm
+                            <div class="payment-card-line" style="font-size:18px; color:${isFree ? '#10b981' : '#33cccc'}; font-weight:600; margin-top:6px;">
+                                ${isFree ? 'Bepul' : `${(this.course?.price || 0).toLocaleString()} so'm`}
                             </div>
                         </div>
 
-                        <div class="checkout-summary" style="margin-top:20px; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25); border-radius:10px; padding:14px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="font-size:1.6rem">💳</span>
-                                <div>
-                                    <div style="font-weight:600; color:#10b981">Payme orqali to'lov</div>
-                                    <div style="font-size:13px; color:#6ee7b7">
-                                        Yozilgandan so'ng Payme to'lov sahifasi avtomatik ochiladi
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        ${paymentBlock}
 
                         <div class="detail-control" style="margin-top:20px">
                             <div class="detail-actions">
                                 <button type="submit" class="btn-confirm-delivery" id="submitEnrollBtn">
-                                    <i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to'lash
+                                    ${submitLabel}
                                 </button>
                             </div>
                         </div>
@@ -74,6 +95,8 @@ export default class EnrollmentModal {
         modal.querySelector('#closeEnrollment').onclick = () => this.close();
         modal.onclick = (e) => { if (e.target === modal) this.close(); };
 
+        const isFree = !this.course?.price || this.course.price === 0;
+
         modal.querySelector('#enrollmentForm').onsubmit = async (e) => {
             e.preventDefault();
             const submitBtn = modal.querySelector('#submitEnrollBtn');
@@ -81,19 +104,26 @@ export default class EnrollmentModal {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yozilmoqda...';
 
             try {
-                const response = await api.post(`/courses/${this.course.id}/enroll`, { paymentMethod: 'PAYME' });
+                const payload = isFree ? { paymentMethod: 'FREE' } : { paymentMethod: 'PAYME' };
+                const response = await api.post(`/courses/${this.course.id}/enroll`, payload);
                 const { id: enrollId, paymentUrl } = response;
 
-                if (!paymentUrl) throw new Error("To'lov URL olinmadi");
-
-                window.open(paymentUrl, '_blank');
-                this._showWaitingState(paymentUrl);
-                this._startPolling(enrollId);
+                if (isFree || !paymentUrl) {
+                    this._showSuccess();
+                    setTimeout(() => { this.close(); this.onSuccess(); }, 2000);
+                } else {
+                    window.open(paymentUrl, '_blank');
+                    this._showWaitingState(paymentUrl);
+                    this._startPolling(enrollId);
+                }
             } catch (error) {
                 console.error('Enrollment error:', error);
                 toast.error('Ariza yuborishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to\'lash';
+                const label = isFree
+                    ? '<i class="fas fa-user-plus"></i> Kursga bepul yozilish'
+                    : '<i class="fas fa-credit-card"></i> Kursga yozilish va Payme orqali to\'lash';
+                submitBtn.innerHTML = label;
             }
         };
     }
@@ -150,8 +180,8 @@ export default class EnrollmentModal {
         body.innerHTML = `
             <div style="text-align:center; padding:40px 20px">
                 <div style="font-size:4rem; color:#10b981; margin-bottom:20px">✅</div>
-                <h2 style="color:white; margin-bottom:12px">To'lov muvaffaqiyatli!</h2>
-                <p style="color:#8b92a7">Kursga yozildingiz. Tez orada operatorlarimiz siz bilan bog'lanadi.</p>
+                <h2 style="color:white; margin-bottom:12px">Kursga muvaffaqiyatli yozildingiz!</h2>
+                <p style="color:#8b92a7">Tez orada operatorlarimiz siz bilan bog'lanadi.</p>
             </div>
         `;
     }

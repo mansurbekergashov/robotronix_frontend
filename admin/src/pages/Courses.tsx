@@ -305,29 +305,21 @@ export default function Courses() {
                   <input
                     type="number"
                     min={0}
+                    step={1}
                     placeholder="0"
                     required
                     value={formData.price}
+                    onWheel={e => e.currentTarget.blur()}
                     onChange={e => {
                       const value = e.target.value;
-
                       if (value === '') {
-                        setFormData({
-                          ...formData,
-                          price: ''
-                        });
+                        setFormData({ ...formData, price: '' });
                         return;
                       }
-
-                        const num = Number(value);
-
-                        if (num < 0) return;
-
-                        setFormData({
-                          ...formData,
-                          price: num
-                        });
-                      }}
+                      const num = Math.round(Number(value));
+                      if (num < 0) return;
+                      setFormData({ ...formData, price: num });
+                    }}
                   />
                 </div>
                 <div className="form-group">

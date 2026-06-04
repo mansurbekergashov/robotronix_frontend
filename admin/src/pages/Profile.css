@@ -322,7 +322,7 @@
 .modal {
   position: fixed;
   inset: 0;
-  background: var(--card-bg);
+  background: rgba(0, 0, 0, 0.108);
   display: flex;
   align-items: center;
   justify-content: center;

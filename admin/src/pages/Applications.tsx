@@ -356,14 +356,33 @@ export default function Applications() {
               <div className="detail-grid" style={{ marginTop: '1rem' }}>
                 <div className="detail-section">
                   <h3>To'lov holati</h3>
-                  {selectedApp.paymentConfirmed ? (
-                    <p><span className="badge badge-success"><FaCheck /> Payme orqali to'langan</span></p>
-                  ) : (
-                    <p><span className="badge badge-warning">To'lov kutilmoqda</span></p>
-                  )}
-                  <p style={{ marginTop: '0.5rem', color: '#8b92a7', fontSize: '13px' }}>
-                    To'lov Payme orqali avtomatik tasdiqlanadi
-                  </p>
+                  {(() => {
+                    const isFree = selectedApp.paymentMethod === 'FREE'
+                      || selectedApp.course?.price === 0
+                      || selectedApp.coursePrice === 0;
+                    if (isFree) {
+                      return (
+                        <>
+                          <p><span className="badge badge-success">Bepul kurs</span></p>
+                          <p style={{ marginTop: '0.5rem', color: '#8b92a7', fontSize: '13px' }}>
+                            Bu kurs bepul taqdim etiladi
+                          </p>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        {selectedApp.paymentConfirmed ? (
+                          <p><span className="badge badge-success"><FaCheck /> Payme orqali to'langan</span></p>
+                        ) : (
+                          <p><span className="badge badge-warning">To'lov kutilmoqda</span></p>
+                        )}
+                        <p style={{ marginTop: '0.5rem', color: '#8b92a7', fontSize: '13px' }}>
+                          To'lov Payme orqali avtomatik tasdiqlanadi
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 

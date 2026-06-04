@@ -64,16 +64,22 @@ const CourseDetailPage = () => {
             navigate(`/login?redirect=/courses/${id}`);
             return;
         }
+        const free = !course?.price || course.price === 0;
         setIsEnrolling(true);
         try {
-            const res = await api.post(`/courses/${id}/enroll`, { paymentMethod: 'PAYME' });
+            const payload = free ? { paymentMethod: 'FREE' } : { paymentMethod: 'PAYME' };
+            const res = await api.post(`/courses/${id}/enroll`, payload);
             const { id: eid, paymentUrl: url } = res.data;
 
-            setEnrollId(eid);
-            setPaymentUrl(url);
-            setPaymentState('waiting');
-            window.open(url, '_blank');
-            startPolling(eid);
+            if (free || !url) {
+                setPaymentState('confirmed');
+            } else {
+                setEnrollId(eid);
+                setPaymentUrl(url);
+                setPaymentState('waiting');
+                window.open(url, '_blank');
+                startPolling(eid);
+            }
         } catch (error) {
             alert('Kursga yozilishda xatolik: ' + (error.response?.data?.message || error.message));
         } finally {
@@ -83,6 +89,8 @@ const CourseDetailPage = () => {
 
     if (loading) return <div className="loading">Yuklanmoqda...</div>;
     if (!course)  return <div className="error">Kurs topilmadi</div>;
+
+    const isFree = !course.price || course.price === 0;
 
     // ─── To'lov kutilmoqda holati ─────────────────────────────────────────────
 
@@ -135,9 +143,9 @@ const CourseDetailPage = () => {
             <div className="course-detail-container">
                 <div className="container" style={{ textAlign: 'center', padding: '80px 20px' }}>
                     <div style={{ fontSize: '4rem', color: '#10b981', marginBottom: '20px' }}>✅</div>
-                    <h2>To'lov muvaffaqiyatli amalga oshirildi!</h2>
+                    <h2>Kursga muvaffaqiyatli yozildingiz!</h2>
                     <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-                        Kursga yozildingiz. Tez orada operatorlarimiz siz bilan bog'lanadi.
+                        Tez orada operatorlarimiz siz bilan bog'lanadi.
                     </p>
                     <Link to="/courses" className="btn-primary">Kurslarga qaytish</Link>
                 </div>
@@ -206,30 +214,59 @@ const CourseDetailPage = () => {
                 <aside className="course-sidebar" data-aos="fade-left" data-aos-delay="500">
                     <div className="enrollment-card">
                         <div className="price-label">Kurs narxi:</div>
-                        <div className="price">{course.price?.toLocaleString() || '0'} so'm</div>
+                        <div className="price">
+                            {isFree ? (
+                                <span style={{ color: '#10b981' }}>Bepul</span>
+                            ) : (
+                                `${course.price?.toLocaleString()} so'm`
+                            )}
+                        </div>
 
-                        {/* Payme to'lov info */}
-                        <div style={{
-                            background: 'rgba(16,185,129,.1)',
-                            border: '1px solid rgba(16,185,129,.3)',
-                            borderRadius: '8px',
-                            padding: '12px',
-                            marginTop: '12px',
-                            marginBottom: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}>
-                            <span style={{ fontSize: '1.4rem' }}>💳</span>
-                            <div>
-                                <div style={{ fontWeight: 600, color: '#10b981', fontSize: '14px' }}>
-                                    Payme orqali to'lov
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#6ee7b7' }}>
-                                    Yozilgandan so'ng Payme sahifasi ochiladi
+                        {isFree ? (
+                            <div style={{
+                                background: 'rgba(16,185,129,.1)',
+                                border: '1px solid rgba(16,185,129,.3)',
+                                borderRadius: '8px',
+                                padding: '12px',
+                                marginTop: '12px',
+                                marginBottom: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                <span style={{ fontSize: '1.4rem' }}>🎓</span>
+                                <div>
+                                    <div style={{ fontWeight: 600, color: '#10b981', fontSize: '14px' }}>
+                                        Bepul kurs
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#6ee7b7' }}>
+                                        Bu kurs to'lovsiz taqdim etiladi
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div style={{
+                                background: 'rgba(16,185,129,.1)',
+                                border: '1px solid rgba(16,185,129,.3)',
+                                borderRadius: '8px',
+                                padding: '12px',
+                                marginTop: '12px',
+                                marginBottom: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                <span style={{ fontSize: '1.4rem' }}>💳</span>
+                                <div>
+                                    <div style={{ fontWeight: 600, color: '#10b981', fontSize: '14px' }}>
+                                        Payme orqali to'lov
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#6ee7b7' }}>
+                                        Yozilgandan so'ng Payme sahifasi ochiladi
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             onClick={handleEnroll}
@@ -238,6 +275,8 @@ const CourseDetailPage = () => {
                         >
                             {isEnrolling ? (
                                 <><i className="fas fa-spinner fa-spin" /> Yozilmoqda...</>
+                            ) : isFree ? (
+                                <><i className="fas fa-user-plus" /> Kursga bepul yozilish</>
                             ) : (
                                 <><i className="fas fa-user-plus" /> Kursga yozilish</>
                             )}

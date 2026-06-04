@@ -77,9 +77,9 @@
   gap: 1.25rem;
   padding: 1rem 1.2rem;
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  border: var(--border-color);
   border-radius: 18px;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .cert-user-info {
@@ -197,19 +197,22 @@
 }
 
 .disabled-input {
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.7);
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-primary);
   cursor: not-allowed;
 }
 
 .file-drop-area {
+  margin-top: 2px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 3rem 1rem;
-  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border: var(--image-upload-border);
   border-radius: 14px;
   transition: all 0.2s;
   background: rgba(255, 255, 255, 0.03);
@@ -354,6 +357,33 @@
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: #8b92a7;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: end;
+  gap: 3px;
+
+}
+
+.students-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 @media (max-width: 768px) {

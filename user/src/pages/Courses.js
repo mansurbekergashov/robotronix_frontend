@@ -81,25 +81,28 @@ export default class Courses {
             const isEnrolled = !!enrollment;
             const status = enrollment?.status;
 
+            const isFree = !course.price || course.price === 0;
             let buttonHTML = '';
             if (!isEnrolled) {
                 buttonHTML = `
                     <button class="btn-primary btn-full enroll-btn" data-id="${course.id}">
-                        <i class="fas fa-user-plus"></i> Kursga yozilish
+                        <i class="fas fa-user-plus"></i> ${isFree ? 'Kursga bepul yozilish' : 'Kursga yozilish'}
                     </button>
                 `;
             } else {
+                const pendingText = isFree ? 'Tasdiqlanish kutilmoqda' : "To'lov kutilmoqda";
+                const pendingIcon = isFree ? 'hourglass-half' : 'credit-card';
                 const statusMap = {
-                    'PENDING':         { text: "To'lov kutilmoqda",   class: 'status-pending',  icon: 'credit-card' },
-                    'PAYMENT_WAITING': { text: "To'lov kutilmoqda",   class: 'status-pending',  icon: 'credit-card' },
-                    'CONFIRMED':       { text: "O'qishda",            class: 'status-active',   icon: 'check-double' },
-                    'REJECTED':        { text: 'Rad etilgan',          class: 'status-rejected', icon: 'times-circle' },
-                    'CANCELLED':       { text: 'Bekor qilindi',        class: 'status-rejected', icon: 'ban' },
-                    'COMPLETED':       { text: 'Tugallangan',          class: 'status-completed',icon: 'certificate' }
+                    'PENDING':         { text: pendingText,   class: 'status-pending',   icon: pendingIcon },
+                    'PAYMENT_WAITING': { text: pendingText,   class: 'status-pending',   icon: pendingIcon },
+                    'CONFIRMED':       { text: "O'qishda",    class: 'status-active',    icon: 'check-double' },
+                    'REJECTED':        { text: 'Rad etilgan', class: 'status-rejected',  icon: 'times-circle' },
+                    'CANCELLED':       { text: 'Bekor qilindi', class: 'status-rejected', icon: 'ban' },
+                    'COMPLETED':       { text: 'Tugallangan', class: 'status-completed', icon: 'certificate' }
                 };
                 const s = statusMap[status] || { text: 'Yozilgan', class: 'status-info', icon: 'info-circle' };
 
-                const canRetryPayment = (status === 'PENDING' || status === 'PAYMENT_WAITING') && !enrollment?.paymentConfirmed;
+                const canRetryPayment = !isFree && (status === 'PENDING' || status === 'PAYMENT_WAITING') && !enrollment?.paymentConfirmed;
                 buttonHTML = canRetryPayment ? `
                     <button class="btn-primary btn-full retry-payment-btn"
                         data-enrollment-id="${enrollment.id}"
@@ -138,7 +141,9 @@ export default class Courses {
                         </div>
                         <div class="feature-item">
                             <i class="fas fa-wallet"></i>
-                            <span class="course-price">${(course.price || 0).toLocaleString()} so'm</span>
+                            <span class="course-price" style="${!course.price || course.price === 0 ? 'color:#10b981;font-weight:600' : ''}">
+                                ${!course.price || course.price === 0 ? 'Bepul' : `${course.price.toLocaleString()} so'm`}
+                            </span>
                         </div>
                     </div>
 

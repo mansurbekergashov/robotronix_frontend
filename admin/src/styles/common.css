@@ -373,7 +373,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  border-bottom: var(--border-color);
+  border-bottom: var(--border-color) !important;
 }
 
 .modal-header h2 {
