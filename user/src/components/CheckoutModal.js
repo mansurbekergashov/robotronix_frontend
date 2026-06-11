@@ -89,7 +89,7 @@ export default class CheckoutModal {
                                         </div>
                                         <div style="font-size:12px; color:#34d399; margin-top:8px;">
                                             <i class="fas fa-map-marker-alt"></i>
-                                            <strong>Manzil:</strong> Toshkent sh., Robotronix Markazi
+                                            <strong>Manzil:</strong> Farg'ona sh., Robotronix Markazi
                                         </div>
                                     </div>
                                 </div>
