@@ -228,6 +228,13 @@ export default class Orders {
     return statusMap[status] || { class: "secondary", text: status, icon: "fa-info-circle" };
   }
 
+  getDeliveryBadge(deliveryType) {
+    if (deliveryType === 'SELF_PICKUP') {
+      return `<span class="status-badge" style="background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.35);font-size:0.75rem;padding:3px 9px;"><i class="fas fa-store"></i> O'zim olib ketaman</span>`;
+    }
+    return `<span class="status-badge" style="background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);font-size:0.75rem;padding:3px 9px;"><i class="fas fa-truck"></i> Yetkazib berish</span>`;
+  }
+
   renderOrders() {
     const ordersList = document.getElementById("ordersList");
 
@@ -437,6 +444,12 @@ export default class Orders {
                     <p class="text-primary" style="font-weight: 700;">${(order.totalAmount || 0).toLocaleString()} so'm</p>
                 </div>
 
+                <!-- Yetkazish turi -->
+                <div class="detail-item">
+                    <label><i class="fas fa-shipping-fast"></i> Yetkazish turi</label>
+                    <div>${this.getDeliveryBadge(order.deliveryType)}</div>
+                </div>
+
                 ${
                   order.contactPhone
                     ? `
@@ -448,11 +461,17 @@ export default class Orders {
                 }
 
                 ${
-                  order.shippingAddress
+                  order.deliveryType !== 'SELF_PICKUP' && order.shippingAddress
                     ? `
                 <div class="detail-item full-width">
                     <label><i class="fas fa-map-marker-alt"></i> Yetkazib berish manzili</label>
                     <p>${esc(order.shippingAddress)}</p>
+                </div>`
+                    : order.deliveryType === 'SELF_PICKUP'
+                    ? `
+                <div class="detail-item full-width">
+                    <label><i class="fas fa-store"></i> Pickup manzili</label>
+                    <p style="color:#10b981;">🏪 Robotronix Markazi — mijoz o'zi kelib oladi</p>
                 </div>`
                     : ""
                 }

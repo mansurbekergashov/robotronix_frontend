@@ -20,6 +20,7 @@ interface OrderData {
   shippingStatus?: string;
   receiverJurisdictionId?: number;
   postalIndex?: string;
+  deliveryType?: string; // 'DELIVERY' | 'SELF_PICKUP'
 }
 
 interface TrackingInfo {
@@ -613,7 +614,19 @@ export default function Orders() {
                   </div>
                   <p><strong>Ism:</strong> {selectedOrder.user?.fullName}</p>
                   <p><strong>Telefon:</strong> {selectedOrder.contactPhone || selectedOrder.user?.phone}</p>
-                  <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}</p>
+                  {/* Yetkazish turi badge */}
+                  {selectedOrder.deliveryType === 'SELF_PICKUP' ? (
+                    <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <strong>Yetkazish:</strong>
+                      <span style={{
+                        background: 'rgba(16,185,129,.15)', color: '#10b981',
+                        border: '1px solid rgba(16,185,129,.35)', borderRadius: '6px',
+                        padding: '2px 10px', fontSize: '13px', fontWeight: 600
+                      }}>🏪 O'zi kelib oladi (Self-Pickup)</span>
+                    </p>
+                  ) : (
+                    <p><strong>Manzil:</strong> {selectedOrder.shippingAddress || 'Ko\'rsatilmagan'}</p>
+                  )}
                   <p><strong>Pochta indeksi:</strong> {selectedOrder.postalIndex
                     ? <code style={{ color: '#4ade80' }}>📮 {selectedOrder.postalIndex}</code>
                     : <span style={{ color: '#8b92a7' }}>—</span>}
@@ -672,49 +685,65 @@ export default function Orders() {
                 </div>
               </div>
 
-              {/* UzPost — separate section */}
-              <div className="status-management" style={{ marginTop: '1rem', borderTop: '1px solid #2d3250', paddingTop: '1rem' }}>
-                <h3><FaTruck /> UzPost pochta</h3>
-                {selectedOrder.trackingNumber && (
-                  <p style={{ fontSize: '13px', color: '#8b92a7', marginBottom: '8px' }}>
-                    Tracking: <code>{selectedOrder.trackingNumber}</code>
-                    {selectedOrder.shippingStatus && (
-                      <span style={{ marginLeft: '8px', color: '#4ade80' }}>({selectedOrder.shippingStatus})</span>
-                    )}
+              {/* UzPost — faqat DELIVERY uchun */}
+              {selectedOrder.deliveryType !== 'SELF_PICKUP' ? (
+                <div className="status-management" style={{ marginTop: '1rem', borderTop: '1px solid #2d3250', paddingTop: '1rem' }}>
+                  <h3><FaTruck /> UzPost pochta</h3>
+                  {selectedOrder.trackingNumber && (
+                    <p style={{ fontSize: '13px', color: '#8b92a7', marginBottom: '8px' }}>
+                      Tracking: <code>{selectedOrder.trackingNumber}</code>
+                      {selectedOrder.shippingStatus && (
+                        <span style={{ marginLeft: '8px', color: '#4ade80' }}>({selectedOrder.shippingStatus})</span>
+                      )}
+                    </p>
+                  )}
+                  <div className="status-actions">
+                    <button
+                      className="btn-status btn-secondary"
+                      disabled={!!selectedOrder.trackingNumber
+                        || (selectedOrder.status !== 'CONFIRMED' && selectedOrder.status !== 'PREPARING')}
+                      onClick={() => openShipModal(selectedOrder.id)}
+                      title={selectedOrder.trackingNumber ? 'Allaqachon yuborilgan' : ''}
+                    >
+                      <FaTruck /> UzPostga yuborish
+                    </button>
+                    <button
+                      className="btn-status"
+                      style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd' }}
+                      disabled={!selectedOrder.trackingNumber}
+                      onClick={() => printLabel(selectedOrder.id)}
+                      title={!selectedOrder.trackingNumber ? 'Buyurtma hali yuborilmagan' : 'Manzil yorlig\'ini chop etish'}
+                    >
+                      <FaTag /> Manzil yorlig'i
+                    </button>
+                    <button
+                      className="btn-status btn-danger"
+                      disabled={!selectedOrder.trackingNumber}
+                      onClick={() => cancelShipment(selectedOrder.id)}
+                      title={!selectedOrder.trackingNumber ? 'Hali yuborilmagan' : ''}
+                    >
+                      <FaBan /> UzPost bekor qilish
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#8b92a7', marginTop: '6px' }}>
+                    Holat (SHIPPED → DELIVERED) UzPost dan avtomatik yangilanadi (har 30 daqiqada)
                   </p>
-                )}
-                <div className="status-actions">
-                  <button
-                    className="btn-status btn-secondary"
-                    disabled={!!selectedOrder.trackingNumber
-                      || (selectedOrder.status !== 'CONFIRMED' && selectedOrder.status !== 'PREPARING')}
-                    onClick={() => openShipModal(selectedOrder.id)}
-                    title={selectedOrder.trackingNumber ? 'Allaqachon yuborilgan' : ''}
-                  >
-                    <FaTruck /> UzPostga yuborish
-                  </button>
-                  <button
-                    className="btn-status"
-                    style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd' }}
-                    disabled={!selectedOrder.trackingNumber}
-                    onClick={() => printLabel(selectedOrder.id)}
-                    title={!selectedOrder.trackingNumber ? 'Buyurtma hali yuborilmagan' : 'Manzil yorlig\'ini chop etish'}
-                  >
-                    <FaTag /> Manzil yorlig'i
-                  </button>
-                  <button
-                    className="btn-status btn-danger"
-                    disabled={!selectedOrder.trackingNumber}
-                    onClick={() => cancelShipment(selectedOrder.id)}
-                    title={!selectedOrder.trackingNumber ? 'Hali yuborilmagan' : ''}
-                  >
-                    <FaBan /> UzPost bekor qilish
-                  </button>
                 </div>
-                <p style={{ fontSize: '12px', color: '#8b92a7', marginTop: '6px' }}>
-                  Holat (SHIPPED → DELIVERED) UzPost dan avtomatik yangilanadi (har 30 daqiqada)
-                </p>
-              </div>
+              ) : (
+                <div className="status-management" style={{
+                  marginTop: '1rem', borderTop: '1px solid #2d3250', paddingTop: '1rem',
+                  background: 'rgba(16,185,129,0.06)', borderRadius: '10px', padding: '16px'
+                }}>
+                  <h3 style={{ color: '#10b981', marginTop: 0 }}>🏪 Self-Pickup buyurtmasi</h3>
+                  <p style={{ color: '#6ee7b7', fontSize: '14px', margin: '0 0 8px' }}>
+                    Mijoz mahsulotni o'zi kelib oladi — UzPost orqali yuborish kerak emas.
+                  </p>
+                  <p style={{ color: '#8b92a7', fontSize: '13px', margin: 0 }}>
+                    Buyurtma tayyorlanganda mijozga telefon orqali xabar bering.<br />
+                    <strong style={{ color: '#34d399' }}>Telefon:</strong> {selectedOrder.contactPhone}
+                  </p>
+                </div>
+              )}
 
               {/* UzPost live tracking */}
               {selectedOrder.trackingNumber && (

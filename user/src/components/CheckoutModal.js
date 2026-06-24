@@ -22,6 +22,8 @@ export default class CheckoutModal {
         this._pollTimeout = null;
         this._modal = null;
         this._submitting = false;
+        // Default: yetkazib berish
+        this._deliveryType = 'DELIVERY';
     }
 
     render() {
@@ -39,8 +41,24 @@ export default class CheckoutModal {
                 </div>
                 <div class="modal-body" id="checkoutBody">
                     <form class="checkout-form" id="checkoutForm">
+
+                        <!-- YETKAZISH TURI TANLASH -->
+                        <div class="delivery-type-selector" id="deliveryTypeSelector">
+                            <button type="button" class="delivery-type-btn active" id="btnDelivery" data-type="DELIVERY">
+                                <span class="delivery-type-icon">🚚</span>
+                                <span class="delivery-type-label">Yetkazib berish</span>
+                                <span class="delivery-type-desc">Manzilga yetkazamiz</span>
+                            </button>
+                            <button type="button" class="delivery-type-btn" id="btnSelfPickup" data-type="SELF_PICKUP">
+                                <span class="delivery-type-icon">🏪</span>
+                                <span class="delivery-type-label">O'zim olib ketaman</span>
+                                <span class="delivery-type-desc">Ofisdan o'zim olaman</span>
+                            </button>
+                        </div>
+
                         <div class="detail-grid">
-                            <div class="detail-item full-width" style="position:relative">
+                            <!-- Manzil qidiruv — faqat DELIVERY da ko'rinadi -->
+                            <div class="detail-item full-width delivery-only-field" id="jurFieldWrapper" style="position:relative">
                                 <label><i class="fas fa-map-marker-alt"></i> Shahar / Tuman (UzPost)</label>
                                 <input type="text" id="jurSearchInput" class="form-input"
                                        placeholder="Tuman yoki shahar nomini kiriting..."
@@ -54,6 +72,30 @@ export default class CheckoutModal {
                                     <i class="fas fa-check-circle"></i> <span id="jurSelectedName"></span>
                                 </div>
                             </div>
+
+                            <!-- Self-pickup info banner — faqat SELF_PICKUP da ko'rinadi -->
+                            <div class="detail-item full-width self-pickup-only-field" id="selfPickupBanner"
+                                 style="display:none; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.3);
+                                        border-radius:10px; padding:14px; margin-bottom:4px;">
+                                <div style="display:flex; align-items:flex-start; gap:12px;">
+                                    <span style="font-size:2rem; line-height:1;">🏪</span>
+                                    <div>
+                                        <div style="font-weight:700; color:#10b981; margin-bottom:4px;">
+                                            O'zim olib ketaman tanlandi
+                                        </div>
+                                        <div style="font-size:13px; color:#6ee7b7; line-height:1.5;">
+                                            Buyurtmangiz tasdiqlanganidan so'ng siz bilan bog'lanamiz.<br>
+                                            Mahsulotni ofisimizdan olib ketishingiz mumkin.
+                                        </div>
+                                        <div style="font-size:12px; color:#34d399; margin-top:8px;">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <strong>Manzil:</strong> Farg'ona sh., Robotronix Markazi
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Telefon — har doim ko'rinadi -->
                             <div class="detail-item full-width">
                                 <label><i class="fas fa-phone"></i> Aloqa telefoni</label>
                                 <input type="tel" id="phoneInput" class="form-input"
@@ -116,7 +158,95 @@ export default class CheckoutModal {
 
         document.body.appendChild(modal);
         this._modal = modal;
+        this._injectStyles();
         this._setupEventListeners(modal);
+    }
+
+    _injectStyles() {
+        if (document.getElementById('checkout-delivery-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'checkout-delivery-styles';
+        style.textContent = `
+            .delivery-type-selector {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            .delivery-type-btn {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                padding: 14px 10px;
+                background: rgba(255,255,255,0.04);
+                border: 2px solid var(--border-color, #2d3748);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.25s ease;
+                font-family: inherit;
+                text-align: center;
+            }
+            .delivery-type-btn:hover {
+                border-color: rgba(16,185,129,0.5);
+                background: rgba(16,185,129,0.06);
+            }
+            .delivery-type-btn.active {
+                border-color: #10b981;
+                background: rgba(16,185,129,0.12);
+                box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+            }
+            .delivery-type-icon {
+                font-size: 1.8rem;
+                line-height: 1;
+                margin-bottom: 2px;
+            }
+            .delivery-type-label {
+                font-size: 14px;
+                font-weight: 700;
+                color: #e2e8f0;
+            }
+            .delivery-type-desc {
+                font-size: 11px;
+                color: #8b92a7;
+            }
+            .delivery-type-btn.active .delivery-type-label {
+                color: #10b981;
+            }
+            .delivery-only-field,
+            .self-pickup-only-field {
+                transition: opacity 0.25s ease, max-height 0.3s ease;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    _switchDeliveryType(type) {
+        this._deliveryType = type;
+        const modal = this._modal;
+
+        const btnDelivery   = modal.querySelector('#btnDelivery');
+        const btnSelfPickup = modal.querySelector('#btnSelfPickup');
+        const jurWrapper    = modal.querySelector('#jurFieldWrapper');
+        const selfBanner    = modal.querySelector('#selfPickupBanner');
+        const submitBtn     = modal.querySelector('#submitOrderBtn');
+
+        if (type === 'SELF_PICKUP') {
+            btnDelivery.classList.remove('active');
+            btnSelfPickup.classList.add('active');
+            jurWrapper.style.display = 'none';
+            selfBanner.style.display = 'block';
+            submitBtn.innerHTML = '<i class="fas fa-store"></i> O\'zim olib ketaman — Buyurtma berish';
+            // Jurisdiktsiya tanlovini tozalash
+            this.selectedJurisdiction = null;
+            this._postalIndex = '';
+        } else {
+            btnSelfPickup.classList.remove('active');
+            btnDelivery.classList.add('active');
+            jurWrapper.style.display = '';
+            selfBanner.style.display = 'none';
+            submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
+        }
     }
 
     async _searchJurisdictions(query) {
@@ -196,11 +326,14 @@ export default class CheckoutModal {
         modal.querySelector('#closeCheckout').onclick = () => this.close();
         modal.onclick = (e) => { if (e.target === modal) this.close(); };
 
+        // Delivery type tugmalari
+        modal.querySelector('#btnDelivery').addEventListener('click', () => this._switchDeliveryType('DELIVERY'));
+        modal.querySelector('#btnSelfPickup').addEventListener('click', () => this._switchDeliveryType('SELF_PICKUP'));
+
         // Jurisdiction search input
         const jurInput = modal.querySelector('#jurSearchInput');
         jurInput.addEventListener('input', (e) => {
             const q = e.target.value.trim();
-            // Clear selection if user edits
             this.selectedJurisdiction = null;
             this._postalIndex = '';
             modal.querySelector('#jurSelected').style.display = 'none';
@@ -239,16 +372,22 @@ export default class CheckoutModal {
 
             const submitBtn = modal.querySelector('#submitOrderBtn');
             const phone  = modal.querySelector('#phoneInput').value.trim();
+            const isSelfPickup = this._deliveryType === 'SELF_PICKUP';
 
             const reset = (msg) => {
                 toast.warning(msg);
                 this._submitting = false;
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
+                if (isSelfPickup) {
+                    submitBtn.innerHTML = '<i class="fas fa-store"></i> O\'zim olib ketaman — Buyurtma berish';
+                } else {
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Buyurtma berish va Payme orqali to\'lash';
+                }
             };
 
-            if (!this.selectedJurisdiction) return reset('Shahar yoki tumaningizni tanlang');
-            if (!phone)                      return reset('Telefon raqamini kiriting');
+            // Validatsiya
+            if (!isSelfPickup && !this.selectedJurisdiction) return reset('Shahar yoki tumaningizni tanlang');
+            if (!phone) return reset('Telefon raqamini kiriting');
 
             this._submitting = true;
             submitBtn.disabled = true;
@@ -259,11 +398,16 @@ export default class CheckoutModal {
             try {
                 const orderData = {
                     items: this.items.map(item => ({ productId: item.id, quantity: item.quantity })),
-                    shippingAddress: this.selectedJurisdiction.name,
+                    deliveryType: this._deliveryType,
                     contactPhone: phone,
-                    receiverJurisdictionId: this.selectedJurisdiction.id,
-                    postalIndex: this._postalIndex || undefined,
                 };
+
+                // Faqat DELIVERY uchun manzil qo'shamiz
+                if (!isSelfPickup) {
+                    orderData.shippingAddress = this.selectedJurisdiction.name;
+                    orderData.receiverJurisdictionId = this.selectedJurisdiction.id;
+                    if (this._postalIndex) orderData.postalIndex = this._postalIndex;
+                }
 
                 const response = await api.post('/orders', orderData);
                 const { id: orderId, paymentUrl } = response;
@@ -334,7 +478,7 @@ export default class CheckoutModal {
             <div style="text-align:center; padding:40px 20px">
                 <div style="font-size:4rem; color:#10b981; margin-bottom:20px">✅</div>
                 <h2 style="color:white; margin-bottom:12px">To'lov muvaffaqiyatli!</h2>
-                <p style="color:#8b92a7">Buyurtmangiz tasdiqlandi. Tez orada yetkazib beriladi.</p>
+                <p style="color:#8b92a7">Buyurtmangiz tasdiqlandi. Tez orada siz bilan bog'lanamiz.</p>
             </div>
         `;
     }
